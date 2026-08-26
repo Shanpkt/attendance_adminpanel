@@ -19,6 +19,11 @@ import {
   Clock3,
   X,
   MapPinned,
+  Plus,
+  ChevronLeft,
+  ChevronRight,
+  CalendarPlus,
+  Trash2,
 } from "lucide-react";
 
 import "./Profile.scss";
@@ -33,6 +38,9 @@ const EMPLOYEE_API =
 const ATTENDANCE_API =
   "https://attendance-backend-hs75.onrender.com/api/attendance";
 
+const LEAVE_API =
+  "https://attendance-backend-hs75.onrender.com/api/leaves";
+
 // ==================================================
 // PROFILE
 // ==================================================
@@ -41,21 +49,66 @@ function Profile() {
   const { employeeId } = useParams();
   const navigate = useNavigate();
 
+  // ==================================================
+  // EMPLOYEE
+  // ==================================================
+
   const [employee, setEmployee] = useState(null);
-  const [attendance, setAttendance] = useState([]);
-
   const [loading, setLoading] = useState(true);
-  const [attendanceLoading, setAttendanceLoading] = useState(true);
-
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // ==================================================
+  // ATTENDANCE
+  // ==================================================
+
+  const [attendance, setAttendance] = useState([]);
+  const [attendanceLoading, setAttendanceLoading] = useState(true);
 
   const [showPresentPopup, setShowPresentPopup] =
     useState(false);
 
-  const [selectedMonth, setSelectedMonth] = useState(
-    getCurrentMonthValue()
-  );
+  // ==================================================
+  // LEAVE STATES
+  // ==================================================
+
+  const [scheduledLeaves, setScheduledLeaves] =
+    useState([]);
+
+  const [leaveLoading, setLeaveLoading] =
+    useState(false);
+
+  const [leaveSaving, setLeaveSaving] =
+    useState(false);
+
+  const [showLeaveCalendar, setShowLeaveCalendar] =
+    useState(false);
+
+  const [showScheduleLeave, setShowScheduleLeave] =
+    useState(false);
+
+  const [selectedLeaveDate, setSelectedLeaveDate] =
+    useState("");
+
+  const [leaveReason, setLeaveReason] =
+    useState("");
+
+  const [leaveType, setLeaveType] =
+    useState("full");
+
+  const [leaveCalendarMonth, setLeaveCalendarMonth] =
+    useState(getCurrentMonthValue());
+
+  // ==================================================
+  // MONTH
+  // ==================================================
+
+  const [selectedMonth, setSelectedMonth] =
+    useState(getCurrentMonthValue());
+
+  // ==================================================
+  // FORM
+  // ==================================================
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -63,7 +116,6 @@ function Profile() {
     email: "",
     phone: "",
     joiningDate: "",
-    dateOfBirth: "",
   });
 
   // ==================================================
@@ -75,7 +127,9 @@ function Profile() {
       setLoading(true);
       setError("");
 
-      const response = await axios.get(EMPLOYEE_API);
+      const response = await axios.get(
+        EMPLOYEE_API
+      );
 
       console.log(
         "Employee API response:",
@@ -88,7 +142,7 @@ function Profile() {
       const selectedEmployee =
         employees.find(
           (item) =>
-            String(item._id || item.id) ===
+            String(item?._id || item?.id) ===
             String(employeeId)
         );
 
@@ -102,34 +156,22 @@ function Profile() {
 
       setFormData({
         fullName:
-          selectedEmployee.name ||
-          selectedEmployee.employeeName ||
-          "",
+          selectedEmployee.name || "",
 
         employeeId:
-          selectedEmployee.employeeId ||
           selectedEmployee._id ||
           selectedEmployee.id ||
           "",
 
         email:
-          selectedEmployee.email ||
-          "",
+          selectedEmployee.email || "",
 
         phone:
-          selectedEmployee.mobileNumber ||
-          selectedEmployee.mobile ||
-          "",
+          selectedEmployee.mobileNumber || "",
 
         joiningDate:
           formatDateForInput(
-            selectedEmployee.joiningDate ||
-              selectedEmployee.createdAt
-          ),
-
-        dateOfBirth:
-          formatDateForInput(
-            selectedEmployee.dateOfBirth
+            selectedEmployee.joiningDate
           ),
       });
     } catch (err) {
@@ -150,33 +192,188 @@ function Profile() {
   // FETCH ATTENDANCE
   // ==================================================
 
-  const fetchAttendance = useCallback(async () => {
-    try {
-      setAttendanceLoading(true);
+  const fetchAttendance = useCallback(
+    async () => {
+      try {
+        setAttendanceLoading(true);
 
-      const response =
-        await axios.get(ATTENDANCE_API);
+        const response = await axios.get(
+          ATTENDANCE_API
+        );
 
-      console.log(
-        "Attendance API response:",
-        response.data
-      );
+        console.log(
+          "Attendance API response:",
+          response.data
+        );
 
-      const attendanceData =
-        response.data?.data || [];
+        const attendanceData =
+          response.data?.data || [];
 
-      setAttendance(attendanceData);
-    } catch (err) {
-      console.error(
-        "Attendance fetch error:",
-        err
-      );
+        setAttendance(attendanceData);
+      } catch (err) {
+        console.error(
+          "Attendance fetch error:",
+          err
+        );
 
-      setAttendance([]);
-    } finally {
-      setAttendanceLoading(false);
-    }
-  }, []);
+        setAttendance([]);
+      } finally {
+        setAttendanceLoading(false);
+      }
+    },
+    []
+  );
+
+  // ==================================================
+  // FETCH EMPLOYEE LEAVES FROM BACKEND
+  //
+  // GET /api/leaves/employee/:mobileNumber
+  // ==================================================
+
+  const fetchLeaves = useCallback(
+    async (mobileNumber) => {
+      if (!mobileNumber) {
+        setScheduledLeaves([]);
+        return;
+      }
+
+      try {
+        setLeaveLoading(true);
+
+        const cleanMobileNumber =
+          String(mobileNumber).replace(
+            /\D/g,
+            ""
+          );
+
+        console.log(
+          "Fetching leaves for:",
+          cleanMobileNumber
+        );
+
+        const response =
+          await axios.get(
+            `${LEAVE_API}/employee/${cleanMobileNumber}`
+          );
+
+        console.log(
+          "Leave API response:",
+          response.data
+        );
+
+        const leaves =
+          response.data?.data || [];
+
+        /*
+          Backend stores:
+
+          startDate
+          endDate
+          leaveType
+          reason
+          _id
+          status
+
+          Frontend calendar works with:
+
+          date
+          leaveType: full / half
+          reason
+          id
+        */
+
+        const normalizedLeaves = [];
+
+        leaves.forEach((leave) => {
+          const startDate =
+            normalizeDateKey(
+              leave.startDate
+            );
+
+          const endDate =
+            normalizeDateKey(
+              leave.endDate
+            );
+
+          if (!startDate) {
+            return;
+          }
+
+          const finalEndDate =
+            endDate || startDate;
+
+          const dates =
+            getDatesBetween(
+              startDate,
+              finalEndDate
+            );
+
+          dates.forEach((date) => {
+            normalizedLeaves.push({
+              id:
+                leave._id ||
+                leave.id,
+
+              backendId:
+                leave._id ||
+                leave.id,
+
+              date,
+
+              leaveType:
+                normalizeLeaveType(
+                  leave.leaveType
+                ),
+
+              reason:
+                leave.reason ||
+                "Personal Leave",
+
+              status:
+                leave.status ||
+                "Scheduled",
+
+              startDate,
+
+              endDate:
+                finalEndDate,
+
+              employeeId:
+                leave.employeeId,
+
+              employeeName:
+                leave.employeeName,
+
+              mobileNumber:
+                leave.mobileNumber,
+
+              createdAt:
+                leave.createdAt,
+            });
+          });
+        });
+
+        setScheduledLeaves(
+          normalizedLeaves
+        );
+      } catch (err) {
+        console.error(
+          "Leave fetch error:",
+          err
+        );
+
+        setScheduledLeaves([]);
+
+        alert(
+          err.response?.data?.message ||
+            "Unable to fetch employee leaves."
+        );
+      } finally {
+        setLeaveLoading(false);
+      }
+    },
+    []
+  );
 
   // ==================================================
   // LOAD DATA
@@ -198,11 +395,31 @@ function Profile() {
   ]);
 
   // ==================================================
+  // LOAD LEAVES AFTER EMPLOYEE IS AVAILABLE
+  // ==================================================
+
+  useEffect(() => {
+    if (!employee?.mobileNumber) {
+      return;
+    }
+
+    fetchLeaves(
+      employee.mobileNumber
+    );
+  }, [
+    employee?.mobileNumber,
+    fetchLeaves,
+  ]);
+
+  // ==================================================
   // FORM CHANGE
   // ==================================================
 
   const handleChange = (event) => {
-    const { name, value } = event.target;
+    const {
+      name,
+      value,
+    } = event.target;
 
     setFormData((previous) => ({
       ...previous,
@@ -221,7 +438,8 @@ function Profile() {
       setSaving(true);
 
       const requestData = {
-        name: formData.fullName.trim(),
+        name:
+          formData.fullName.trim(),
 
         mobileNumber:
           formData.phone.trim(),
@@ -231,9 +449,6 @@ function Profile() {
 
         joiningDate:
           formData.joiningDate,
-
-        dateOfBirth:
-          formData.dateOfBirth,
       };
 
       console.log(
@@ -263,6 +478,14 @@ function Profile() {
       );
 
       await fetchEmployee();
+
+      /*
+        If phone number was changed,
+        refresh leaves using the new number.
+      */
+      await fetchLeaves(
+        requestData.mobileNumber
+      );
     } catch (err) {
       console.error(
         "Update employee error:",
@@ -292,12 +515,10 @@ function Profile() {
 
   const name =
     employee?.name ||
-    employee?.employeeName ||
     "Unknown Employee";
 
   const phone =
     employee?.mobileNumber ||
-    employee?.mobile ||
     "";
 
   const email =
@@ -313,29 +534,36 @@ function Profile() {
   // EMPLOYEE ATTENDANCE
   // ==================================================
 
-  const employeeAttendance = useMemo(() => {
-    if (!phone) {
-      return [];
-    }
-
-    const cleanPhone =
-      String(phone).replace(/\D/g, "");
-
-    return attendance.filter(
-      (record) => {
-        const recordPhone =
-          String(
-            record.mobileNumber ||
-              record.mobile ||
-              ""
-          ).replace(/\D/g, "");
-
-        return (
-          recordPhone === cleanPhone
-        );
+  const employeeAttendance =
+    useMemo(() => {
+      if (!phone) {
+        return [];
       }
-    );
-  }, [attendance, phone]);
+
+      const cleanPhone =
+        String(phone).replace(
+          /\D/g,
+          ""
+        );
+
+      return attendance.filter(
+        (record) => {
+          const recordPhone =
+            String(
+              record?.mobileNumber ||
+                ""
+            ).replace(/\D/g, "");
+
+          return (
+            recordPhone ===
+            cleanPhone
+          );
+        }
+      );
+    }, [
+      attendance,
+      phone,
+    ]);
 
   // ==================================================
   // MONTH ATTENDANCE
@@ -357,15 +585,18 @@ function Profile() {
   // PRESENT DAYS
   // ==================================================
 
-  const presentDateKeys = useMemo(() => {
-    return new Set(
-      selectedMonthAttendance
-        .map((record) =>
-          getRecordDateKey(record)
-        )
-        .filter(Boolean)
-    );
-  }, [selectedMonthAttendance]);
+  const presentDateKeys =
+    useMemo(() => {
+      return new Set(
+        selectedMonthAttendance
+          .map((record) =>
+            getRecordDateKey(record)
+          )
+          .filter(Boolean)
+      );
+    }, [
+      selectedMonthAttendance,
+    ]);
 
   const presentDays =
     presentDateKeys.size;
@@ -374,50 +605,60 @@ function Profile() {
   // WORKING DAYS
   // ==================================================
 
-  const workingDays = useMemo(() => {
-    return getWorkingDaysForMonth(
-      selectedMonth
-    );
-  }, [selectedMonth]);
+  const workingDays =
+    useMemo(() => {
+      return getWorkingDaysForMonth(
+        selectedMonth
+      );
+    }, [selectedMonth]);
+
+  // ==================================================
+  // LEAVE DAYS
+  // ==================================================
+
+  const selectedMonthLeaves =
+    useMemo(() => {
+      return scheduledLeaves.filter(
+        (leave) =>
+          leave.date?.startsWith(
+            selectedMonth
+          ) &&
+          leave.status !==
+            "Cancelled"
+      );
+    }, [
+      scheduledLeaves,
+      selectedMonth,
+    ]);
+
+  const leaveDays =
+    useMemo(() => {
+      return selectedMonthLeaves.reduce(
+        (total, leave) => {
+          return (
+            total +
+            (leave.leaveType === "half"
+              ? 0.5
+              : 1)
+          );
+        },
+        0
+      );
+    }, [
+      selectedMonthLeaves,
+    ]);
 
   // ==================================================
   // ABSENT
   // ==================================================
 
-  const absentDays = Math.max(
-    workingDays - presentDays,
-    0
-  );
-
-  // ==================================================
-  // LEAVE
-  // ==================================================
-
-  const leaveDays = 0;
-
-  // ==================================================
-  // TOTAL HOURS
-  // ==================================================
-
-  const totalMinutes = useMemo(() => {
-    return selectedMonthAttendance.reduce(
-      (total, record) => {
-        const value =
-          record.hours ||
-          record.workingHours;
-
-        if (!value) {
-          return total;
-        }
-
-        return (
-          total +
-          parseWorkingHours(value)
-        );
-      },
+  const absentDays =
+    Math.max(
+      workingDays -
+        presentDays -
+        leaveDays,
       0
     );
-  }, [selectedMonthAttendance]);
 
   // ==================================================
   // SORTED PRESENT RECORDS
@@ -432,7 +673,340 @@ function Profile() {
           getRecordTimestamp(b) -
           getRecordTimestamp(a)
       );
-    }, [selectedMonthAttendance]);
+    }, [
+      selectedMonthAttendance,
+    ]);
+
+  // ==================================================
+  // SCHEDULE LEAVE
+  //
+  // POST /api/leaves
+  // ==================================================
+
+  const handleScheduleLeave =
+    async () => {
+      if (!selectedLeaveDate) {
+        alert(
+          "Please select a leave date."
+        );
+        return;
+      }
+
+      if (!employeeMongoId) {
+        alert(
+          "Employee ID is missing."
+        );
+        return;
+      }
+
+      if (!phone) {
+        alert(
+          "Employee mobile number is missing."
+        );
+        return;
+      }
+
+      /*
+        Prevent duplicate date
+        in frontend.
+      */
+
+      const alreadyScheduled =
+        scheduledLeaves.some(
+          (leave) =>
+            leave.date ===
+              selectedLeaveDate &&
+            leave.status !==
+              "Cancelled"
+        );
+
+      if (alreadyScheduled) {
+        alert(
+          "Leave is already scheduled for this date."
+        );
+        return;
+      }
+
+      try {
+        setLeaveSaving(true);
+
+        /*
+          Backend expects:
+
+          {
+            employeeId,
+            leaveType,
+            startDate,
+            endDate,
+            reason
+          }
+
+          Your UI has:
+
+          full -> Full Day
+          half -> Half Day
+        */
+
+        const requestData = {
+          employeeId:
+            employeeMongoId,
+
+          leaveType:
+            leaveType === "half"
+              ? "Half Day"
+              : "Full Day",
+
+          startDate:
+            selectedLeaveDate,
+
+          endDate:
+            selectedLeaveDate,
+
+          reason:
+            leaveReason.trim() ||
+            "Personal Leave",
+        };
+
+        console.log(
+          "Creating leave:",
+          requestData
+        );
+
+        const response =
+          await axios.post(
+            LEAVE_API,
+            requestData
+          );
+
+        console.log(
+          "Leave POST response:",
+          response.data
+        );
+
+        if (
+          response.data?.success &&
+          response.data?.data
+        ) {
+          const savedLeave =
+            response.data.data;
+
+          /*
+            Add backend saved leave
+            immediately to UI.
+          */
+
+          setScheduledLeaves(
+            (previous) => [
+              ...previous,
+              {
+                id:
+                  savedLeave._id,
+
+                backendId:
+                  savedLeave._id,
+
+                date:
+                  normalizeDateKey(
+                    savedLeave.startDate
+                  ),
+
+                leaveType:
+                  normalizeLeaveType(
+                    savedLeave.leaveType
+                  ),
+
+                reason:
+                  savedLeave.reason ||
+                  "Personal Leave",
+
+                status:
+                  savedLeave.status ||
+                  "Scheduled",
+
+                startDate:
+                  normalizeDateKey(
+                    savedLeave.startDate
+                  ),
+
+                endDate:
+                  normalizeDateKey(
+                    savedLeave.endDate
+                  ),
+
+                employeeId:
+                  savedLeave.employeeId,
+
+                employeeName:
+                  savedLeave.employeeName,
+
+                mobileNumber:
+                  savedLeave.mobileNumber,
+
+                createdAt:
+                  savedLeave.createdAt,
+              },
+            ]
+          );
+        }
+
+        const selectedType =
+          leaveType;
+
+        const selectedDate =
+          selectedLeaveDate;
+
+        setSelectedLeaveDate("");
+        setLeaveReason("");
+        setLeaveType("full");
+
+        setShowScheduleLeave(
+          false
+        );
+
+        setShowLeaveCalendar(
+          true
+        );
+
+        alert(
+          `${
+            selectedType === "half"
+              ? "Half Day"
+              : "Full Day"
+          } leave scheduled for ${formatDate(
+            selectedDate
+          )}.`
+        );
+
+        /*
+          Refresh from backend so
+          UI and database are always
+          synchronized.
+        */
+
+        await fetchLeaves(phone);
+      } catch (err) {
+        console.error(
+          "Schedule leave error:",
+          err
+        );
+
+        alert(
+          err.response?.data?.message ||
+            "Unable to schedule leave."
+        );
+      } finally {
+        setLeaveSaving(false);
+      }
+    };
+
+  // ==================================================
+  // DELETE LEAVE
+  //
+  // DELETE /api/leaves/:id
+  // ==================================================
+
+  const handleDeleteLeave =
+    async (leaveId) => {
+      if (!leaveId) {
+        alert(
+          "Leave ID is missing."
+        );
+        return;
+      }
+
+      const confirmed =
+        window.confirm(
+          "Are you sure you want to remove this scheduled leave?"
+        );
+
+      if (!confirmed) {
+        return;
+      }
+
+      try {
+        setLeaveLoading(true);
+
+        console.log(
+          "Deleting leave:",
+          leaveId
+        );
+
+        const response =
+          await axios.delete(
+            `${LEAVE_API}/${leaveId}`
+          );
+
+        console.log(
+          "Delete leave response:",
+          response.data
+        );
+
+        /*
+          Remove deleted leave
+          from frontend immediately.
+        */
+
+        setScheduledLeaves(
+          (previous) =>
+            previous.filter(
+              (leave) =>
+                leave.backendId !==
+                  leaveId &&
+                leave.id !== leaveId
+            )
+        );
+
+        alert(
+          response.data?.message ||
+            "Leave deleted successfully."
+        );
+      } catch (err) {
+        console.error(
+          "Delete leave error:",
+          err
+        );
+
+        alert(
+          err.response?.data?.message ||
+            "Unable to delete leave."
+        );
+      } finally {
+        setLeaveLoading(false);
+      }
+    };
+
+  // ==================================================
+  // SELECT CALENDAR DATE
+  // ==================================================
+
+  const handleCalendarDateClick =
+    (dateKey) => {
+      const existingLeave =
+        scheduledLeaves.find(
+          (leave) =>
+            leave.date === dateKey &&
+            leave.status !==
+              "Cancelled"
+        );
+
+      if (existingLeave) {
+        return;
+      }
+
+      setSelectedLeaveDate(
+        dateKey
+      );
+
+      setLeaveType("full");
+
+      setShowLeaveCalendar(
+        false
+      );
+
+      setShowScheduleLeave(
+        true
+      );
+    };
 
   // ==================================================
   // LOADING
@@ -520,7 +1094,9 @@ function Profile() {
 
         <span>›</span>
 
-        <strong>{name}</strong>
+        <strong>
+          {name}
+        </strong>
 
       </div>
 
@@ -566,7 +1142,9 @@ function Profile() {
 
           </div>
 
-          <h2>{name}</h2>
+          <h2>
+            {name}
+          </h2>
 
           <div className="employee-id">
             ID: {employeeMongoId}
@@ -588,7 +1166,9 @@ function Profile() {
             <ProfileDetail
               icon={Phone}
               label="Phone"
-              value={phone || "N/A"}
+              value={
+                phone || "N/A"
+              }
             />
 
             <ProfileDetail
@@ -596,14 +1176,6 @@ function Profile() {
               label="Joining Date"
               value={formatDate(
                 employee.joiningDate
-              )}
-            />
-
-            <ProfileDetail
-              icon={CalendarDays}
-              label="Date of Birth"
-              value={formatDate(
-                employee.dateOfBirth
               )}
             />
 
@@ -619,6 +1191,7 @@ function Profile() {
         >
 
           <div className="form-heading">
+
             <div>
 
               <h2>
@@ -631,6 +1204,7 @@ function Profile() {
               </p>
 
             </div>
+
           </div>
 
           <div className="form-grid">
@@ -638,44 +1212,57 @@ function Profile() {
             <FormInput
               label="Full Name"
               name="fullName"
-              value={formData.fullName}
-              onChange={handleChange}
+              value={
+                formData.fullName
+              }
+              onChange={
+                handleChange
+              }
             />
 
             <FormInput
               label="Employee ID"
               name="employeeId"
-              value={formData.employeeId}
-              onChange={handleChange}
+              value={
+                formData.employeeId
+              }
+              onChange={
+                handleChange
+              }
               disabled
             />
 
             <FormInput
               label="Email"
               name="email"
-              value={formData.email}
-              onChange={handleChange}
+              value={
+                formData.email
+              }
+              onChange={
+                handleChange
+              }
             />
 
             <FormInput
               label="Phone"
               name="phone"
-              value={formData.phone}
-              onChange={handleChange}
+              value={
+                formData.phone
+              }
+              onChange={
+                handleChange
+              }
             />
 
             <FormDate
               label="Joining Date"
               name="joiningDate"
-              value={formData.joiningDate}
-              onChange={handleChange}
-            />
-
-            <FormDate
-              label="Date of Birth"
-              name="dateOfBirth"
-              value={formData.dateOfBirth}
-              onChange={handleChange}
+              value={
+                formData.joiningDate
+              }
+              onChange={
+                handleChange
+              }
             />
 
           </div>
@@ -708,20 +1295,226 @@ function Profile() {
 
       </div>
 
+      {/* ==================================================
+          LEAVE ACTIONS
+      ================================================== */}
+
+      <section className="leave-section">
+
+        <div className="leave-section-header">
+
+          <div>
+
+            <h2>
+              Leave Management
+            </h2>
+
+            <p>
+              Schedule employee leaves
+              and view all scheduled dates.
+            </p>
+
+          </div>
+
+          <div className="leave-actions">
+
+            {/* SCHEDULE LEAVE */}
+
+            <button
+              type="button"
+              className="schedule-leave-button"
+              onClick={() => {
+
+                setShowLeaveCalendar(
+                  false
+                );
+
+                setSelectedLeaveDate(
+                  ""
+                );
+
+                setLeaveReason(
+                  ""
+                );
+
+                setLeaveType(
+                  "full"
+                );
+
+                setShowScheduleLeave(
+                  true
+                );
+
+              }}
+              disabled={leaveSaving}
+            >
+              <CalendarPlus size={17} />
+
+              Schedule Leave
+            </button>
+
+            {/* CALENDAR */}
+
+            <div className="leave-calendar-wrapper">
+
+              <button
+                type="button"
+                className="leave-calendar-button"
+                onClick={() => {
+
+                  setShowScheduleLeave(
+                    false
+                  );
+
+                  setShowLeaveCalendar(
+                    (previous) =>
+                      !previous
+                  );
+
+                }}
+              >
+
+                <CalendarDays size={17} />
+
+                Leave Calendar
+
+                <span className="leave-count-badge">
+                  {
+                    scheduledLeaves.filter(
+                      (leave) =>
+                        leave.status !==
+                        "Cancelled"
+                    ).length
+                  }
+                </span>
+
+              </button>
+
+              {showLeaveCalendar && (
+
+                <LeaveCalendarPopup
+                  calendarMonth={
+                    leaveCalendarMonth
+                  }
+
+                  setCalendarMonth={
+                    setLeaveCalendarMonth
+                  }
+
+                  leaves={
+                    scheduledLeaves
+                  }
+
+                  onDateClick={
+                    handleCalendarDateClick
+                  }
+
+                  onDelete={
+                    handleDeleteLeave
+                  }
+
+                  onClose={() =>
+                    setShowLeaveCalendar(
+                      false
+                    )
+                  }
+
+                  loading={
+                    leaveLoading
+                  }
+                />
+
+              )}
+
+            </div>
+
+          </div>
+
+        </div>
+
+        {/* ================= SCHEDULE LEAVE POPUP ================= */}
+
+        {showScheduleLeave && (
+
+          <ScheduleLeavePopup
+            selectedDate={
+              selectedLeaveDate
+            }
+
+            setSelectedDate={
+              setSelectedLeaveDate
+            }
+
+            reason={
+              leaveReason
+            }
+
+            setReason={
+              setLeaveReason
+            }
+
+            leaveType={
+              leaveType
+            }
+
+            setLeaveType={
+              setLeaveType
+            }
+
+            onSchedule={
+              handleScheduleLeave
+            }
+
+            onClose={() =>
+              setShowScheduleLeave(
+                false
+              )
+            }
+
+            saving={
+              leaveSaving
+            }
+          />
+
+        )}
+
+      </section>
+
       {/* ================= ATTENDANCE SUMMARY ================= */}
 
       <AttendanceSummary
-        selectedMonth={selectedMonth}
+        selectedMonth={
+          selectedMonth
+        }
+
         setSelectedMonth={
           setSelectedMonth
         }
-        presentDays={presentDays}
-        absentDays={absentDays}
-        leaveDays={leaveDays}
-        totalMinutes={totalMinutes}
-        workingDays={workingDays}
+
+        presentDays={
+          presentDays
+        }
+
+        absentDays={
+          absentDays
+        }
+
+        leaveDays={
+          leaveDays
+        }
+
+        punchCount={
+          selectedMonthAttendance.length
+        }
+
+        workingDays={
+          workingDays
+        }
+
         onPresentClick={() =>
-          setShowPresentPopup(true)
+          setShowPresentPopup(
+            true
+          )
         }
       />
 
@@ -731,25 +1524,40 @@ function Profile() {
         attendance={
           selectedMonthAttendance
         }
-        selectedMonth={selectedMonth}
-        loading={attendanceLoading}
+
+        selectedMonth={
+          selectedMonth
+        }
+
+        loading={
+          attendanceLoading
+        }
       />
 
       {/* ================= PRESENT MODAL ================= */}
 
       {showPresentPopup && (
+
         <PresentPunchModal
           records={
             presentPopupRecords
           }
-          employeeName={name}
+
+          employeeName={
+            name
+          }
+
           selectedMonth={
             selectedMonth
           }
+
           onClose={() =>
-            setShowPresentPopup(false)
+            setShowPresentPopup(
+              false
+            )
           }
         />
+
       )}
 
     </div>
@@ -774,9 +1582,13 @@ function ProfileDetail({
 
       <div className="detail-text">
 
-        <span>{label}</span>
+        <span>
+          {label}
+        </span>
 
-        <strong>{value}</strong>
+        <strong>
+          {value}
+        </strong>
 
       </div>
 
@@ -851,6 +1663,772 @@ function FormDate({
 }
 
 // ==================================================
+// SCHEDULE LEAVE POPUP
+// ==================================================
+
+function ScheduleLeavePopup({
+  selectedDate,
+  setSelectedDate,
+  reason,
+  setReason,
+  leaveType,
+  setLeaveType,
+  onSchedule,
+  onClose,
+  saving,
+}) {
+  return (
+    <div
+      className="leave-popup-overlay"
+      onMouseDown={onClose}
+    >
+
+      <div
+        className="schedule-leave-popup"
+        onMouseDown={(event) =>
+          event.stopPropagation()
+        }
+      >
+
+        {/* HEADER */}
+
+        <div className="schedule-popup-header">
+
+          <div className="schedule-popup-header-content">
+
+            <div className="schedule-popup-icon">
+              <CalendarPlus size={20} />
+            </div>
+
+            <div>
+
+              <h3>
+                Schedule Leave
+              </h3>
+
+              <p>
+                Select a date and leave type.
+              </p>
+
+            </div>
+
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="popup-close-button"
+          >
+            <X size={18} />
+          </button>
+
+        </div>
+
+        {/* BODY */}
+
+        <div className="schedule-popup-body">
+
+          {/* DATE */}
+
+          <div className="leave-form-field">
+
+            <label>
+              Leave Date
+            </label>
+
+            <div className="leave-date-input">
+
+              <CalendarDays size={17} />
+
+              <input
+                type="date"
+                value={
+                  selectedDate
+                }
+                onChange={(event) =>
+                  setSelectedDate(
+                    event.target.value
+                  )
+                }
+              />
+
+            </div>
+
+          </div>
+
+          {/* LEAVE TYPE */}
+
+          <div className="leave-form-field">
+
+            <label>
+              Leave Type
+            </label>
+
+            <div className="leave-type-options">
+
+              {/* FULL DAY */}
+
+              <button
+                type="button"
+                className={`leave-type-option ${
+                  leaveType === "full"
+                    ? "active"
+                    : ""
+                }`}
+                onClick={() =>
+                  setLeaveType(
+                    "full"
+                  )
+                }
+              >
+
+                <div className="leave-type-radio">
+
+                  {leaveType ===
+                    "full" && (
+                    <span />
+                  )}
+
+                </div>
+
+                <div className="leave-type-content">
+
+                  <strong>
+                    Full Day
+                  </strong>
+
+                  <small>
+                    1 full leave day
+                  </small>
+
+                </div>
+
+              </button>
+
+              {/* HALF DAY */}
+
+              <button
+                type="button"
+                className={`leave-type-option ${
+                  leaveType === "half"
+                    ? "active"
+                    : ""
+                }`}
+                onClick={() =>
+                  setLeaveType(
+                    "half"
+                  )
+                }
+              >
+
+                <div className="leave-type-radio">
+
+                  {leaveType ===
+                    "half" && (
+                    <span />
+                  )}
+
+                </div>
+
+                <div className="leave-type-content">
+
+                  <strong>
+                    Half Day
+                  </strong>
+
+                  <small>
+                    0.5 leave day
+                  </small>
+
+                </div>
+
+              </button>
+
+            </div>
+
+          </div>
+
+          {/* REASON */}
+
+          <div className="leave-form-field">
+
+            <label>
+              Reason
+            </label>
+
+            <input
+              type="text"
+              placeholder="e.g. Personal Leave"
+              value={reason}
+              onChange={(event) =>
+                setReason(
+                  event.target.value
+                )
+              }
+            />
+
+          </div>
+
+        </div>
+
+        {/* FOOTER */}
+
+        <div className="schedule-popup-footer">
+
+          <button
+            type="button"
+            className="leave-cancel-button"
+            onClick={onClose}
+            disabled={saving}
+          >
+            Cancel
+          </button>
+
+          <button
+            type="button"
+            className="leave-confirm-button"
+            onClick={onSchedule}
+            disabled={saving}
+          >
+
+            <Plus size={17} />
+
+            {saving
+              ? "Saving..."
+              : `Schedule ${
+                  leaveType === "half"
+                    ? "Half Day"
+                    : "Leave"
+                }`}
+
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+  );
+}
+
+// ==================================================
+// LEAVE CALENDAR POPUP
+// ==================================================
+
+function LeaveCalendarPopup({
+  calendarMonth,
+  setCalendarMonth,
+  leaves,
+  onDateClick,
+  onDelete,
+  onClose,
+  loading,
+}) {
+  const [
+    selectedCalendarDate,
+    setSelectedCalendarDate,
+  ] = useState(null);
+
+  const calendarDays =
+    useMemo(() => {
+      return generateCalendarDays(
+        calendarMonth
+      );
+    }, [calendarMonth]);
+
+  const monthLeaves =
+    leaves.filter(
+      (leave) =>
+        leave.date?.startsWith(
+          calendarMonth
+        ) &&
+        leave.status !==
+          "Cancelled"
+    );
+
+  // ==================================================
+  // PREVIOUS MONTH
+  // ==================================================
+
+  const goPreviousMonth = () => {
+    const [
+      year,
+      month,
+    ] = calendarMonth
+      .split("-")
+      .map(Number);
+
+    const date = new Date(
+      year,
+      month - 2,
+      1
+    );
+
+    setCalendarMonth(
+      `${date.getFullYear()}-${String(
+        date.getMonth() + 1
+      ).padStart(2, "0")}`
+    );
+
+    setSelectedCalendarDate(null);
+  };
+
+  // ==================================================
+  // NEXT MONTH
+  // ==================================================
+
+  const goNextMonth = () => {
+    const [
+      year,
+      month,
+    ] = calendarMonth
+      .split("-")
+      .map(Number);
+
+    const date = new Date(
+      year,
+      month,
+      1
+    );
+
+    setCalendarMonth(
+      `${date.getFullYear()}-${String(
+        date.getMonth() + 1
+      ).padStart(2, "0")}`
+    );
+
+    setSelectedCalendarDate(null);
+  };
+
+  // ==================================================
+  // SELECTED LEAVE
+  // ==================================================
+
+  const selectedLeave =
+    leaves.find(
+      (leave) =>
+        leave.date ===
+          selectedCalendarDate &&
+        leave.status !==
+          "Cancelled"
+    );
+
+  return (
+    <div className="leave-calendar-popup">
+
+      {/* HEADER */}
+
+      <div className="leave-calendar-header">
+
+        <div>
+
+          <h3>
+            Leave Calendar
+          </h3>
+
+          <span>
+            {formatMonthName(
+              calendarMonth
+            )}
+          </span>
+
+        </div>
+
+        <button
+          type="button"
+          className="leave-popup-x"
+          onClick={onClose}
+        >
+          <X size={17} />
+        </button>
+
+      </div>
+
+      {/* MONTH NAVIGATION */}
+
+      <div className="calendar-navigation">
+
+        <button
+          type="button"
+          onClick={
+            goPreviousMonth
+          }
+        >
+          <ChevronLeft size={17} />
+        </button>
+
+        <strong>
+          {formatMonthName(
+            calendarMonth
+          )}
+        </strong>
+
+        <button
+          type="button"
+          onClick={
+            goNextMonth
+          }
+        >
+          <ChevronRight size={17} />
+        </button>
+
+      </div>
+
+      {/* LOADING */}
+
+      {loading && (
+        <div className="calendar-loading">
+          Loading leaves...
+        </div>
+      )}
+
+      {/* WEEK DAYS */}
+
+      <div className="calendar-weekdays">
+
+        {[
+          "Sun",
+          "Mon",
+          "Tue",
+          "Wed",
+          "Thu",
+          "Fri",
+          "Sat",
+        ].map((day) => (
+
+          <span key={day}>
+            {day}
+          </span>
+
+        ))}
+
+      </div>
+
+      {/* CALENDAR */}
+
+      <div className="calendar-grid">
+
+        {calendarDays.map(
+          (day, index) => {
+
+            if (!day) {
+              return (
+                <div
+                  key={`empty-${index}`}
+                  className="calendar-empty"
+                />
+              );
+            }
+
+            const leave =
+              leaves.find(
+                (item) =>
+                  item.date ===
+                    day.date &&
+                  item.status !==
+                    "Cancelled"
+              );
+
+            const isToday =
+              day.date ===
+              getTodayDateKey();
+
+            const isSelected =
+              selectedCalendarDate ===
+              day.date;
+
+            return (
+              <button
+                type="button"
+                key={day.date}
+                className={[
+                  "calendar-day",
+
+                  isToday
+                    ? "calendar-day--today"
+                    : "",
+
+                  leave
+                    ? "calendar-day--leave"
+                    : "",
+
+                  leave?.leaveType ===
+                    "half"
+                    ? "calendar-day--half-leave"
+                    : "",
+
+                  isSelected
+                    ? "calendar-day--selected"
+                    : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+
+                onClick={() => {
+
+                  if (leave) {
+
+                    setSelectedCalendarDate(
+                      day.date
+                    );
+
+                  } else {
+
+                    onDateClick(
+                      day.date
+                    );
+
+                  }
+
+                }}
+              >
+
+                <span>
+                  {day.day}
+                </span>
+
+                {leave && (
+                  <i />
+                )}
+
+                {leave && (
+                  <small>
+                    {leave.leaveType ===
+                    "half"
+                      ? "½"
+                      : "F"}
+                  </small>
+                )}
+
+              </button>
+            );
+          }
+        )}
+
+      </div>
+
+      {/* LEGEND */}
+
+      <div className="calendar-legend">
+
+        <div>
+          <span className="legend-dot" />
+          Scheduled Leave
+        </div>
+
+        <div>
+          <span className="legend-half">
+            ½
+          </span>
+          Half Day
+        </div>
+
+        <div>
+          <span className="legend-today" />
+          Today
+        </div>
+
+      </div>
+
+      {/* SELECTED LEAVE */}
+
+      {selectedLeave && (
+
+        <div className="selected-leave-info">
+
+          <div className="selected-leave-info-top">
+
+            <div>
+
+              <span>
+                Scheduled Leave
+              </span>
+
+              <strong>
+                {formatDate(
+                  selectedLeave.date
+                )}
+              </strong>
+
+            </div>
+
+            <button
+              type="button"
+              onClick={() =>
+                onDelete(
+                  selectedLeave.backendId ||
+                    selectedLeave.id
+                )
+              }
+              title="Delete leave"
+              disabled={loading}
+            >
+              <Trash2 size={16} />
+            </button>
+
+          </div>
+
+          <div className="selected-leave-type">
+
+            <span
+              className={
+                selectedLeave.leaveType ===
+                "half"
+                  ? "half"
+                  : "full"
+              }
+            >
+              {selectedLeave.leaveType ===
+              "half"
+                ? "Half Day"
+                : "Full Day"}
+            </span>
+
+          </div>
+
+          <p>
+            {selectedLeave.reason ||
+              "Personal Leave"}
+          </p>
+
+        </div>
+
+      )}
+
+      {/* LEAVE LIST */}
+
+      <div className="calendar-leave-list">
+
+        <div className="calendar-leave-list-header">
+
+          <strong>
+            Scheduled Leaves
+          </strong>
+
+          <span>
+            {monthLeaves.length}
+          </span>
+
+        </div>
+
+        {monthLeaves.length ===
+        0 ? (
+
+          <div className="calendar-no-leaves">
+
+            <CalendarDays size={22} />
+
+            <p>
+              No leaves scheduled
+              for this month.
+            </p>
+
+          </div>
+
+        ) : (
+
+          [...monthLeaves]
+            .sort(
+              (a, b) =>
+                a.date.localeCompare(
+                  b.date
+                )
+            )
+            .map((leave) => (
+
+              <div
+                className="calendar-leave-item"
+                key={`${leave.id}-${leave.date}`}
+
+                onClick={() =>
+                  setSelectedCalendarDate(
+                    leave.date
+                  )
+                }
+              >
+
+                <div className="calendar-leave-date">
+
+                  <strong>
+                    {new Date(
+                      `${leave.date}T00:00:00`
+                    ).getDate()}
+                  </strong>
+
+                  <span>
+                    {new Date(
+                      `${leave.date}T00:00:00`
+                    ).toLocaleDateString(
+                      "en-IN",
+                      {
+                        month:
+                          "short",
+                      }
+                    )}
+                  </span>
+
+                </div>
+
+                <div className="calendar-leave-details">
+
+                  <strong>
+                    {leave.reason ||
+                      "Personal Leave"}
+                  </strong>
+
+                  <span>
+                    {formatDate(
+                      leave.date
+                    )}
+                  </span>
+
+                  <small
+                    className={
+                      leave.leaveType ===
+                      "half"
+                        ? "half"
+                        : "full"
+                    }
+                  >
+                    {leave.leaveType ===
+                    "half"
+                      ? "Half Day"
+                      : "Full Day"}
+                  </small>
+
+                </div>
+
+                <button
+                  type="button"
+                  onClick={(event) => {
+
+                    event.stopPropagation();
+
+                    onDelete(
+                      leave.backendId ||
+                        leave.id
+                    );
+
+                  }}
+                  title="Delete leave"
+                  disabled={loading}
+                >
+                  <Trash2 size={15} />
+                </button>
+
+              </div>
+
+            ))
+
+        )}
+
+      </div>
+
+    </div>
+  );
+}
+
+// ==================================================
 // ATTENDANCE SUMMARY
 // ==================================================
 
@@ -860,7 +2438,7 @@ function AttendanceSummary({
   presentDays,
   absentDays,
   leaveDays,
-  totalMinutes,
+  punchCount,
   workingDays,
   onPresentClick,
 }) {
@@ -872,6 +2450,7 @@ function AttendanceSummary({
       icon: UserCheck,
       clickable: true,
     },
+
     {
       title: "Absent Days",
       value: absentDays,
@@ -879,6 +2458,7 @@ function AttendanceSummary({
       icon: UserX,
       clickable: false,
     },
+
     {
       title: "Leave Days",
       value: leaveDays,
@@ -886,11 +2466,10 @@ function AttendanceSummary({
       icon: Clock3,
       clickable: false,
     },
+
     {
-      title: "Total Working Hours",
-      value: formatMinutes(
-        totalMinutes
-      ),
+      title: "Attendance Punches",
+      value: punchCount,
       type: "hours",
       icon: Clock3,
       clickable: false,
@@ -909,6 +2488,7 @@ function AttendanceSummary({
           </h2>
 
           <p>
+
             {formatMonthName(
               selectedMonth
             )}
@@ -920,6 +2500,7 @@ function AttendanceSummary({
             <strong>
               {workingDays}
             </strong>
+
           </p>
 
         </div>
@@ -930,7 +2511,9 @@ function AttendanceSummary({
 
           <input
             type="month"
-            value={selectedMonth}
+            value={
+              selectedMonth
+            }
             onChange={(event) =>
               setSelectedMonth(
                 event.target.value
@@ -945,9 +2528,12 @@ function AttendanceSummary({
       <div className="summary-items">
 
         {summary.map((item) => {
-          const Icon = item.icon;
+
+          const Icon =
+            item.icon;
 
           return (
+
             <button
               type="button"
               key={item.title}
@@ -969,7 +2555,9 @@ function AttendanceSummary({
 
               <div className="summary-content">
 
-                <p>{item.title}</p>
+                <p>
+                  {item.title}
+                </p>
 
                 <strong>
                   {item.value}
@@ -984,6 +2572,7 @@ function AttendanceSummary({
               </div>
 
             </button>
+
           );
         })}
 
@@ -1031,6 +2620,7 @@ function AttendanceRecords({
       </div>
 
       {loading ? (
+
         <div className="no-attendance">
 
           <Clock3 size={28} />
@@ -1040,7 +2630,10 @@ function AttendanceRecords({
           </p>
 
         </div>
-      ) : attendance.length === 0 ? (
+
+      ) : attendance.length ===
+        0 ? (
+
         <div className="no-attendance">
 
           <Clock3 size={28} />
@@ -1055,7 +2648,9 @@ function AttendanceRecords({
           </p>
 
         </div>
+
       ) : (
+
         <div className="attendance-table">
 
           <div className="attendance-table-header">
@@ -1073,16 +2668,21 @@ function AttendanceRecords({
             (record, index) => {
 
               const recordDate =
-                getRecordDate(record);
+                getRecordDate(
+                  record
+                );
 
               const time =
-                getRecordTime(record);
+                getRecordTime(
+                  record
+                );
 
               return (
+
                 <div
                   className="attendance-table-row"
                   key={
-                    record._id ||
+                    record?._id ||
                     index
                   }
                 >
@@ -1107,11 +2707,10 @@ function AttendanceRecords({
                       undefined &&
                     record.longitude !==
                       undefined ? (
+
                       <span className="location-text">
 
-                        <MapPinned
-                          size={14}
-                        />
+                        <MapPinned size={14} />
 
                         {Number(
                           record.latitude
@@ -1124,6 +2723,7 @@ function AttendanceRecords({
                         ).toFixed(4)}
 
                       </span>
+
                     ) : (
                       "—"
                     )}
@@ -1222,7 +2822,9 @@ function PresentPunchModal({
 
         <div className="present-modal-body">
 
-          {records.length === 0 ? (
+          {records.length ===
+          0 ? (
+
             <div className="modal-empty">
 
               <Clock3 size={30} />
@@ -1233,7 +2835,9 @@ function PresentPunchModal({
               </p>
 
             </div>
+
           ) : (
+
             <div className="punch-list">
 
               {records.map(
@@ -1250,10 +2854,11 @@ function PresentPunchModal({
                     );
 
                   return (
+
                     <div
                       className="punch-item"
                       key={
-                        record._id ||
+                        record?._id ||
                         index
                       }
                     >
@@ -1280,9 +2885,7 @@ function PresentPunchModal({
 
                       <div className="punch-time">
 
-                        <Clock3
-                          size={17}
-                        />
+                        <Clock3 size={17} />
 
                         <strong>
                           {time}
@@ -1292,9 +2895,7 @@ function PresentPunchModal({
 
                       <div className="punch-location">
 
-                        <MapPinned
-                          size={16}
-                        />
+                        <MapPinned size={16} />
 
                         <span>
 
@@ -1323,6 +2924,7 @@ function PresentPunchModal({
               )}
 
             </div>
+
           )}
 
         </div>
@@ -1346,7 +2948,7 @@ function PresentPunchModal({
 }
 
 // ==================================================
-// HELPERS
+// GET INITIALS
 // ==================================================
 
 function getInitials(name) {
@@ -1378,18 +2980,192 @@ function getCurrentMonthValue() {
 }
 
 // ==================================================
+// TODAY DATE KEY
+// ==================================================
+
+function getTodayDateKey() {
+  const date = new Date();
+
+  return `${date.getFullYear()}-${String(
+    date.getMonth() + 1
+  ).padStart(2, "0")}-${String(
+    date.getDate()
+  ).padStart(2, "0")}`;
+}
+
+// ==================================================
+// NORMALIZE DATE KEY
+// ==================================================
+
+function normalizeDateKey(date) {
+  if (!date) {
+    return "";
+  }
+
+  const dateString =
+    String(date).trim();
+
+  // YYYY-MM-DD
+  if (
+    /^\d{4}-\d{2}-\d{2}$/.test(
+      dateString
+    )
+  ) {
+    return dateString;
+  }
+
+  // DD/MM/YYYY
+  if (
+    /^\d{2}\/\d{2}\/\d{4}$/.test(
+      dateString
+    )
+  ) {
+    const [
+      day,
+      month,
+      year,
+    ] = dateString
+      .split("/")
+      .map(Number);
+
+    return `${year}-${String(
+      month
+    ).padStart(
+      2,
+      "0"
+    )}-${String(
+      day
+    ).padStart(
+      2,
+      "0"
+    )}`;
+  }
+
+  const parsed =
+    new Date(date);
+
+  if (
+    Number.isNaN(
+      parsed.getTime()
+    )
+  ) {
+    return "";
+  }
+
+  return `${parsed.getFullYear()}-${String(
+    parsed.getMonth() + 1
+  ).padStart(
+    2,
+    "0"
+  )}-${String(
+    parsed.getDate()
+  ).padStart(
+    2,
+    "0"
+  )}`;
+}
+
+// ==================================================
+// NORMALIZE LEAVE TYPE
+// ==================================================
+
+function normalizeLeaveType(
+  leaveType
+) {
+  if (!leaveType) {
+    return "full";
+  }
+
+  const value =
+    String(
+      leaveType
+    ).toLowerCase();
+
+  if (
+    value.includes("half")
+  ) {
+    return "half";
+  }
+
+  return "full";
+}
+
+// ==================================================
+// GET DATES BETWEEN START AND END
+// ==================================================
+
+function getDatesBetween(
+  startDate,
+  endDate
+) {
+  const dates = [];
+
+  const startParts =
+    startDate
+      .split("-")
+      .map(Number);
+
+  const endParts =
+    endDate
+      .split("-")
+      .map(Number);
+
+  const current =
+    new Date(
+      startParts[0],
+      startParts[1] - 1,
+      startParts[2]
+    );
+
+  const end =
+    new Date(
+      endParts[0],
+      endParts[1] - 1,
+      endParts[2]
+    );
+
+  while (
+    current <= end
+  ) {
+    dates.push(
+      `${current.getFullYear()}-${String(
+        current.getMonth() + 1
+      ).padStart(
+        2,
+        "0"
+      )}-${String(
+        current.getDate()
+      ).padStart(
+        2,
+        "0"
+      )}`
+    );
+
+    current.setDate(
+      current.getDate() + 1
+    );
+  }
+
+  return dates;
+}
+
+// ==================================================
 // FORMAT MONTH
 // ==================================================
 
-function formatMonthName(monthValue) {
+function formatMonthName(
+  monthValue
+) {
   if (!monthValue) {
     return "";
   }
 
-  const [year, month] =
-    monthValue
-      .split("-")
-      .map(Number);
+  const [
+    year,
+    month,
+  ] = monthValue
+    .split("-")
+    .map(Number);
 
   const date = new Date(
     year,
@@ -1407,15 +3183,85 @@ function formatMonthName(monthValue) {
 }
 
 // ==================================================
+// GENERATE CALENDAR DAYS
+// ==================================================
+
+function generateCalendarDays(
+  monthValue
+) {
+  if (!monthValue) {
+    return [];
+  }
+
+  const [
+    year,
+    month,
+  ] = monthValue
+    .split("-")
+    .map(Number);
+
+  const firstDay =
+    new Date(
+      year,
+      month - 1,
+      1
+    ).getDay();
+
+  const totalDays =
+    new Date(
+      year,
+      month,
+      0
+    ).getDate();
+
+  const days = [];
+
+  for (
+    let i = 0;
+    i < firstDay;
+    i++
+  ) {
+    days.push(null);
+  }
+
+  for (
+    let day = 1;
+    day <= totalDays;
+    day++
+  ) {
+    days.push({
+      day,
+
+      date: `${year}-${String(
+        month
+      ).padStart(
+        2,
+        "0"
+      )}-${String(
+        day
+      ).padStart(
+        2,
+        "0"
+      )}`,
+    });
+  }
+
+  return days;
+}
+
+// ==================================================
 // RECORD DATE
 // ==================================================
 
 function getRecordDate(record) {
   if (record?.date) {
     const dateString =
-      String(record.date).trim();
+      String(
+        record.date
+      ).trim();
 
     // YYYY-MM-DD
+
     if (
       /^\d{4}-\d{2}-\d{2}$/.test(
         dateString
@@ -1437,6 +3283,7 @@ function getRecordDate(record) {
     }
 
     // DD/MM/YYYY
+
     if (
       /^\d{2}\/\d{2}\/\d{4}$/.test(
         dateString
@@ -1458,10 +3305,13 @@ function getRecordDate(record) {
     }
   }
 
+  // FALLBACK TO TIMESTAMP
+
   if (record?.timestamp) {
-    const date = new Date(
-      record.timestamp
-    );
+    const date =
+      new Date(
+        record.timestamp
+      );
 
     if (
       !Number.isNaN(
@@ -1479,7 +3329,9 @@ function getRecordDate(record) {
 // RECORD TIMESTAMP
 // ==================================================
 
-function getRecordTimestamp(record) {
+function getRecordTimestamp(
+  record
+) {
   if (record?.timestamp) {
     const timestamp =
       new Date(
@@ -1487,7 +3339,9 @@ function getRecordTimestamp(record) {
       ).getTime();
 
     if (
-      !Number.isNaN(timestamp)
+      !Number.isNaN(
+        timestamp
+      )
     ) {
       return timestamp;
     }
@@ -1505,7 +3359,9 @@ function getRecordTimestamp(record) {
 // RECORD DATE KEY
 // ==================================================
 
-function getRecordDateKey(record) {
+function getRecordDateKey(
+  record
+) {
   const date =
     getRecordDate(record);
 
@@ -1515,12 +3371,20 @@ function getRecordDateKey(record) {
 
   return [
     date.getFullYear(),
+
     String(
       date.getMonth() + 1
-    ).padStart(2, "0"),
+    ).padStart(
+      2,
+      "0"
+    ),
+
     String(
       date.getDate()
-    ).padStart(2, "0"),
+    ).padStart(
+      2,
+      "0"
+    ),
   ].join("-");
 }
 
@@ -1528,7 +3392,9 @@ function getRecordDateKey(record) {
 // RECORD MONTH
 // ==================================================
 
-function getRecordMonth(record) {
+function getRecordMonth(
+  record
+) {
   const date =
     getRecordDate(record);
 
@@ -1538,7 +3404,10 @@ function getRecordMonth(record) {
 
   return `${date.getFullYear()}-${String(
     date.getMonth() + 1
-  ).padStart(2, "0")}`;
+  ).padStart(
+    2,
+    "0"
+  )}`;
 }
 
 // ==================================================
@@ -1600,6 +3469,72 @@ function formatDate(date) {
     return "—";
   }
 
+  // YYYY-MM-DD
+
+  if (
+    typeof date === "string" &&
+    /^\d{4}-\d{2}-\d{2}$/.test(
+      date
+    )
+  ) {
+    const [
+      year,
+      month,
+      day,
+    ] = date
+      .split("-")
+      .map(Number);
+
+    const parsed =
+      new Date(
+        year,
+        month - 1,
+        day
+      );
+
+    return parsed.toLocaleDateString(
+      "en-IN",
+      {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }
+    );
+  }
+
+  // DD/MM/YYYY
+
+  if (
+    typeof date === "string" &&
+    /^\d{2}\/\d{2}\/\d{4}$/.test(
+      date
+    )
+  ) {
+    const [
+      day,
+      month,
+      year,
+    ] = date
+      .split("/")
+      .map(Number);
+
+    const parsed =
+      new Date(
+        year,
+        month - 1,
+        day
+      );
+
+    return parsed.toLocaleDateString(
+      "en-IN",
+      {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }
+    );
+  }
+
   const parsedDate =
     date instanceof Date
       ? date
@@ -1627,7 +3562,9 @@ function formatDate(date) {
 // DATE INPUT
 // ==================================================
 
-function formatDateForInput(date) {
+function formatDateForInput(
+  date
+) {
   if (!date) {
     return "";
   }
@@ -1635,7 +3572,8 @@ function formatDateForInput(date) {
   const dateString =
     String(date).trim();
 
-  // Already YYYY-MM-DD
+  // YYYY-MM-DD
+
   if (
     /^\d{4}-\d{2}-\d{2}$/.test(
       dateString
@@ -1645,6 +3583,7 @@ function formatDateForInput(date) {
   }
 
   // DD/MM/YYYY
+
   if (
     /^\d{2}\/\d{2}\/\d{4}$/.test(
       dateString
@@ -1684,12 +3623,20 @@ function formatDateForInput(date) {
 
   return [
     parsedDate.getFullYear(),
+
     String(
       parsedDate.getMonth() + 1
-    ).padStart(2, "0"),
+    ).padStart(
+      2,
+      "0"
+    ),
+
     String(
       parsedDate.getDate()
-    ).padStart(2, "0"),
+    ).padStart(
+      2,
+      "0"
+    ),
   ].join("-");
 }
 
@@ -1722,6 +3669,7 @@ function getWorkingDaysForMonth(
   let lastDay;
 
   // Future month
+
   if (
     year > currentYear ||
     (
@@ -1734,10 +3682,10 @@ function getWorkingDaysForMonth(
   }
 
   // Current month
+
   if (
     year === currentYear &&
-    month - 1 ===
-      currentMonth
+    month - 1 === currentMonth
   ) {
     lastDay =
       now.getDate();
@@ -1779,83 +3727,7 @@ function getWorkingDaysForMonth(
 }
 
 // ==================================================
-// WORKING HOURS
-// ==================================================
-
-function parseWorkingHours(value) {
-  if (typeof value === "number") {
-    return value * 60;
-  }
-
-  if (
-    typeof value !== "string"
-  ) {
-    return 0;
-  }
-
-  const cleanValue =
-    value
-      .trim()
-      .toLowerCase();
-
-  // Example: 8h 30m
-  const match =
-    cleanValue.match(
-      /(\d+(?:\.\d+)?)\s*h(?:ours?)?\s*(?:(\d+)\s*m(?:in(?:ute)?s?)?)?/
-    );
-
-  if (match) {
-    const hours =
-      Number(match[1]) || 0;
-
-    const minutes =
-      Number(match[2]) || 0;
-
-    return (
-      hours * 60 +
-      minutes
-    );
-  }
-
-  // Example: 8.5
-  const decimalHours =
-    Number(cleanValue);
-
-  if (
-    !Number.isNaN(
-      decimalHours
-    )
-  ) {
-    return (
-      decimalHours * 60
-    );
-  }
-
-  return 0;
-}
-
-// ==================================================
-// FORMAT MINUTES
-// ==================================================
-
-function formatMinutes(minutes) {
-  if (!minutes) {
-    return "0h 0m";
-  }
-
-  const hours =
-    Math.floor(
-      minutes / 60
-    );
-
-  const remainingMinutes =
-    Math.round(
-      minutes % 60
-    );
-
-  return `${hours}h ${remainingMinutes}m`;
-}
-
+// EXPORT
 // ==================================================
 
 export default Profile;
