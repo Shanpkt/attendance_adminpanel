@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
-
 import {
   ArrowLeft,
   CalendarDays,
@@ -35,56 +34,20 @@ function Profile() {
   const { employeeId } = useParams();
   const navigate = useNavigate();
 
-  // ==================================================
-  // EMPLOYEE
-  // ==================================================
-
   const [employee, setEmployee] = useState(null);
-
-  // ==================================================
-  // ATTENDANCE
-  // ==================================================
-
   const [attendance, setAttendance] = useState([]);
 
-  // ==================================================
-  // LOADING
-  // ==================================================
-
   const [loading, setLoading] = useState(true);
-
-  const [attendanceLoading, setAttendanceLoading] =
-    useState(true);
-
-  // ==================================================
-  // ERROR
-  // ==================================================
+  const [attendanceLoading, setAttendanceLoading] = useState(true);
 
   const [error, setError] = useState("");
-
-  // ==================================================
-  // SAVING
-  // ==================================================
-
   const [saving, setSaving] = useState(false);
 
-  // ==================================================
-  // PRESENT POPUP
-  // ==================================================
+  const [showPresentPopup, setShowPresentPopup] = useState(false);
 
-  const [showPresentPopup, setShowPresentPopup] =
-    useState(false);
-
-  // ==================================================
-  // SELECTED MONTH
-  // ==================================================
-
-  const [selectedMonth, setSelectedMonth] =
-    useState(getCurrentMonthValue());
-
-  // ==================================================
-  // FORM
-  // ==================================================
+  const [selectedMonth, setSelectedMonth] = useState(
+    getCurrentMonthValue()
+  );
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -110,8 +73,7 @@ function Profile() {
 
       const selectedEmployee = employees.find(
         (item) =>
-          String(item._id || item.id) ===
-          String(employeeId)
+          String(item._id || item.id) === String(employeeId)
       );
 
       if (!selectedEmployee) {
@@ -120,20 +82,10 @@ function Profile() {
         return;
       }
 
-      console.log(
-        "Selected employee:",
-        selectedEmployee
-      );
-
       setEmployee(selectedEmployee);
 
-      // ==================================================
-      // SET FORM
-      // ==================================================
-
       setFormData({
-        fullName:
-          selectedEmployee.name || "",
+        fullName: selectedEmployee.name || "",
 
         employeeId:
           selectedEmployee.employeeId ||
@@ -141,33 +93,24 @@ function Profile() {
           selectedEmployee.id ||
           "",
 
-        email:
-          selectedEmployee.email || "",
+        email: selectedEmployee.email || "",
 
         phone:
           selectedEmployee.mobileNumber ||
           selectedEmployee.mobile ||
           "",
 
-        joiningDate:
-          formatDateForInput(
-            selectedEmployee.joiningDate
-          ),
+        joiningDate: formatDateForInput(
+          selectedEmployee.joiningDate
+        ),
 
-        dateOfBirth:
-          formatDateForInput(
-            selectedEmployee.dateOfBirth
-          ),
+        dateOfBirth: formatDateForInput(
+          selectedEmployee.dateOfBirth
+        ),
       });
     } catch (err) {
-      console.error(
-        "Employee fetch error:",
-        err
-      );
-
-      setError(
-        "Unable to fetch employee information."
-      );
+      console.error("Employee fetch error:", err);
+      setError("Unable to fetch employee information.");
     } finally {
       setLoading(false);
     }
@@ -181,31 +124,21 @@ function Profile() {
     try {
       setAttendanceLoading(true);
 
-      const response = await axios.get(
-        ATTENDANCE_API
-      );
+      const response = await axios.get(ATTENDANCE_API);
 
-      const attendanceData =
-        response.data?.data || [];
-
-      console.log(
-        "All attendance:",
-        attendanceData
-      );
+      const attendanceData = response.data?.data || [];
 
       setAttendance(attendanceData);
     } catch (err) {
-      console.error(
-        "Attendance fetch error:",
-        err
-      );
+      console.error("Attendance fetch error:", err);
+      setAttendance([]);
     } finally {
       setAttendanceLoading(false);
     }
   };
 
   // ==================================================
-  // LOAD DATA
+  // LOAD
   // ==================================================
 
   useEffect(() => {
@@ -224,10 +157,7 @@ function Profile() {
   // ==================================================
 
   const handleChange = (event) => {
-    const {
-      name,
-      value,
-    } = event.target;
+    const { name, value } = event.target;
 
     setFormData((previous) => ({
       ...previous,
@@ -236,7 +166,7 @@ function Profile() {
   };
 
   // ==================================================
-  // SAVE EMPLOYEE
+  // SAVE
   // ==================================================
 
   const handleSubmit = async (event) => {
@@ -245,22 +175,12 @@ function Profile() {
     try {
       setSaving(true);
 
-      // Only send fields that still exist
       const requestData = {
-        name:
-          formData.fullName.trim(),
-
-        mobileNumber:
-          formData.phone.trim(),
-
-        email:
-          formData.email.trim(),
-
-        joiningDate:
-          formData.joiningDate,
-
-        dateOfBirth:
-          formData.dateOfBirth,
+        name: formData.fullName.trim(),
+        mobileNumber: formData.phone.trim(),
+        email: formData.email.trim(),
+        joiningDate: formData.joiningDate,
+        dateOfBirth: formData.dateOfBirth,
       };
 
       const response = await axios.put(
@@ -268,26 +188,13 @@ function Profile() {
         requestData
       );
 
-      console.log(
-        "Employee updated:",
-        response.data
-      );
+      setEmployee(response.data?.data || employee);
 
-      setEmployee(
-        response.data?.data ||
-          employee
-      );
-
-      alert(
-        "Employee information updated successfully."
-      );
+      alert("Employee information updated successfully.");
 
       await fetchEmployee();
     } catch (err) {
-      console.error(
-        "Update employee error:",
-        err
-      );
+      console.error("Update employee error:", err);
 
       alert(
         err.response?.data?.message ||
@@ -320,9 +227,7 @@ function Profile() {
     employee?.mobile ||
     "";
 
-  const email =
-    employee?.email ||
-    "N/A";
+  const email = employee?.email || "N/A";
 
   const employeeMongoId =
     employee?._id ||
@@ -334,73 +239,53 @@ function Profile() {
   // ==================================================
 
   const employeeAttendance = useMemo(() => {
-    if (!phone) {
-      return [];
-    }
+    if (!phone) return [];
 
-    return attendance.filter(
-      (record) =>
-        String(
-          record.mobileNumber
-        ).replace(/\D/g, "") ===
-        String(phone).replace(
-          /\D/g,
-          ""
-        )
-    );
+    const cleanPhone = String(phone).replace(/\D/g, "");
+
+    return attendance.filter((record) => {
+      const recordPhone = String(
+        record.mobileNumber || record.mobile || ""
+      ).replace(/\D/g, "");
+
+      return recordPhone === cleanPhone;
+    });
   }, [attendance, phone]);
 
   // ==================================================
-  // SELECTED MONTH ATTENDANCE
+  // MONTH ATTENDANCE
   // ==================================================
 
-  const selectedMonthAttendance =
-    useMemo(() => {
-      return employeeAttendance.filter(
-        (record) =>
-          getRecordMonth(record) ===
-          selectedMonth
-      );
-    }, [
-      employeeAttendance,
-      selectedMonth,
-    ]);
-
-  // ==================================================
-  // UNIQUE PRESENT DATES
-  // ==================================================
-
-  const presentDateKeys = useMemo(() => {
-    return new Set(
-      selectedMonthAttendance
-        .map((record) =>
-          getRecordDateKey(record)
-        )
-        .filter(Boolean)
+  const selectedMonthAttendance = useMemo(() => {
+    return employeeAttendance.filter(
+      (record) => getRecordMonth(record) === selectedMonth
     );
-  }, [
-    selectedMonthAttendance,
-  ]);
+  }, [employeeAttendance, selectedMonth]);
 
   // ==================================================
   // PRESENT DAYS
   // ==================================================
 
-  const presentDays =
-    presentDateKeys.size;
+  const presentDateKeys = useMemo(() => {
+    return new Set(
+      selectedMonthAttendance
+        .map((record) => getRecordDateKey(record))
+        .filter(Boolean)
+    );
+  }, [selectedMonthAttendance]);
+
+  const presentDays = presentDateKeys.size;
 
   // ==================================================
   // WORKING DAYS
   // ==================================================
 
   const workingDays = useMemo(() => {
-    return getWorkingDaysForMonth(
-      selectedMonth
-    );
+    return getWorkingDaysForMonth(selectedMonth);
   }, [selectedMonth]);
 
   // ==================================================
-  // ABSENT DAYS
+  // ABSENT
   // ==================================================
 
   const absentDays = Math.max(
@@ -409,7 +294,7 @@ function Profile() {
   );
 
   // ==================================================
-  // LEAVE DAYS
+  // LEAVE
   // ==================================================
 
   const leaveDays = 0;
@@ -425,35 +310,25 @@ function Profile() {
           record.hours ||
           record.workingHours;
 
-        if (!value) {
-          return total;
-        }
+        if (!value) return total;
 
-        return (
-          total +
-          parseWorkingHours(value)
-        );
+        return total + parseWorkingHours(value);
       },
       0
     );
-  }, [
-    selectedMonthAttendance,
-  ]);
+  }, [selectedMonthAttendance]);
 
   // ==================================================
-  // PRESENT POPUP DATA
+  // SORTED POPUP
   // ==================================================
 
-  const presentPopupRecords =
-    useMemo(() => {
-      return [...selectedMonthAttendance].sort(
-        (a, b) =>
-          getRecordTimestamp(b) -
-          getRecordTimestamp(a)
-      );
-    }, [
-      selectedMonthAttendance,
-    ]);
+  const presentPopupRecords = useMemo(() => {
+    return [...selectedMonthAttendance].sort(
+      (a, b) =>
+        getRecordTimestamp(b) -
+        getRecordTimestamp(a)
+    );
+  }, [selectedMonthAttendance]);
 
   // ==================================================
   // LOADING
@@ -463,13 +338,9 @@ function Profile() {
     return (
       <div className="profile-page">
         <div className="profile-loading">
-          <div className="profile-loading-icon">
-            ⏳
-          </div>
-
-          <h2>
-            Loading employee profile...
-          </h2>
+          <div className="profile-spinner" />
+          <h2>Loading employee profile...</h2>
+          <p>Please wait while we fetch the employee information.</p>
         </div>
       </div>
     );
@@ -483,9 +354,10 @@ function Profile() {
     return (
       <div className="profile-page">
         <div className="profile-error">
+          <div className="error-icon">!</div>
+
           <h2>
-            {error ||
-              "Employee not found."}
+            {error || "Employee not found."}
           </h2>
 
           <button
@@ -507,47 +379,38 @@ function Profile() {
   return (
     <div className="profile-page">
 
-      {/* ==================================================
-          BREADCRUMB
-      ================================================== */}
+      {/* ================= BREADCRUMB ================= */}
 
       <div className="profile-breadcrumb">
-        <span
-          onClick={() =>
-            navigate("/dashboard")
-          }
+        <button
+          type="button"
+          onClick={() => navigate("/dashboard")}
         >
           Dashboard
-        </span>
+        </button>
 
         <span>›</span>
 
-        <span
-          onClick={() =>
-            navigate("/employees")
-          }
+        <button
+          type="button"
+          onClick={() => navigate("/employees")}
         >
           Employees
-        </span>
+        </button>
 
         <span>›</span>
 
         <strong>{name}</strong>
       </div>
 
-      {/* ==================================================
-          HEADER
-      ================================================== */}
+      {/* ================= HEADER ================= */}
 
       <div className="profile-header">
         <div>
-          <h1>
-            Employee Profile
-          </h1>
+          <h1>Employee Profile</h1>
 
           <p>
-            View employee information
-            and attendance
+            View and manage employee information and attendance.
           </p>
         </div>
 
@@ -560,15 +423,11 @@ function Profile() {
         </button>
       </div>
 
-      {/* ==================================================
-          PROFILE + FORM
-      ================================================== */}
+      {/* ================= PROFILE CONTENT ================= */}
 
       <div className="profile-content">
 
-        {/* ==================================================
-            EMPLOYEE CARD
-        ================================================== */}
+        {/* ================= EMPLOYEE CARD ================= */}
 
         <div className="employee-card">
 
@@ -581,10 +440,11 @@ function Profile() {
           <h2>{name}</h2>
 
           <div className="employee-id">
-            {employeeMongoId}
+            ID: {employeeMongoId}
           </div>
 
           <div className="employee-status">
+            <span />
             Active
           </div>
 
@@ -599,109 +459,80 @@ function Profile() {
             <ProfileDetail
               icon={Phone}
               label="Phone"
-              value={
-                phone || "N/A"
-              }
+              value={phone || "N/A"}
             />
 
             <ProfileDetail
               icon={CalendarDays}
               label="Joining Date"
-              value={formatDate(
-                employee.joiningDate
-              )}
+              value={formatDate(employee.joiningDate)}
             />
 
             <ProfileDetail
               icon={CalendarDays}
               label="Date of Birth"
-              value={formatDate(
-                employee.dateOfBirth
-              )}
+              value={formatDate(employee.dateOfBirth)}
             />
 
           </div>
         </div>
 
-        {/* ==================================================
-            EDIT FORM
-        ================================================== */}
+        {/* ================= FORM ================= */}
 
         <form
           className="employee-form"
           onSubmit={handleSubmit}
         >
-          <h2>
-            Edit Employee Information
-          </h2>
+          <div className="form-heading">
+            <div>
+              <h2>Edit Employee Information</h2>
+              <p>Update the employee details below.</p>
+            </div>
+          </div>
 
           <div className="form-grid">
 
             <FormInput
               label="Full Name"
               name="fullName"
-              value={
-                formData.fullName
-              }
-              onChange={
-                handleChange
-              }
+              value={formData.fullName}
+              onChange={handleChange}
             />
 
             <FormInput
               label="Employee ID"
               name="employeeId"
-              value={
-                formData.employeeId
-              }
-              onChange={
-                handleChange
-              }
+              value={formData.employeeId}
+              onChange={handleChange}
               disabled
             />
 
             <FormInput
               label="Email"
               name="email"
-              value={
-                formData.email
-              }
-              onChange={
-                handleChange
-              }
+              value={formData.email}
+              onChange={handleChange}
             />
 
             <FormInput
               label="Phone"
               name="phone"
-              value={
-                formData.phone
-              }
-              onChange={
-                handleChange
-              }
+              value={formData.phone}
+              onChange={handleChange}
             />
 
             <FormDate
               label="Joining Date"
               name="joiningDate"
-              value={
-                formData.joiningDate
-              }
-              onChange={
-                handleChange
-              }
+              value={formData.joiningDate}
+              onChange={handleChange}
             />
 
             <FormDate
               label="Date of Birth"
               name="dateOfBirth"
-              value={
-                formData.dateOfBirth
-              }
-              onChange={
-                handleChange
-              }
+              value={formData.dateOfBirth}
+              onChange={handleChange}
             />
 
           </div>
@@ -732,66 +563,36 @@ function Profile() {
         </form>
       </div>
 
-      {/* ==================================================
-          ATTENDANCE SUMMARY
-      ================================================== */}
+      {/* ================= ATTENDANCE SUMMARY ================= */}
 
       <AttendanceSummary
-        selectedMonth={
-          selectedMonth
-        }
-        setSelectedMonth={
-          setSelectedMonth
-        }
-        presentDays={
-          presentDays
-        }
-        absentDays={
-          absentDays
-        }
-        leaveDays={
-          leaveDays
-        }
-        totalMinutes={
-          totalMinutes
-        }
-        workingDays={
-          workingDays
-        }
+        selectedMonth={selectedMonth}
+        setSelectedMonth={setSelectedMonth}
+        presentDays={presentDays}
+        absentDays={absentDays}
+        leaveDays={leaveDays}
+        totalMinutes={totalMinutes}
+        workingDays={workingDays}
         onPresentClick={() =>
           setShowPresentPopup(true)
         }
       />
 
-      {/* ==================================================
-          ATTENDANCE HISTORY
-      ================================================== */}
+      {/* ================= ATTENDANCE HISTORY ================= */}
 
       <AttendanceRecords
-        attendance={
-          selectedMonthAttendance
-        }
-        selectedMonth={
-          selectedMonth
-        }
-        loading={
-          attendanceLoading
-        }
+        attendance={selectedMonthAttendance}
+        selectedMonth={selectedMonth}
+        loading={attendanceLoading}
       />
 
-      {/* ==================================================
-          PRESENT POPUP
-      ================================================== */}
+      {/* ================= MODAL ================= */}
 
       {showPresentPopup && (
         <PresentPunchModal
-          records={
-            presentPopupRecords
-          }
+          records={presentPopupRecords}
           employeeName={name}
-          selectedMonth={
-            selectedMonth
-          }
+          selectedMonth={selectedMonth}
           onClose={() =>
             setShowPresentPopup(false)
           }
@@ -813,21 +614,20 @@ function ProfileDetail({
 }) {
   return (
     <div className="employee-detail">
-      <Icon size={16} />
+      <div className="detail-icon">
+        <Icon size={16} />
+      </div>
 
-      <span>
-        {label}
-      </span>
-
-      <strong>
-        {value}
-      </strong>
+      <div className="detail-text">
+        <span>{label}</span>
+        <strong>{value}</strong>
+      </div>
     </div>
   );
 }
 
 // ==================================================
-// INPUT
+// FORM INPUT
 // ==================================================
 
 function FormInput({
@@ -839,10 +639,7 @@ function FormInput({
 }) {
   return (
     <div className="form-field">
-
-      <label>
-        {label}
-      </label>
+      <label>{label}</label>
 
       <input
         type="text"
@@ -851,13 +648,12 @@ function FormInput({
         onChange={onChange}
         disabled={disabled}
       />
-
     </div>
   );
 }
 
 // ==================================================
-// DATE
+// DATE INPUT
 // ==================================================
 
 function FormDate({
@@ -868,16 +664,10 @@ function FormDate({
 }) {
   return (
     <div className="form-field">
-
-      <label>
-        {label}
-      </label>
+      <label>{label}</label>
 
       <div className="date-field">
-
-        <CalendarDays
-          size={16}
-        />
+        <CalendarDays size={17} />
 
         <input
           type="date"
@@ -885,7 +675,6 @@ function FormDate({
           value={value}
           onChange={onChange}
         />
-
       </div>
     </div>
   );
@@ -905,11 +694,6 @@ function AttendanceSummary({
   workingDays,
   onPresentClick,
 }) {
-  const monthName =
-    formatMonthName(
-      selectedMonth
-    );
-
   const summary = [
     {
       title: "Present Days",
@@ -934,10 +718,7 @@ function AttendanceSummary({
     },
     {
       title: "Total Working Hours",
-      value:
-        formatMinutes(
-          totalMinutes
-        ),
+      value: formatMinutes(totalMinutes),
       type: "hours",
       icon: Clock3,
       clickable: false,
@@ -947,108 +728,71 @@ function AttendanceSummary({
   return (
     <section className="attendance-summary">
 
-      {/* HEADER */}
-
       <div className="attendance-summary-header">
 
         <div>
-          <h2>
-            Attendance Summary
-          </h2>
+          <h2>Attendance Summary</h2>
 
           <p>
-            {monthName}
-            {" • "}
-            Working days:{" "}
-            <strong>
-              {workingDays}
-            </strong>
+            {formatMonthName(selectedMonth)}
+            <span>•</span>
+            Working days:
+            <strong>{workingDays}</strong>
           </p>
         </div>
 
-        {/* MONTH CALENDAR */}
-
         <div className="month-picker">
-
-          <CalendarDays
-            size={18}
-          />
+          <CalendarDays size={18} />
 
           <input
             type="month"
-            value={
-              selectedMonth
-            }
+            value={selectedMonth}
             onChange={(event) =>
-              setSelectedMonth(
-                event.target.value
-              )
+              setSelectedMonth(event.target.value)
             }
           />
-
         </div>
 
       </div>
 
-      {/* CARDS */}
-
       <div className="summary-items">
 
-        {summary.map(
-          (item) => {
-            const Icon =
-              item.icon;
+        {summary.map((item) => {
+          const Icon = item.icon;
 
-            return (
-              <button
-                type="button"
-                className={`summary-item summary-item--${item.type} ${
-                  item.clickable
-                    ? "summary-item--clickable"
-                    : ""
-                }`}
-                key={
-                  item.title
-                }
-                onClick={
-                  item.clickable
-                    ? onPresentClick
-                    : undefined
-                }
-              >
+          return (
+            <button
+              type="button"
+              key={item.title}
+              className={`summary-item summary-item--${item.type} ${
+                item.clickable
+                  ? "summary-item--clickable"
+                  : ""
+              }`}
+              onClick={
+                item.clickable
+                  ? onPresentClick
+                  : undefined
+              }
+            >
+              <div className="summary-icon">
+                <Icon size={21} />
+              </div>
 
-                <div className="summary-icon">
-                  <Icon
-                    size={20}
-                  />
-                </div>
+              <div className="summary-content">
+                <p>{item.title}</p>
 
-                <div className="summary-content">
+                <strong>{item.value}</strong>
 
-                  <p>
-                    {item.title}
-                  </p>
-
-                  <strong>
-                    {item.value}
-                  </strong>
-
-                  {item.clickable && (
-                    <small>
-                      Click to view
-                      punches
-                    </small>
-                  )}
-
-                </div>
-
-              </button>
-            );
-          }
-        )}
+                {item.clickable && (
+                  <small>Click to view punches</small>
+                )}
+              </div>
+            </button>
+          );
+        })}
 
       </div>
-
     </section>
   );
 }
@@ -1068,51 +812,34 @@ function AttendanceRecords({
       <div className="attendance-records-header">
 
         <div>
-          <h2>
-            Attendance History
-          </h2>
+          <h2>Attendance History</h2>
 
           <p>
             Records for{" "}
             <strong>
-              {formatMonthName(
-                selectedMonth
-              )}
+              {formatMonthName(selectedMonth)}
             </strong>
           </p>
         </div>
 
-        <strong>
+        <div className="records-count">
           {attendance.length} Records
-        </strong>
+        </div>
 
       </div>
 
       {loading ? (
         <div className="no-attendance">
-
-          <Clock3
-            size={25}
-          />
-
-          <p>
-            Loading attendance...
-          </p>
-
+          <Clock3 size={28} />
+          <p>Loading attendance...</p>
         </div>
-      ) : attendance.length ===
-        0 ? (
+      ) : attendance.length === 0 ? (
         <div className="no-attendance">
-
-          <Clock3
-            size={25}
-          />
-
+          <Clock3 size={28} />
+          <h3>No attendance records</h3>
           <p>
-            No attendance records
-            found for this month.
+            No attendance found for this month.
           </p>
-
         </div>
       ) : (
         <div className="attendance-table">
@@ -1126,101 +853,63 @@ function AttendanceRecords({
             <span>Status</span>
           </div>
 
-          {attendance.map(
-            (
-              record,
-              index
-            ) => {
+          {attendance.map((record, index) => {
 
-              const recordDate =
-                getRecordDate(
-                  record
-                );
+            const recordDate =
+              getRecordDate(record);
 
-              const time =
-                getRecordTime(
-                  record
-                );
+            const time =
+              getRecordTime(record);
 
-              return (
-                <div
-                  className="attendance-table-row"
-                  key={
-                    record._id ||
-                    index
-                  }
-                >
+            return (
+              <div
+                className="attendance-table-row"
+                key={record._id || index}
+              >
+                <span className="row-number">
+                  {index + 1}
+                </span>
 
-                  <span>
-                    {index + 1}
-                  </span>
+                <span>
+                  {formatDate(recordDate)}
+                </span>
 
-                  <span>
-                    {formatDate(
-                      recordDate
-                    )}
-                  </span>
+                <span className="time-cell">
+                  {time}
+                </span>
 
-                  <span>
-                    {time}
-                  </span>
+                <span>
+                  {record.latitude !== undefined &&
+                  record.longitude !== undefined ? (
+                    <span className="location-text">
+                      <MapPinned size={14} />
 
-                  <span>
-
-                    {record.latitude !==
-                      undefined &&
-                    record.longitude !==
-                      undefined ? (
-                      <span className="location-text">
-
-                        <MapPinned
-                          size={14}
-                        />
-
-                        {Number(
-                          record.latitude
-                        ).toFixed(4)}
-
-                        ,{" "}
-
-                        {Number(
-                          record.longitude
-                        ).toFixed(4)}
-
-                      </span>
-                    ) : (
-                      "—"
-                    )}
-
-                  </span>
-
-                  <span>
-
-                    {record.accuracy !==
-                      undefined &&
-                    record.accuracy !==
-                      null
-                      ? `${Math.round(
-                          Number(
-                            record.accuracy
-                          )
-                        )} m`
-                      : "—"}
-
-                  </span>
-
-                  <span>
-
-                    <span className="attendance-status">
-                      Present
+                      {Number(record.latitude).toFixed(4)}
+                      ,{" "}
+                      {Number(record.longitude).toFixed(4)}
                     </span>
+                  ) : (
+                    "—"
+                  )}
+                </span>
 
+                <span>
+                  {record.accuracy !== undefined &&
+                  record.accuracy !== null
+                    ? `${Math.round(
+                        Number(record.accuracy)
+                      )} m`
+                    : "—"}
+                </span>
+
+                <span>
+                  <span className="attendance-status">
+                    Present
                   </span>
-
-                </div>
-              );
-            }
-          )}
+                </span>
+              </div>
+            );
+          })}
 
         </div>
       )}
@@ -1244,7 +933,6 @@ function PresentPunchModal({
       className="present-modal-overlay"
       onMouseDown={onClose}
     >
-
       <div
         className="present-modal"
         onMouseDown={(event) =>
@@ -1252,21 +940,15 @@ function PresentPunchModal({
         }
       >
 
-        {/* HEADER */}
-
         <div className="present-modal-header">
 
           <div>
-            <h2>
-              Present Punches
-            </h2>
+            <h2>Present Punches</h2>
 
             <p>
               {employeeName}
-              {" • "}
-              {formatMonthName(
-                selectedMonth
-              )}
+              <span>•</span>
+              {formatMonthName(selectedMonth)}
             </p>
           </div>
 
@@ -1280,133 +962,79 @@ function PresentPunchModal({
 
         </div>
 
-        {/* BODY */}
-
         <div className="present-modal-body">
 
-          {records.length ===
-          0 ? (
+          {records.length === 0 ? (
             <div className="modal-empty">
-
-              <Clock3
-                size={30}
-              />
-
+              <Clock3 size={30} />
               <p>
-                No punches found
-                for this month.
+                No punches found for this month.
               </p>
-
             </div>
           ) : (
             <div className="punch-list">
 
-              {records.map(
-                (
-                  record,
-                  index
-                ) => {
+              {records.map((record, index) => {
 
-                  const date =
-                    getRecordDate(
-                      record
-                    );
+                const date =
+                  getRecordDate(record);
 
-                  const time =
-                    getRecordTime(
-                      record
-                    );
+                const time =
+                  getRecordTime(record);
 
-                  return (
-                    <div
-                      className="punch-item"
-                      key={
-                        record._id ||
-                        index
-                      }
-                    >
+                return (
+                  <div
+                    className="punch-item"
+                    key={record._id || index}
+                  >
 
-                      <div className="punch-number">
-                        {index + 1}
-                      </div>
-
-                      <div className="punch-date">
-
-                        <strong>
-                          {formatDate(
-                            date
-                          )}
-                        </strong>
-
-                        <span>
-                          {getDayName(
-                            date
-                          )}
-                        </span>
-
-                      </div>
-
-                      <div className="punch-time">
-
-                        <Clock3
-                          size={17}
-                        />
-
-                        <strong>
-                          {time}
-                        </strong>
-
-                      </div>
-
-                      <div className="punch-location">
-
-                        <MapPinned
-                          size={16}
-                        />
-
-                        <span>
-
-                          {record.latitude !==
-                            undefined &&
-                          record.longitude !==
-                            undefined
-                            ? `${Number(
-                                record.latitude
-                              ).toFixed(
-                                4
-                              )}, ${Number(
-                                record.longitude
-                              ).toFixed(
-                                4
-                              )}`
-                            : "Location unavailable"}
-
-                        </span>
-
-                      </div>
-
+                    <div className="punch-number">
+                      {index + 1}
                     </div>
-                  );
-                }
-              )}
+
+                    <div className="punch-date">
+                      <strong>
+                        {formatDate(date)}
+                      </strong>
+
+                      <span>
+                        {getDayName(date)}
+                      </span>
+                    </div>
+
+                    <div className="punch-time">
+                      <Clock3 size={17} />
+
+                      <strong>{time}</strong>
+                    </div>
+
+                    <div className="punch-location">
+                      <MapPinned size={16} />
+
+                      <span>
+                        {record.latitude !== undefined &&
+                        record.longitude !== undefined
+                          ? `${Number(
+                              record.latitude
+                            ).toFixed(4)}, ${Number(
+                              record.longitude
+                            ).toFixed(4)}`
+                          : "Location unavailable"}
+                      </span>
+                    </div>
+
+                  </div>
+                );
+              })}
 
             </div>
           )}
 
         </div>
 
-        {/* FOOTER */}
-
         <div className="present-modal-footer">
-
-          <strong>
-            {records.length}
-          </strong>
-
-          <span>
-            total punches
-          </span>
-
+          <strong>{records.length}</strong>
+          <span>total punches</span>
         </div>
 
       </div>
@@ -1419,17 +1047,12 @@ function PresentPunchModal({
 // ==================================================
 
 function getInitials(name) {
-  if (!name) {
-    return "U";
-  }
+  if (!name) return "U";
 
   return name
     .split(" ")
     .filter(Boolean)
-    .map(
-      (word) =>
-        word.charAt(0)
-    )
+    .map((word) => word.charAt(0))
     .join("")
     .slice(0, 2)
     .toUpperCase();
@@ -1440,52 +1063,33 @@ function getInitials(name) {
 // ==================================================
 
 function getCurrentMonthValue() {
-  const date =
-    new Date();
+  const date = new Date();
 
-  const year =
-    date.getFullYear();
-
-  const month =
-    String(
-      date.getMonth() + 1
-    ).padStart(2, "0");
-
-  return `${year}-${month}`;
+  return `${date.getFullYear()}-${String(
+    date.getMonth() + 1
+  ).padStart(2, "0")}`;
 }
 
 // ==================================================
 // FORMAT MONTH
 // ==================================================
 
-function formatMonthName(
-  monthValue
-) {
-  if (!monthValue) {
-    return "";
-  }
+function formatMonthName(monthValue) {
+  if (!monthValue) return "";
 
-  const [
+  const [year, month] =
+    monthValue.split("-").map(Number);
+
+  const date = new Date(
     year,
-    month,
-  ] = monthValue
-    .split("-")
-    .map(Number);
-
-  const date =
-    new Date(
-      year,
-      month - 1,
-      1
-    );
-
-  return date.toLocaleDateString(
-    "en-IN",
-    {
-      month: "long",
-      year: "numeric",
-    }
+    month - 1,
+    1
   );
+
+  return date.toLocaleDateString("en-IN", {
+    month: "long",
+    year: "numeric",
+  });
 }
 
 // ==================================================
@@ -1493,27 +1097,25 @@ function formatMonthName(
 // ==================================================
 
 function getRecordDate(record) {
-  if (
-    record?.date
-  ) {
-    const dateString =
-      String(
-        record.date
-      );
+  if (record?.date) {
+    const dateString = String(record.date);
 
-    if (
-      /^\d{4}-\d{2}-\d{2}$/.test(
-        dateString
-      )
-    ) {
-      const [
+    // YYYY-MM-DD
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      const [year, month, day] =
+        dateString.split("-").map(Number);
+
+      return new Date(
         year,
-        month,
-        day,
-      ] =
-        dateString
-          .split("-")
-          .map(Number);
+        month - 1,
+        day
+      );
+    }
+
+    // DD/MM/YYYY
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateString)) {
+      const [day, month, year] =
+        dateString.split("/").map(Number);
 
       return new Date(
         year,
@@ -1523,12 +1125,12 @@ function getRecordDate(record) {
     }
   }
 
-  if (
-    record?.timestamp
-  ) {
-    return new Date(
-      record.timestamp
-    );
+  if (record?.timestamp) {
+    const date = new Date(record.timestamp);
+
+    if (!Number.isNaN(date.getTime())) {
+      return date;
+    }
   }
 
   return null;
@@ -1538,71 +1140,34 @@ function getRecordDate(record) {
 // RECORD TIMESTAMP
 // ==================================================
 
-function getRecordTimestamp(
-  record
-) {
-  if (
-    record?.timestamp
-  ) {
+function getRecordTimestamp(record) {
+  if (record?.timestamp) {
     const timestamp =
-      new Date(
-        record.timestamp
-      ).getTime();
+      new Date(record.timestamp).getTime();
 
-    if (
-      !Number.isNaN(timestamp)
-    ) {
+    if (!Number.isNaN(timestamp)) {
       return timestamp;
     }
   }
 
-  const date =
-    getRecordDate(record);
+  const date = getRecordDate(record);
 
-  return date
-    ? date.getTime()
-    : 0;
+  return date ? date.getTime() : 0;
 }
 
 // ==================================================
 // RECORD DATE KEY
 // ==================================================
 
-function getRecordDateKey(
-  record
-) {
-  if (
-    record?.date
-  ) {
-    const dateString =
-      String(
-        record.date
-      );
+function getRecordDateKey(record) {
+  const date = getRecordDate(record);
 
-    if (
-      /^\d{4}-\d{2}-\d{2}$/.test(
-        dateString
-      )
-    ) {
-      return dateString;
-    }
-  }
-
-  const date =
-    getRecordDate(record);
-
-  if (!date) {
-    return "";
-  }
+  if (!date) return "";
 
   return [
     date.getFullYear(),
-    String(
-      date.getMonth() + 1
-    ).padStart(2, "0"),
-    String(
-      date.getDate()
-    ).padStart(2, "0"),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
   ].join("-");
 }
 
@@ -1610,15 +1175,10 @@ function getRecordDateKey(
 // RECORD MONTH
 // ==================================================
 
-function getRecordMonth(
-  record
-) {
-  const date =
-    getRecordDate(record);
+function getRecordMonth(record) {
+  const date = getRecordDate(record);
 
-  if (!date) {
-    return "";
-  }
+  if (!date) return "";
 
   return `${date.getFullYear()}-${String(
     date.getMonth() + 1
@@ -1629,54 +1189,33 @@ function getRecordMonth(
 // RECORD TIME
 // ==================================================
 
-function getRecordTime(
-  record
-) {
-  if (
-    !record?.timestamp
-  ) {
+function getRecordTime(record) {
+  if (!record?.timestamp) return "—";
+
+  const date = new Date(record.timestamp);
+
+  if (Number.isNaN(date.getTime())) {
     return "—";
   }
 
-  const date =
-    new Date(
-      record.timestamp
-    );
-
-  if (
-    Number.isNaN(
-      date.getTime()
-    )
-  ) {
-    return "—";
-  }
-
-  return date.toLocaleTimeString(
-    "en-IN",
-    {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: true,
-    }
-  );
+  return date.toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  });
 }
 
 // ==================================================
-// DAY NAME
+// DAY
 // ==================================================
 
 function getDayName(date) {
-  if (!date) {
-    return "";
-  }
+  if (!date) return "";
 
-  return date.toLocaleDateString(
-    "en-IN",
-    {
-      weekday: "long",
-    }
-  );
+  return date.toLocaleDateString("en-IN", {
+    weekday: "long",
+  });
 }
 
 // ==================================================
@@ -1684,74 +1223,47 @@ function getDayName(date) {
 // ==================================================
 
 function formatDate(date) {
-  if (!date) {
-    return "—";
-  }
+  if (!date) return "—";
 
   const parsedDate =
     date instanceof Date
       ? date
       : new Date(date);
 
-  if (
-    Number.isNaN(
-      parsedDate.getTime()
-    )
-  ) {
+  if (Number.isNaN(parsedDate.getTime())) {
     return "—";
   }
 
-  return parsedDate.toLocaleDateString(
-    "en-IN",
-    {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    }
-  );
+  return parsedDate.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 // ==================================================
 // DATE INPUT
 // ==================================================
 
-function formatDateForInput(
-  date
-) {
-  if (!date) {
-    return "";
-  }
+function formatDateForInput(date) {
+  if (!date) return "";
 
-  const dateString =
-    String(date);
+  const dateString = String(date);
 
-  if (
-    /^\d{4}-\d{2}-\d{2}$/.test(
-      dateString
-    )
-  ) {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
     return dateString;
   }
 
-  const parsedDate =
-    new Date(date);
+  const parsedDate = new Date(date);
 
-  if (
-    Number.isNaN(
-      parsedDate.getTime()
-    )
-  ) {
+  if (Number.isNaN(parsedDate.getTime())) {
     return "";
   }
 
   return [
     parsedDate.getFullYear(),
-    String(
-      parsedDate.getMonth() + 1
-    ).padStart(2, "0"),
-    String(
-      parsedDate.getDate()
-    ).padStart(2, "0"),
+    String(parsedDate.getMonth() + 1).padStart(2, "0"),
+    String(parsedDate.getDate()).padStart(2, "0"),
   ].join("-");
 }
 
@@ -1759,29 +1271,16 @@ function formatDateForInput(
 // WORKING DAYS
 // ==================================================
 
-function getWorkingDaysForMonth(
-  monthValue
-) {
-  if (!monthValue) {
-    return 0;
-  }
+function getWorkingDaysForMonth(monthValue) {
+  if (!monthValue) return 0;
 
-  const [
-    year,
-    month,
-  ] =
-    monthValue
-      .split("-")
-      .map(Number);
+  const [year, month] =
+    monthValue.split("-").map(Number);
 
-  const now =
-    new Date();
+  const now = new Date();
 
-  const currentYear =
-    now.getFullYear();
-
-  const currentMonth =
-    now.getMonth();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
 
   let lastDay;
 
@@ -1790,8 +1289,7 @@ function getWorkingDaysForMonth(
     year > currentYear ||
     (
       year === currentYear &&
-      month - 1 >
-        currentMonth
+      month - 1 > currentMonth
     )
   ) {
     return 0;
@@ -1800,38 +1298,28 @@ function getWorkingDaysForMonth(
   // Current month
   if (
     year === currentYear &&
-    month - 1 ===
-      currentMonth
+    month - 1 === currentMonth
   ) {
-    lastDay =
-      now.getDate();
+    lastDay = now.getDate();
   } else {
-    lastDay =
-      new Date(
-        year,
-        month,
-        0
-      ).getDate();
+    lastDay = new Date(
+      year,
+      month,
+      0
+    ).getDate();
   }
 
   let workingDays = 0;
 
-  for (
-    let day = 1;
-    day <= lastDay;
-    day++
-  ) {
-    const date =
-      new Date(
-        year,
-        month - 1,
-        day
-      );
+  for (let day = 1; day <= lastDay; day++) {
+    const date = new Date(
+      year,
+      month - 1,
+      day
+    );
 
-    const dayOfWeek =
-      date.getDay();
+    const dayOfWeek = date.getDay();
 
-    // Monday - Friday
     if (
       dayOfWeek !== 0 &&
       dayOfWeek !== 6
@@ -1847,66 +1335,36 @@ function getWorkingDaysForMonth(
 // WORKING HOURS
 // ==================================================
 
-function parseWorkingHours(
-  value
-) {
-  if (
-    typeof value ===
-    "number"
-  ) {
+function parseWorkingHours(value) {
+  if (typeof value === "number") {
     return value * 60;
   }
 
-  if (
-    typeof value !==
-    "string"
-  ) {
+  if (typeof value !== "string") {
     return 0;
   }
 
-  const match =
-    value.match(
-      /(\d+)\s*h(?:ours?)?\s*(?:(\d+)\s*m(?:in(?:ute)?s?)?)?/i
-    );
-
-  if (!match) {
-    return 0;
-  }
-
-  const hours =
-    Number(
-      match[1]
-    ) || 0;
-
-  const minutes =
-    Number(
-      match[2]
-    ) || 0;
-
-  return (
-    hours * 60 +
-    minutes
+  const match = value.match(
+    /(\d+)\s*h(?:ours?)?\s*(?:(\d+)\s*m(?:in(?:ute)?s?)?)?/i
   );
+
+  if (!match) return 0;
+
+  const hours = Number(match[1]) || 0;
+  const minutes = Number(match[2]) || 0;
+
+  return hours * 60 + minutes;
 }
 
 // ==================================================
 // FORMAT MINUTES
 // ==================================================
 
-function formatMinutes(
-  minutes
-) {
-  if (!minutes) {
-    return "0h 0m";
-  }
+function formatMinutes(minutes) {
+  if (!minutes) return "0h 0m";
 
-  const hours =
-    Math.floor(
-      minutes / 60
-    );
-
-  const remainingMinutes =
-    minutes % 60;
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
 
   return `${hours}h ${remainingMinutes}m`;
 }

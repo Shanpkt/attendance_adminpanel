@@ -1,16 +1,8 @@
-import React, {
-  useEffect,
-  useState,
-} from "react";
-
+import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
-
-import {
-  useNavigate,
-} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 import EmployeeInfoPop from "./employee_info_pop";
-
 import "./Employees.scss";
 
 // ==========================================
@@ -18,542 +10,348 @@ import "./Employees.scss";
 // ==========================================
 
 import IconButton from "@mui/material/IconButton";
-
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 
-
 // ==========================================
-// API URL
+// API
 // ==========================================
 
 const API_URL =
   "https://attendance-backend-hs75.onrender.com/api/employees";
-
 
 // ==========================================
 // GET INITIALS
 // ==========================================
 
 const getInitials = (name) => {
-
   if (!name) {
     return "U";
   }
 
   return name
-    .split(" ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
     .map((word) => word.charAt(0))
     .join("")
     .slice(0, 2)
     .toUpperCase();
-
 };
-
 
 // ==========================================
 // FORMAT DATE
 // ==========================================
 
 const formatDate = (date) => {
-
   if (!date) {
     return "—";
   }
 
-  const parsedDate =
-    new Date(date);
-
+  // Handle YYYY-MM-DD without timezone shifting
   if (
-    Number.isNaN(
-      parsedDate.getTime()
-    )
+    typeof date === "string" &&
+    /^\d{4}-\d{2}-\d{2}$/.test(date)
   ) {
-    return "—";
-  }
+    const [year, month, day] = date.split("-").map(Number);
 
-  return parsedDate.toLocaleDateString(
-    "en-IN",
-    {
+    const localDate = new Date(year, month - 1, day);
+
+    return localDate.toLocaleDateString("en-IN", {
       day: "2-digit",
       month: "short",
       year: "numeric",
-    }
-  );
+    });
+  }
 
+  const parsedDate = new Date(date);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return "—";
+  }
+
+  return parsedDate.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 };
-
 
 // ==========================================
 // EMPLOYEES PAGE
 // ==========================================
 
 function Employees() {
+  const navigate = useNavigate();
 
   // ========================================
-  // NAVIGATION
+  // STATE
   // ========================================
 
-  const navigate =
-    useNavigate();
+  const [employees, setEmployees] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
 
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  // ========================================
-  // EMPLOYEES
-  // ========================================
+  const [openEmployeePopup, setOpenEmployeePopup] =
+    useState(false);
 
-  const [
-    employees,
-    setEmployees,
-  ] = useState([]);
-
-
-  // ========================================
-  // SEARCH
-  // ========================================
-
-  const [
-    searchTerm,
-    setSearchTerm,
-  ] = useState("");
-
-
-  // ========================================
-  // LOADING
-  // ========================================
-
-  const [
-    loading,
-    setLoading,
-  ] = useState(true);
-
-
-  // ========================================
-  // ERROR
-  // ========================================
-
-  const [
-    error,
-    setError,
-  ] = useState("");
-
-
-  // ========================================
-  // POPUP
-  // ========================================
-
-  const [
-    openEmployeePopup,
-    setOpenEmployeePopup,
-  ] = useState(false);
-
-
-  // ========================================
-  // SELECTED EMPLOYEE
-  // ========================================
-
-  const [
-    selectedEmployee,
-    setSelectedEmployee,
-  ] = useState(null);
-
+  const [selectedEmployee, setSelectedEmployee] =
+    useState(null);
 
   // ========================================
   // FETCH EMPLOYEES
   // ========================================
 
-  const fetchEmployees =
-    async () => {
+  const fetchEmployees = async () => {
+    try {
+      setLoading(true);
+      setError("");
 
-      try {
+      const response = await axios.get(API_URL);
 
-        setLoading(true);
+      console.log("Employees API response:", response.data);
 
-        setError("");
+      const data = Array.isArray(response.data?.data)
+        ? response.data.data
+        : [];
 
-        const response =
-          await axios.get(
-            API_URL
-          );
+      setEmployees(data);
+    } catch (err) {
+      console.error("Error fetching employees:", err);
 
-        console.log(
-          "Employees API response:",
-          response.data
-        );
-
-        const data =
-          response.data?.data || [];
-
-        setEmployees(data);
-
-      }
-      catch (err) {
-
-        console.error(
-          "Error fetching employees:",
-          err
-        );
-
-        setError(
-          "Unable to fetch employee data."
-        );
-
-      }
-      finally {
-
-        setLoading(false);
-
-      }
-
-    };
-
+      setError("Unable to fetch employee data.");
+      setEmployees([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // ========================================
-  // FETCH ON PAGE LOAD
+  // LOAD EMPLOYEES
   // ========================================
 
   useEffect(() => {
-
     fetchEmployees();
-
   }, []);
 
-
   // ========================================
-  // SEARCH FILTER
-  // ========================================
-
-  const filteredEmployees =
-    employees.filter(
-      (employee) => {
-
-        const name =
-          employee.name ||
-          employee.employeeName ||
-          "";
-
-        const mobile =
-          employee.mobileNumber ||
-          employee.mobile ||
-          "";
-
-        const search =
-          searchTerm
-            .toLowerCase()
-            .trim();
-
-        return (
-          name
-            .toLowerCase()
-            .includes(search) ||
-
-          mobile
-            .toString()
-            .includes(search)
-        );
-
-      }
-    );
-
-
-  // ========================================
-  // OPEN CREATE POPUP
+  // FILTER EMPLOYEES
   // ========================================
 
-  const handleOpenCreateEmployee =
-    () => {
+  const filteredEmployees = useMemo(() => {
+    const search = searchTerm.toLowerCase().trim();
 
-      setSelectedEmployee(
-        null
+    if (!search) {
+      return employees;
+    }
+
+    return employees.filter((employee) => {
+      const name =
+        employee.name ||
+        employee.employeeName ||
+        "";
+
+      const mobile =
+        employee.mobileNumber ||
+        employee.mobile ||
+        "";
+
+      const email =
+        employee.email ||
+        "";
+
+      return (
+        name.toLowerCase().includes(search) ||
+        String(mobile).includes(search) ||
+        email.toLowerCase().includes(search)
       );
-
-      setOpenEmployeePopup(
-        true
-      );
-
-    };
-
+    });
+  }, [employees, searchTerm]);
 
   // ========================================
-  // OPEN EDIT POPUP
+  // CREATE EMPLOYEE
   // ========================================
 
-  const handleEditEmployee =
-    (employee) => {
+  const handleOpenCreateEmployee = () => {
+    setSelectedEmployee(null);
+    setOpenEmployeePopup(true);
+  };
 
-      console.log(
-        "Opening employee for edit:",
-        employee
-      );
+  // ========================================
+  // EDIT EMPLOYEE
+  // ========================================
 
-      setSelectedEmployee(
-        employee
-      );
-
-      setOpenEmployeePopup(
-        true
-      );
-
-    };
-
+  const handleEditEmployee = (employee) => {
+    setSelectedEmployee(employee);
+    setOpenEmployeePopup(true);
+  };
 
   // ========================================
   // OPEN PROFILE
   // ========================================
 
-  const handleEmployeeClick =
-    (employee) => {
+  const handleEmployeeClick = (employee) => {
+    const employeeId =
+      employee._id ||
+      employee.id;
 
-      const employeeId =
-        employee._id ||
-        employee.id;
-
-      console.log(
-        "Opening employee profile:",
-        employeeId
+    if (!employeeId) {
+      console.error(
+        "Employee ID not found:",
+        employee
       );
 
-      if (!employeeId) {
+      return;
+    }
 
-        console.error(
-          "Employee ID not found:",
-          employee
-        );
-
-        return;
-
-      }
-
-      navigate(
-        `/profile/${employeeId}`
-      );
-
-    };
-
+    navigate(`/profile/${employeeId}`);
+  };
 
   // ========================================
   // CLOSE POPUP
   // ========================================
 
-  const handleCloseEmployeePopup =
-    () => {
-
-      setOpenEmployeePopup(
-        false
-      );
-
-      setSelectedEmployee(
-        null
-      );
-
-    };
-
+  const handleCloseEmployeePopup = () => {
+    setOpenEmployeePopup(false);
+    setSelectedEmployee(null);
+  };
 
   // ========================================
-  // EMPLOYEE CREATED / UPDATED
+  // EMPLOYEE SAVED
   // ========================================
 
-  const handleEmployeeSaved =
-    (savedEmployee) => {
+  const handleEmployeeSaved = (savedEmployee) => {
+    console.log("Employee saved:", savedEmployee);
 
-      console.log(
-        "Employee saved:",
-        savedEmployee
+    // If popup did not return employee,
+    // simply refresh everything.
+    if (!savedEmployee) {
+      fetchEmployees();
+      handleCloseEmployeePopup();
+      return;
+    }
+
+    const savedId =
+      savedEmployee._id ||
+      savedEmployee.id;
+
+    // ======================================
+    // UPDATE EXISTING EMPLOYEE
+    // ======================================
+
+    if (selectedEmployee) {
+      setEmployees((previous) =>
+        previous.map((employee) => {
+          const employeeId =
+            employee._id ||
+            employee.id;
+
+          if (
+            String(employeeId) ===
+            String(savedId)
+          ) {
+            return savedEmployee;
+          }
+
+          return employee;
+        })
       );
+    }
 
-      if (!savedEmployee) {
+    // ======================================
+    // CREATE NEW EMPLOYEE
+    // ======================================
 
-        fetchEmployees();
+    else {
+      setEmployees((previous) => [
+        savedEmployee,
+        ...previous,
+      ]);
+    }
 
-        return;
-
-      }
-
-
-      // ======================================
-      // EDIT
-      // ======================================
-
-      if (selectedEmployee) {
-
-        setEmployees(
-          (previous) =>
-
-            previous.map(
-              (employee) => {
-
-                const employeeId =
-                  employee._id ||
-                  employee.id;
-
-                const savedId =
-                  savedEmployee._id ||
-                  savedEmployee.id;
-
-                if (
-                  employeeId ===
-                  savedId
-                ) {
-
-                  return savedEmployee;
-
-                }
-
-                return employee;
-
-              }
-            )
-        );
-
-      }
-
-
-      // ======================================
-      // CREATE
-      // ======================================
-
-      else {
-
-        setEmployees(
-          (previous) => [
-
-            savedEmployee,
-
-            ...previous,
-
-          ]
-        );
-
-      }
-
-
-      setSelectedEmployee(
-        null
-      );
-
-    };
-
+    handleCloseEmployeePopup();
+  };
 
   // ========================================
   // CLEAR SEARCH
   // ========================================
 
-  const handleClearSearch =
-    () => {
-
-      setSearchTerm("");
-
-    };
-
+  const handleClearSearch = () => {
+    setSearchTerm("");
+  };
 
   // ========================================
   // DELETE EMPLOYEE
   // ========================================
 
-  const handleDeleteEmployee =
-    async (employee) => {
+  const handleDeleteEmployee = async (employee) => {
+    const employeeName =
+      employee.name ||
+      employee.employeeName ||
+      "this employee";
 
-      console.log(
-        "Delete employee:",
-        employee
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete ${employeeName}?`
+    );
+
+    if (!confirmDelete) {
+      return;
+    }
+
+    try {
+      const employeeId =
+        employee._id ||
+        employee.id;
+
+      if (!employeeId) {
+        alert("Employee ID not found.");
+        return;
+      }
+
+      await axios.delete(
+        `${API_URL}/${employeeId}`
       );
 
+      setEmployees((previous) =>
+        previous.filter((item) => {
+          const itemId =
+            item._id ||
+            item.id;
 
-      const employeeName =
-        employee.name ||
-        employee.employeeName ||
-        "this employee";
-
-
-      const confirmDelete =
-        window.confirm(
-          `Are you sure you want to delete ${employeeName}?`
-        );
-
-
-      if (!confirmDelete) {
-
-        return;
-
-      }
-
-
-      try {
-
-        const employeeId =
-          employee._id ||
-          employee.id;
-
-
-        if (!employeeId) {
-
-          alert(
-            "Employee ID not found."
+          return (
+            String(itemId) !==
+            String(employeeId)
           );
+        })
+      );
 
-          return;
+      console.log(
+        "Employee deleted successfully."
+      );
+    } catch (err) {
+      console.error(
+        "Delete employee error:",
+        err
+      );
 
-        }
-
-
-        await axios.delete(
-          `${API_URL}/${employeeId}`
-        );
-
-
-        setEmployees(
-          (previous) =>
-
-            previous.filter(
-              (item) => {
-
-                const itemId =
-                  item._id ||
-                  item.id;
-
-                return (
-                  itemId !==
-                  employeeId
-                );
-
-              }
-            )
-        );
-
-
-        console.log(
-          "Employee deleted successfully."
-        );
-
-      }
-      catch (err) {
-
-        console.error(
-          "Delete employee error:",
-          err
-        );
-
-        alert(
-          err.response?.data?.message ||
+      alert(
+        err.response?.data?.message ||
           "Unable to delete employee."
-        );
-
-      }
-
-    };
-
+      );
+    }
+  };
 
   // ========================================
-  // UI
+  // RENDER
   // ========================================
 
   return (
-
     <div className="employees-page">
 
-
       {/* ======================================
-          HEADER
+          PAGE HEADER
       ====================================== */}
 
       <div className="employees-page__header">
@@ -564,22 +362,19 @@ function Employees() {
             👥
           </div>
 
-          <div>
-
-            <h1>
-              Employee List
-            </h1>
+          <div className="employees-title__text">
+            <h1>Employee List</h1>
 
             <p>
               View and manage employees
             </p>
-
           </div>
 
         </div>
 
-
         <div className="employees-header-actions">
+
+          {/* TOTAL EMPLOYEES */}
 
           <div className="employee-count">
 
@@ -593,6 +388,7 @@ function Employees() {
 
           </div>
 
+          {/* CREATE */}
 
           <button
             type="button"
@@ -601,22 +397,21 @@ function Employees() {
               handleOpenCreateEmployee
             }
           >
-
             <span className="create-button-icon">
               +
             </span>
 
-            Create Employee
-
+            <span>
+              Create Employee
+            </span>
           </button>
 
         </div>
 
       </div>
 
-
       {/* ======================================
-          SEARCH
+          SEARCH SECTION
       ====================================== */}
 
       <div className="employees-actions">
@@ -629,8 +424,8 @@ function Employees() {
 
           <input
             type="text"
-            placeholder="Search employee name or mobile number..."
             value={searchTerm}
+            placeholder="Search employee name or mobile number..."
             onChange={(event) =>
               setSearchTerm(
                 event.target.value
@@ -639,32 +434,29 @@ function Employees() {
           />
 
           {searchTerm && (
-
             <button
               type="button"
               className="search-clear"
               onClick={
                 handleClearSearch
               }
+              aria-label="Clear search"
             >
               ×
             </button>
-
           )}
 
         </div>
 
       </div>
 
-
       {/* ======================================
-          TABLE
+          TABLE CARD
       ====================================== */}
 
       <div className="employees-table-card">
 
         <div className="employees-table-wrapper">
-
 
           {/* ====================================
               TABLE HEADER
@@ -698,13 +490,11 @@ function Employees() {
 
           </div>
 
-
           {/* ====================================
               LOADING
           ==================================== */}
 
           {loading && (
-
             <div className="no-employees">
 
               <div className="no-employees__icon">
@@ -716,90 +506,74 @@ function Employees() {
               </h3>
 
             </div>
-
           )}
-
 
           {/* ====================================
               ERROR
           ==================================== */}
 
-          {!loading &&
-            error && (
+          {!loading && error && (
+            <div className="no-employees">
 
-              <div className="no-employees">
-
-                <div className="no-employees__icon">
-                  ⚠️
-                </div>
-
-                <h3>
-                  {error}
-                </h3>
-
-                <button
-                  type="button"
-                  className="retry-button"
-                  onClick={
-                    fetchEmployees
-                  }
-                >
-                  Try Again
-                </button>
-
+              <div className="no-employees__icon">
+                ⚠️
               </div>
 
-            )}
+              <h3>
+                {error}
+              </h3>
 
+              <button
+                type="button"
+                className="retry-button"
+                onClick={
+                  fetchEmployees
+                }
+              >
+                Try Again
+              </button>
+
+            </div>
+          )}
 
           {/* ====================================
-              EMPLOYEES
+              EMPLOYEE LIST
           ==================================== */}
 
           {!loading &&
             !error &&
             filteredEmployees.length > 0 &&
-
             filteredEmployees.map(
-              (
-                employee,
-                index
-              ) => {
+              (employee, index) => {
 
                 const name =
                   employee.name ||
                   employee.employeeName ||
                   "Unknown Employee";
 
-
                 const mobile =
                   employee.mobileNumber ||
                   employee.mobile ||
                   "N/A";
 
+                const employeeId =
+                  employee._id ||
+                  employee.id ||
+                  index;
 
                 return (
-
                   <div
                     className="employees-table__row"
-                    key={
-                      employee._id ||
-                      employee.id ||
-                      index
-                    }
+                    key={employeeId}
                   >
-
 
                     {/* ==========================
                         NUMBER
                     ========================== */}
 
                     <div className="column-number">
-
                       {index + 1}
-
                     </div>
-
 
                     {/* ==========================
                         EMPLOYEE
@@ -816,72 +590,43 @@ function Employees() {
                     >
 
                       <div className="employee-avatar">
-
-                        {
-                          getInitials(
-                            name
-                          )
-                        }
-
+                        {getInitials(name)}
                       </div>
-
 
                       <div className="employee-info">
 
                         <span className="employee-name">
-
-                          {
-                            name
-                          }
-
+                          {name}
                         </span>
 
-
                         {employee.email && (
-
                           <span className="employee-email">
-
-                            {
-                              employee.email
-                            }
-
+                            {employee.email}
                           </span>
-
                         )}
 
                       </div>
 
                     </div>
 
-
                     {/* ==========================
                         MOBILE
                     ========================== */}
 
                     <div className="column-mobile">
-
-                      {
-                        mobile
-                      }
-
+                      {mobile}
                     </div>
 
-
                     {/* ==========================
-                        DATE
+                        JOINED DATE
                     ========================== */}
 
                     <div className="column-date">
-
-                      {
-                        formatDate(
-                          employee.joiningDate ||
+                      {formatDate(
+                        employee.joiningDate ||
                           employee.createdAt
-                        )
-                      }
-
+                      )}
                     </div>
-
 
                     {/* ==========================
                         STATUS
@@ -899,72 +644,52 @@ function Employees() {
 
                     </div>
 
-
                     {/* ==========================
                         ACTIONS
                     ========================== */}
 
                     <div className="column-actions">
 
-                      {/* ======================
-                          EDIT
-                      ====================== */}
-
                       <IconButton
                         type="button"
-                        className="employee-edit-button"
+                        className="employee-action-button employee-edit-button"
                         onClick={(event) => {
-
                           event.stopPropagation();
 
                           handleEditEmployee(
                             employee
                           );
-
                         }}
                         title="Edit employee"
                         aria-label="Edit employee"
+                        size="small"
                       >
-
                         <EditIcon />
-
                       </IconButton>
-
-
-                      {/* ======================
-                          DELETE
-                      ====================== */}
 
                       <IconButton
                         type="button"
-                        className="employee-delete-button"
+                        className="employee-action-button employee-delete-button"
                         onClick={(event) => {
-
                           event.stopPropagation();
 
                           handleDeleteEmployee(
                             employee
                           );
-
                         }}
                         title="Delete employee"
                         aria-label="Delete employee"
+                        size="small"
                       >
-
                         <DeleteIcon />
-
                       </IconButton>
 
                     </div>
 
                   </div>
-
                 );
-
               }
-
             )}
-
 
           {/* ====================================
               NO SEARCH RESULTS
@@ -974,7 +699,6 @@ function Employees() {
             !error &&
             employees.length > 0 &&
             filteredEmployees.length === 0 && (
-
               <div className="no-employees">
 
                 <div className="no-employees__icon">
@@ -991,10 +715,18 @@ function Employees() {
                   ".
                 </p>
 
+                <button
+                  type="button"
+                  className="empty-create-button"
+                  onClick={
+                    handleClearSearch
+                  }
+                >
+                  Clear Search
+                </button>
+
               </div>
-
             )}
-
 
           {/* ====================================
               NO EMPLOYEES
@@ -1003,7 +735,6 @@ function Employees() {
           {!loading &&
             !error &&
             employees.length === 0 && (
-
               <div className="no-employees">
 
                 <div className="no-employees__icon">
@@ -1030,78 +761,53 @@ function Employees() {
                 </button>
 
               </div>
-
             )}
 
         </div>
 
-
         {/* ======================================
-            FOOTER
+            TABLE FOOTER
         ====================================== */}
 
         {!loading &&
           !error &&
           employees.length > 0 && (
-
             <div className="employees-table__footer">
 
               <span>
-
-                Showing:
-
+                Showing{" "}
                 <strong>
-                  {" "}
                   {filteredEmployees.length}
-                </strong>
-
-                {" "}of{" "}
-
+                </strong>{" "}
+                of{" "}
                 <strong>
                   {employees.length}
-                </strong>
-
-                {" "}
+                </strong>{" "}
                 Employees
-
               </span>
 
             </div>
-
           )}
 
       </div>
-
 
       {/* ======================================
           CREATE / EDIT POPUP
       ====================================== */}
 
       <EmployeeInfoPop
-
-        open={
-          openEmployeePopup
-        }
-
+        open={openEmployeePopup}
         onClose={
           handleCloseEmployeePopup
         }
-
-        employee={
-          selectedEmployee
-        }
-
+        employee={selectedEmployee}
         onEmployeeSaved={
           handleEmployeeSaved
         }
-
       />
 
     </div>
-
   );
-
 }
-
 
 export default Employees;

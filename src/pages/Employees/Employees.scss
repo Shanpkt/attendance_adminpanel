@@ -1,101 +1,821 @@
-// ==========================================
-// ACTION COLUMN
-// ==========================================
+// ======================================================
+// EMPLOYEES PAGE
+// ======================================================
 
-.column-actions {
-
-  display: flex !important;
-
-  align-items: center !important;
-
-  justify-content: flex-start !important;
-
-  flex-direction: row !important;
-
-  flex-wrap: nowrap !important;
-
-  gap: 20px !important;
-
+.employees-page {
   width: 100%;
+  min-height: 100vh;
+  padding: 28px 32px 40px;
+  box-sizing: border-box;
 
-  white-space: nowrap;
+  background: #f6f8fb;
+  color: #1f2937;
 
-  min-width: 160px;
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
 
+  // ====================================================
+  // HEADER
+  // ====================================================
+
+  &__header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 26px;
+  }
+
+  // ====================================================
+  // TITLE
+  // ====================================================
+
+  .employees-title {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+
+    &__icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      background: #eef2ff;
+      color: #4f46e5;
+
+      font-size: 23px;
+      flex-shrink: 0;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 25px;
+      line-height: 1.2;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    p {
+      margin: 5px 0 0;
+      font-size: 14px;
+      color: #6b7280;
+    }
+  }
+
+  // ====================================================
+  // HEADER ACTIONS
+  // ====================================================
+
+  .employees-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+
+  // ====================================================
+  // EMPLOYEE COUNT
+  // ====================================================
+
+  .employee-count {
+    min-width: 120px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+
+    span {
+      font-size: 12px;
+      color: #6b7280;
+      margin-bottom: 3px;
+    }
+
+    strong {
+      font-size: 22px;
+      line-height: 1;
+      color: #111827;
+      font-weight: 700;
+    }
+  }
+
+  // ====================================================
+  // CREATE BUTTON
+  // ====================================================
+
+  .create-employee-button {
+    height: 44px;
+    padding: 0 18px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+
+    border: none;
+    border-radius: 9px;
+
+    background: #4f46e5;
+    color: #ffffff;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+      background 0.2s ease,
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
+
+    &:hover {
+      background: #4338ca;
+      box-shadow: 0 5px 14px rgba(79, 70, 229, 0.22);
+      transform: translateY(-1px);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+
+  .create-button-icon {
+    font-size: 21px;
+    line-height: 1;
+    font-weight: 400;
+  }
+
+  // ====================================================
+  // SEARCH SECTION
+  // ====================================================
+
+  .employees-actions {
+    width: 100%;
+    margin-bottom: 18px;
+  }
+
+  .employee-search {
+    width: 100%;
+    height: 48px;
+
+    display: flex;
+    align-items: center;
+
+    position: relative;
+
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+
+    box-sizing: border-box;
+
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
+
+    &:focus-within {
+      border-color: #818cf8;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    .search-icon {
+      width: 48px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      font-size: 17px;
+      color: #9ca3af;
+      flex-shrink: 0;
+    }
+
+    input {
+      flex: 1;
+      min-width: 0;
+      height: 100%;
+
+      border: none;
+      outline: none;
+      background: transparent;
+
+      padding: 0 44px 0 0;
+
+      font-size: 14px;
+      color: #111827;
+
+      &::placeholder {
+        color: #9ca3af;
+      }
+    }
+
+    .search-clear {
+      position: absolute;
+      right: 10px;
+
+      width: 30px;
+      height: 30px;
+
+      border: none;
+      border-radius: 50%;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      background: #f3f4f6;
+      color: #6b7280;
+
+      font-size: 19px;
+      line-height: 1;
+
+      cursor: pointer;
+
+      transition:
+        background 0.2s ease,
+        color 0.2s ease;
+
+      &:hover {
+        background: #e5e7eb;
+        color: #111827;
+      }
+    }
+  }
+
+  // ====================================================
+  // TABLE CARD
+  // ====================================================
+
+  .employees-table-card {
+    width: 100%;
+
+    background: #ffffff;
+
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+
+    overflow: hidden;
+
+    box-shadow:
+      0 1px 2px rgba(15, 23, 42, 0.03);
+  }
+
+  .employees-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  // ====================================================
+  // TABLE HEADER
+  // ====================================================
+
+  .employees-table__header {
+    min-width: 850px;
+
+    display: grid;
+
+    grid-template-columns:
+      60px
+      minmax(240px, 1.7fr)
+      minmax(150px, 1fr)
+      minmax(130px, 1fr)
+      minmax(120px, 0.8fr)
+      130px;
+
+    align-items: center;
+
+    padding: 0 20px;
+
+    min-height: 52px;
+
+    background: #f9fafb;
+
+    border-bottom: 1px solid #e5e7eb;
+
+    color: #6b7280;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+
+    box-sizing: border-box;
+  }
+
+  // ====================================================
+  // TABLE ROW
+  // ====================================================
+
+  .employees-table__row {
+    min-width: 850px;
+
+    display: grid;
+
+    grid-template-columns:
+      60px
+      minmax(240px, 1.7fr)
+      minmax(150px, 1fr)
+      minmax(130px, 1fr)
+      minmax(120px, 0.8fr)
+      130px;
+
+    align-items: center;
+
+    padding: 0 20px;
+
+    min-height: 76px;
+
+    background: #ffffff;
+
+    border-bottom: 1px solid #f0f1f3;
+
+    box-sizing: border-box;
+
+    transition: background 0.2s ease;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &:hover {
+      background: #fafbff;
+    }
+  }
+
+  // ====================================================
+  // COLUMNS
+  // ====================================================
+
+  .column-number {
+    color: #9ca3af;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .column-employee {
+    min-width: 0;
+  }
+
+  .column-mobile {
+    color: #374151;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .column-date {
+    color: #4b5563;
+    font-size: 13px;
+  }
+
+  .column-status {
+    display: flex;
+    align-items: center;
+  }
+
+  .column-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 4px;
+  }
+
+  // ====================================================
+  // CLICKABLE EMPLOYEE
+  // ====================================================
+
+  .employee-clickable {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    cursor: pointer;
+
+    min-width: 0;
+  }
+
+  // ====================================================
+  // AVATAR
+  // ====================================================
+
+  .employee-avatar {
+    width: 42px;
+    height: 42px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: #eef2ff;
+    color: #4f46e5;
+
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  // ====================================================
+  // EMPLOYEE INFO
+  // ====================================================
+
+  .employee-info {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .employee-name {
+    display: block;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    color: #111827;
+
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .employee-email {
+    display: block;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    color: #9ca3af;
+
+    font-size: 12px;
+  }
+
+  // ====================================================
+  // STATUS
+  // ====================================================
+
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+
+    padding: 5px 10px;
+
+    border-radius: 999px;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    &--active {
+      background: #ecfdf3;
+      color: #15803d;
+    }
+  }
+
+  .status-dot {
+    width: 7px;
+    height: 7px;
+
+    border-radius: 50%;
+
+    background: #22c55e;
+  }
+
+  // ====================================================
+  // MUI EDIT BUTTON
+  // ====================================================
+
+  .employee-edit-button {
+    width: 36px !important;
+    height: 36px !important;
+
+    padding: 0 !important;
+
+    border-radius: 8px !important;
+
+    color: #4f46e5 !important;
+    background: transparent !important;
+
+    transition:
+      background 0.2s ease,
+      color 0.2s ease;
+
+    svg {
+      font-size: 19px;
+    }
+
+    &:hover {
+      background: #eef2ff !important;
+      color: #4338ca !important;
+    }
+  }
+
+  // ====================================================
+  // MUI DELETE BUTTON
+  // ====================================================
+
+  .employee-delete-button {
+    width: 36px !important;
+    height: 36px !important;
+
+    padding: 0 !important;
+
+    border-radius: 8px !important;
+
+    color: #ef4444 !important;
+    background: transparent !important;
+
+    transition:
+      background 0.2s ease,
+      color 0.2s ease;
+
+    svg {
+      font-size: 19px;
+    }
+
+    &:hover {
+      background: #fef2f2 !important;
+      color: #dc2626 !important;
+    }
+  }
+
+  // ====================================================
+  // EMPTY / LOADING / ERROR
+  // ====================================================
+
+  .no-employees {
+    min-height: 260px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    padding: 35px 20px;
+
+    text-align: center;
+
+    background: #ffffff;
+
+    box-sizing: border-box;
+
+    &__icon {
+      width: 54px;
+      height: 54px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      margin-bottom: 14px;
+
+      border-radius: 50%;
+
+      background: #f3f4f6;
+
+      font-size: 23px;
+    }
+
+    h3 {
+      margin: 0;
+
+      color: #374151;
+
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    p {
+      margin: 7px 0 0;
+
+      color: #9ca3af;
+
+      font-size: 13px;
+    }
+  }
+
+  // ====================================================
+  // RETRY
+  // ====================================================
+
+  .retry-button {
+    margin-top: 16px;
+
+    height: 38px;
+    padding: 0 16px;
+
+    border: 1px solid #4f46e5;
+    border-radius: 8px;
+
+    background: #ffffff;
+    color: #4f46e5;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+      background 0.2s ease,
+      color 0.2s ease;
+
+    &:hover {
+      background: #4f46e5;
+      color: #ffffff;
+    }
+  }
+
+  // ====================================================
+  // EMPTY CREATE BUTTON
+  // ====================================================
+
+  .empty-create-button {
+    margin-top: 18px;
+
+    height: 40px;
+    padding: 0 17px;
+
+    border: none;
+    border-radius: 8px;
+
+    background: #4f46e5;
+    color: #ffffff;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+      background 0.2s ease,
+      transform 0.2s ease;
+
+    &:hover {
+      background: #4338ca;
+      transform: translateY(-1px);
+    }
+  }
+
+  // ====================================================
+  // FOOTER
+  // ====================================================
+
+  .employees-table__footer {
+    min-height: 52px;
+
+    display: flex;
+    align-items: center;
+
+    padding: 0 20px;
+
+    border-top: 1px solid #e5e7eb;
+
+    background: #ffffff;
+
+    color: #6b7280;
+
+    font-size: 13px;
+
+    strong {
+      color: #374151;
+      font-weight: 600;
+    }
+  }
 }
 
+// ======================================================
+// RESPONSIVE - TABLET
+// ======================================================
 
-// ==========================================
-// MUI ACTION BUTTON
-// ==========================================
+@media (max-width: 900px) {
+  .employees-page {
+    padding: 22px 20px 32px;
 
-.employee-edit-button,
-.employee-delete-button {
+    &__header {
+      align-items: flex-start;
+    }
 
-  width: 40px !important;
+    .employees-header-actions {
+      gap: 10px;
+    }
 
-  height: 40px !important;
-
-  padding: 8px !important;
-
-  flex: 0 0 40px;
-
-  border-radius: 8px !important;
-
-  transition:
-    background-color 0.2s ease,
-    transform 0.2s ease !important;
-
+    .employee-count {
+      display: none;
+    }
+  }
 }
 
+// ======================================================
+// RESPONSIVE - MOBILE
+// ======================================================
 
-// ==========================================
-// EDIT BUTTON
-// ==========================================
+@media (max-width: 650px) {
+  .employees-page {
+    padding: 18px 14px 28px;
 
-.employee-edit-button {
+    &__header {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 18px;
+      margin-bottom: 20px;
+    }
 
-  color: #2563eb !important;
+    .employees-title {
+      gap: 11px;
 
+      &__icon {
+        width: 42px;
+        height: 42px;
+
+        font-size: 19px;
+        border-radius: 10px;
+      }
+
+      h1 {
+        font-size: 21px;
+      }
+
+      p {
+        font-size: 12px;
+      }
+    }
+
+    .employees-header-actions {
+      width: 100%;
+    }
+
+    .create-employee-button {
+      width: 100%;
+      height: 44px;
+    }
+
+    .employee-search {
+      height: 46px;
+
+      input {
+        font-size: 13px;
+      }
+    }
+
+    .employees-table-card {
+      border-radius: 10px;
+    }
+
+    .employees-table-wrapper {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .employees-table__header,
+    .employees-table__row {
+      min-width: 820px;
+    }
+
+    .employees-table__row {
+      min-height: 70px;
+      padding: 0 15px;
+    }
+
+    .employees-table__header {
+      padding: 0 15px;
+    }
+
+    .employees-table__footer {
+      padding: 0 15px;
+      font-size: 12px;
+    }
+  }
 }
 
+// ======================================================
+// VERY SMALL MOBILE
+// ======================================================
 
-.employee-edit-button:hover {
+@media (max-width: 400px) {
+  .employees-page {
+    padding: 14px 10px 24px;
 
-  background-color: #eff6ff !important;
+    .employees-title {
+      h1 {
+        font-size: 19px;
+      }
+    }
 
-  transform: translateY(-1px);
-
-}
-
-
-// ==========================================
-// DELETE BUTTON
-// ==========================================
-
-.employee-delete-button {
-
-  color: #dc2626 !important;
-
-}
-
-
-.employee-delete-button:hover {
-
-  background-color: #fef2f2 !important;
-
-  transform: translateY(-1px);
-
-}
-
-
-// ==========================================
-// MUI ICON SIZE
-// ==========================================
-
-.employee-edit-button svg,
-.employee-delete-button svg {
-
-  font-size: 21px;
-
+    .employee-search {
+      .search-icon {
+        width: 42px;
+      }
+    }
+  }
 }
