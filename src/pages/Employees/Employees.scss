@@ -1,0 +1,101 @@
+// ==========================================
+// ACTION COLUMN
+// ==========================================
+
+.column-actions {
+
+  display: flex !important;
+
+  align-items: center !important;
+
+  justify-content: flex-start !important;
+
+  flex-direction: row !important;
+
+  flex-wrap: nowrap !important;
+
+  gap: 20px !important;
+
+  width: 100%;
+
+  white-space: nowrap;
+
+  min-width: 160px;
+
+}
+
+
+// ==========================================
+// MUI ACTION BUTTON
+// ==========================================
+
+.employee-edit-button,
+.employee-delete-button {
+
+  width: 40px !important;
+
+  height: 40px !important;
+
+  padding: 8px !important;
+
+  flex: 0 0 40px;
+
+  border-radius: 8px !important;
+
+  transition:
+    background-color 0.2s ease,
+    transform 0.2s ease !important;
+
+}
+
+
+// ==========================================
+// EDIT BUTTON
+// ==========================================
+
+.employee-edit-button {
+
+  color: #2563eb !important;
+
+}
+
+
+.employee-edit-button:hover {
+
+  background-color: #eff6ff !important;
+
+  transform: translateY(-1px);
+
+}
+
+
+// ==========================================
+// DELETE BUTTON
+// ==========================================
+
+.employee-delete-button {
+
+  color: #dc2626 !important;
+
+}
+
+
+.employee-delete-button:hover {
+
+  background-color: #fef2f2 !important;
+
+  transform: translateY(-1px);
+
+}
+
+
+// ==========================================
+// MUI ICON SIZE
+// ==========================================
+
+.employee-edit-button svg,
+.employee-delete-button svg {
+
+  font-size: 21px;
+
+}

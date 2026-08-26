@@ -1,0 +1,891 @@
+@import "../../styles/variables";
+
+$border-radius: 8px;
+
+
+/* ==================================================
+   DASHBOARD
+================================================== */
+
+.dashboard {
+
+  &__header {
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    margin-bottom: 25px;
+
+    h1 {
+
+      font-size: 28px;
+      font-weight: 700;
+
+      margin-bottom: 5px;
+
+    }
+
+    p {
+
+      color: $text-secondary;
+      font-size: 13px;
+
+    }
+
+  }
+
+
+  &__actions {
+
+    display: flex;
+    gap: 12px;
+
+  }
+
+}
+
+
+/* ==================================================
+   BUTTONS
+================================================== */
+
+.date-button,
+.report-button {
+
+  height: 42px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 10px;
+
+  padding: 0 15px;
+
+  border-radius: 7px;
+
+  font-size: 13px;
+
+  cursor: pointer;
+
+}
+
+
+.date-button {
+
+  background: #fff;
+
+  border: 1px solid $border-color;
+
+  color: $text-primary;
+
+}
+
+
+.report-button {
+
+  background: $primary;
+
+  color: #fff;
+
+  border: none;
+
+  transition: all 0.2s ease;
+
+  &:hover {
+
+    background: $primary-dark;
+
+  }
+
+  &:disabled {
+
+    opacity: 0.6;
+
+    cursor: not-allowed;
+
+  }
+
+}
+
+
+/* ==================================================
+   STATISTICS
+================================================== */
+
+.stats {
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(4, 1fr);
+
+  gap: 18px;
+
+  margin-bottom: 22px;
+
+}
+
+
+.stat-card {
+
+  min-height: 105px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 17px;
+
+  padding: 20px;
+
+  background: #fff;
+
+  border: 1px solid $border-color;
+
+  border-radius: $border-radius;
+
+
+  &__icon {
+
+    width: 55px;
+    height: 55px;
+
+    flex-shrink: 0;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    font-size: 23px;
+
+  }
+
+
+  p {
+
+    margin-bottom: 5px;
+
+    color: $text-secondary;
+
+    font-size: 13px;
+
+  }
+
+
+  h2 {
+
+    font-size: 25px;
+
+    font-weight: 700;
+
+  }
+
+
+  &--employees {
+
+    .stat-card__icon {
+
+      background: #e9f1ff;
+
+      color: $primary;
+
+    }
+
+  }
+
+
+  &--present {
+
+    .stat-card__icon {
+
+      background: $success-bg;
+
+      color: $success;
+
+    }
+
+  }
+
+
+  &--absent {
+
+    .stat-card__icon {
+
+      background: $danger-bg;
+
+      color: $danger;
+
+    }
+
+  }
+
+
+  &--leave {
+
+    .stat-card__icon {
+
+      background: $warning-bg;
+
+      color: $warning;
+
+    }
+
+  }
+
+}
+
+
+/* ==================================================
+   MAIN GRID
+   FULL WIDTH - PROFILE REMOVED
+================================================== */
+
+.dashboard-grid {
+
+  display: grid;
+
+  grid-template-columns: 1fr;
+
+  width: 100%;
+
+  gap: 20px;
+
+}
+
+
+/* ==================================================
+   ATTENDANCE CARD
+================================================== */
+
+.attendance-card {
+
+  width: 100%;
+
+  min-width: 0;
+
+  min-height: 450px;
+
+  background: #fff;
+
+  border: 1px solid $border-color;
+
+  border-radius: $border-radius;
+
+  overflow: hidden;
+
+}
+
+
+/* ==================================================
+   CARD HEADER
+================================================== */
+
+.card-header {
+
+  min-height: 65px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 15px;
+
+  padding: 0 22px;
+
+  border-bottom: 1px solid $border-color;
+
+
+  h2 {
+
+    font-size: 17px;
+
+    margin: 0;
+
+    white-space: nowrap;
+
+  }
+
+}
+
+
+/* ==================================================
+   ATTENDANCE ACTIONS
+================================================== */
+
+.attendance-actions {
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: flex-end;
+
+  gap: 10px;
+
+  flex-shrink: 0;
+
+}
+
+
+/* ==================================================
+   REFRESH BUTTON
+================================================== */
+
+.refresh-button {
+
+  height: 34px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 6px;
+
+  padding: 0 13px;
+
+  border: 1px solid #1976d2;
+
+  border-radius: 7px;
+
+  background: #ffffff;
+
+  color: #1976d2;
+
+  font-size: 12px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  white-space: nowrap;
+
+  transition: all 0.2s ease;
+
+
+  &:hover {
+
+    background: #1976d2;
+
+    color: #ffffff;
+
+  }
+
+
+  &:disabled {
+
+    opacity: 0.6;
+
+    cursor: not-allowed;
+
+  }
+
+
+  &:disabled:hover {
+
+    background: #ffffff;
+
+    color: #1976d2;
+
+  }
+
+}
+
+
+/* ==================================================
+   VIEW ALL / DOWNLOAD PDF
+================================================== */
+
+.view-all {
+
+  height: 34px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  padding: 0 13px;
+
+  background: transparent;
+
+  border: 1px solid $primary;
+
+  border-radius: 7px;
+
+  color: $primary;
+
+  font-size: 12px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  white-space: nowrap;
+
+  transition: all 0.2s ease;
+
+
+  &:hover {
+
+    background: $primary;
+
+    color: #fff;
+
+    text-decoration: none;
+
+  }
+
+
+  &:disabled {
+
+    opacity: 0.5;
+
+    cursor: not-allowed;
+
+  }
+
+
+  &:disabled:hover {
+
+    background: transparent;
+
+    color: $primary;
+
+  }
+
+}
+
+
+/* ==================================================
+   PLACEHOLDER
+================================================== */
+
+.attendance-placeholder {
+
+  min-height: 380px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  color: red;
+
+  font-size: 14px;
+
+}
+
+
+/* ==================================================
+   ATTENDANCE LIST
+================================================== */
+
+.attendance-list {
+
+  width: 100%;
+
+  display: block;
+
+}
+
+
+/* ==================================================
+   TABLE HEADER
+================================================== */
+
+.attendance-list__header {
+
+  display: grid;
+
+  grid-template-columns:
+    2fr
+    1fr
+    1fr;
+
+  align-items: center;
+
+  width: 100%;
+
+  padding: 14px 22px;
+
+  box-sizing: border-box;
+
+  border-bottom: 1px solid #e5e7eb;
+
+  background: #fafafa;
+
+  color: #6b7280;
+
+  font-size: 12px;
+
+  font-weight: 600;
+
+  text-transform: uppercase;
+
+}
+
+
+/* ==================================================
+   ATTENDANCE ROW
+================================================== */
+
+.attendance-list__row {
+
+  display: grid;
+
+  grid-template-columns:
+    2fr
+    1fr
+    1fr;
+
+  align-items: center;
+
+  width: 100%;
+
+  min-height: 72px;
+
+  padding: 10px 22px;
+
+  box-sizing: border-box;
+
+  border-bottom: 1px solid #eeeeee;
+
+  transition: background 0.2s ease;
+
+
+  &:hover {
+
+    background: #f8fafc;
+
+  }
+
+
+  &:last-child {
+
+    border-bottom: none;
+
+  }
+
+}
+
+
+/* ==================================================
+   EMPLOYEE SECTION
+================================================== */
+
+.attendance-user {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+
+  min-width: 0;
+
+}
+
+
+/* ==================================================
+   AVATAR
+================================================== */
+
+.attendance-user .MuiAvatar-root {
+
+  flex-shrink: 0;
+
+}
+
+
+/* ==================================================
+   EMPLOYEE NAME
+================================================== */
+
+.attendance-user__number {
+
+  font-size: 14px !important;
+
+  font-weight: 600 !important;
+
+  color: #1f2937;
+
+  margin: 0 !important;
+
+}
+
+
+/* ==================================================
+   EMPLOYEE LABEL / MOBILE
+================================================== */
+
+.attendance-user__label {
+
+  font-size: 12px !important;
+
+  color: #9ca3af;
+
+  margin-top: 2px !important;
+
+}
+
+
+/* ==================================================
+   DATE
+================================================== */
+
+.attendance-date {
+
+  font-size: 14px !important;
+
+  font-weight: 500 !important;
+
+  color: #4b5563;
+
+  margin: 0 !important;
+
+}
+
+
+/* ==================================================
+   TIME
+================================================== */
+
+.attendance-time {
+
+  width: fit-content;
+
+  background: #eef6ff !important;
+
+  color: #1976d2 !important;
+
+  border: 1px solid #d7eaff !important;
+
+  font-size: 12px !important;
+
+  font-weight: 600 !important;
+
+}
+
+
+/* ==================================================
+   TABLET
+================================================== */
+
+@media (max-width: 1100px) {
+
+  .stats {
+
+    grid-template-columns:
+      repeat(2, 1fr);
+
+  }
+
+
+  .dashboard-grid {
+
+    grid-template-columns: 1fr;
+
+  }
+
+}
+
+
+/* ==================================================
+   MOBILE
+================================================== */
+
+@media (max-width: 650px) {
+
+  .dashboard {
+
+    &__header {
+
+      align-items: flex-start;
+
+      flex-direction: column;
+
+      gap: 15px;
+
+
+      h1 {
+
+        font-size: 23px;
+
+      }
+
+    }
+
+
+    &__actions {
+
+      width: 100%;
+
+
+      .date-button,
+      .report-button {
+
+        flex: 1;
+
+        justify-content: center;
+
+      }
+
+    }
+
+  }
+
+
+  /* ==========================
+     MOBILE STATS
+  ========================== */
+
+  .stats {
+
+    grid-template-columns: 1fr;
+
+  }
+
+
+  .stat-card {
+
+    min-height: 90px;
+
+  }
+
+
+  /* ==========================
+     MOBILE ATTENDANCE
+  ========================== */
+
+  .attendance-card {
+
+    min-height: 400px;
+
+    overflow-x: auto;
+
+  }
+
+
+  /* ==========================
+     MOBILE CARD HEADER
+  ========================== */
+
+  .card-header {
+
+    min-width: 500px;
+
+    min-height: 65px;
+
+    padding: 0 16px;
+
+
+    h2 {
+
+      font-size: 15px;
+
+    }
+
+  }
+
+
+  /* ==========================
+     MOBILE ACTION BUTTONS
+  ========================== */
+
+  .attendance-actions {
+
+    gap: 7px;
+
+  }
+
+
+  .refresh-button,
+  .view-all {
+
+    height: 32px;
+
+    padding: 0 9px;
+
+    font-size: 11px;
+
+  }
+
+
+  /* ==========================
+     MOBILE LIST
+  ========================== */
+
+  .attendance-list {
+
+    min-width: 500px;
+
+  }
+
+
+  .attendance-list__header {
+
+    padding: 12px 16px;
+
+    grid-template-columns:
+      2fr
+      1fr
+      1fr;
+
+  }
+
+
+  .attendance-list__row {
+
+    padding: 10px 16px;
+
+    grid-template-columns:
+      2fr
+      1fr
+      1fr;
+
+  }
+
+}
+
+
+/* ==================================================
+   VERY SMALL MOBILE
+================================================== */
+
+@media (max-width: 400px) {
+
+  .card-header {
+
+    min-width: 470px;
+
+  }
+
+
+  .attendance-list {
+
+    min-width: 470px;
+
+  }
+
+
+  .refresh-button,
+  .view-all {
+
+    padding: 0 8px;
+
+    font-size: 10px;
+
+  }
+
+}
