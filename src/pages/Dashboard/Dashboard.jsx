@@ -1,6 +1,7 @@
 import React, {
   useEffect,
   useState,
+  useCallback,
 } from "react";
 
 import axios from "axios";
@@ -17,7 +18,6 @@ import autoTable from "jspdf-autotable";
 import "./Dashboard.scss";
 
 function Dashboard() {
-
   // ==========================================
   // API URLS
   // ==========================================
@@ -28,14 +28,12 @@ function Dashboard() {
   const EMPLOYEES_API =
     "https://attendance-backend-hs75.onrender.com/api/employees";
 
-
   // ==========================================
   // ATTENDANCE STATE
   // ==========================================
 
   const [attendanceList, setAttendanceList] =
     useState([]);
-
 
   // ==========================================
   // EMPLOYEE STATE
@@ -44,14 +42,12 @@ function Dashboard() {
   const [employees, setEmployees] =
     useState([]);
 
-
   // ==========================================
   // LOADING STATE
   // ==========================================
 
   const [loading, setLoading] =
     useState(true);
-
 
   // ==========================================
   // REFRESH STATE
@@ -60,7 +56,6 @@ function Dashboard() {
   const [refreshing, setRefreshing] =
     useState(false);
 
-
   // ==========================================
   // ERROR STATE
   // ==========================================
@@ -68,14 +63,12 @@ function Dashboard() {
   const [error, setError] =
     useState("");
 
-
   // ==========================================
   // TOTAL EMPLOYEES - DYNAMIC
   // ==========================================
 
   const totalEmployees =
     employees.length;
-
 
   // ==========================================
   // GET TODAY DATE
@@ -87,10 +80,8 @@ function Dashboard() {
   // 26/8/2026
   // ==========================================
 
-  const getTodayDate = () => {
-
-    const today =
-      new Date();
+  const getTodayDate = useCallback(() => {
+    const today = new Date();
 
     const day =
       today.getDate();
@@ -102,170 +93,141 @@ function Dashboard() {
       today.getFullYear();
 
     return `${day}/${month}/${year}`;
-
-  };
-
+  }, []);
 
   // ==========================================
   // FETCH ATTENDANCE + EMPLOYEES
   // ==========================================
 
-  const fetchData = async (
-    isRefresh = false
-  ) => {
+  const fetchData = useCallback(
+    async (isRefresh = false) => {
+      try {
+        // ======================================
+        // LOADING STATE
+        // ======================================
 
-    try {
+        if (isRefresh) {
+          setRefreshing(true);
+        } else {
+          setLoading(true);
+        }
 
-      // ======================================
-      // LOADING STATE
-      // ======================================
+        setError("");
 
-      if (isRefresh) {
+        // ======================================
+        // GET ATTENDANCE
+        // ======================================
 
-        setRefreshing(true);
+        const attendanceResponse =
+          await axios.get(
+            ATTENDANCE_API
+          );
 
-      } else {
+        console.log(
+          "Attendance API response:",
+          attendanceResponse.data
+        );
 
-        setLoading(true);
+        // ======================================
+        // GET ALL ATTENDANCE
+        // ======================================
 
+        const allAttendance =
+          attendanceResponse.data.data || [];
+
+        // ======================================
+        // GET TODAY DATE
+        // ======================================
+
+        const todayDate =
+          getTodayDate();
+
+        console.log(
+          "Today's date:",
+          todayDate
+        );
+
+        // ======================================
+        // FILTER ONLY TODAY'S ATTENDANCE
+        // ======================================
+
+        const todayAttendance =
+          allAttendance.filter(
+            (attendance) => {
+              const attendanceDate =
+                String(
+                  attendance.date || ""
+                ).trim();
+
+              return (
+                attendanceDate ===
+                todayDate
+              );
+            }
+          );
+
+        console.log(
+          "Today's attendance:",
+          todayAttendance
+        );
+
+        // ======================================
+        // SET TODAY'S ATTENDANCE
+        // ======================================
+
+        setAttendanceList(
+          todayAttendance
+        );
+
+        // ======================================
+        // GET EMPLOYEES
+        // ======================================
+
+        const employeeResponse =
+          await axios.get(
+            EMPLOYEES_API
+          );
+
+        console.log(
+          "Employees API response:",
+          employeeResponse.data
+        );
+
+        // ======================================
+        // SET EMPLOYEES
+        // ======================================
+
+        setEmployees(
+          employeeResponse.data.data || []
+        );
+      } catch (error) {
+        console.error(
+          "Error fetching dashboard data:",
+          error
+        );
+
+        setError(
+          "Unable to fetch dashboard data."
+        );
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
       }
-
-
-      setError("");
-
-
-      // ======================================
-      // GET ATTENDANCE
-      // ======================================
-
-      const attendanceResponse =
-        await axios.get(
-          ATTENDANCE_API
-        );
-
-
-      console.log(
-        "Attendance API response:",
-        attendanceResponse.data
-      );
-
-
-      // ======================================
-      // GET ALL ATTENDANCE
-      // ======================================
-
-      const allAttendance =
-        attendanceResponse.data.data || [];
-
-
-      // ======================================
-      // GET TODAY DATE
-      // ======================================
-
-      const todayDate =
-        getTodayDate();
-
-
-      console.log(
-        "Today's date:",
-        todayDate
-      );
-
-
-      // ======================================
-      // FILTER ONLY TODAY'S ATTENDANCE
-      // ======================================
-
-      const todayAttendance =
-        allAttendance.filter(
-          (attendance) => {
-
-            const attendanceDate =
-              String(
-                attendance.date || ""
-              ).trim();
-
-            return (
-              attendanceDate ===
-              todayDate
-            );
-
-          }
-        );
-
-
-      console.log(
-        "Today's attendance:",
-        todayAttendance
-      );
-
-
-      // ======================================
-      // SET TODAY'S ATTENDANCE
-      // ======================================
-
-      setAttendanceList(
-        todayAttendance
-      );
-
-
-      // ======================================
-      // GET EMPLOYEES
-      // ======================================
-
-      const employeeResponse =
-        await axios.get(
-          EMPLOYEES_API
-        );
-
-
-      console.log(
-        "Employees API response:",
-        employeeResponse.data
-      );
-
-
-      // ======================================
-      // SET EMPLOYEES
-      // ======================================
-
-      setEmployees(
-        employeeResponse.data.data || []
-      );
-
-    } catch (error) {
-
-      console.error(
-        "Error fetching dashboard data:",
-        error
-      );
-
-
-      setError(
-        "Unable to fetch dashboard data."
-      );
-
-    } finally {
-
-      setLoading(false);
-
-      setRefreshing(false);
-
-    }
-
-  };
-
+    },
+    [
+      getTodayDate,
+      ATTENDANCE_API,
+      EMPLOYEES_API,
+    ]
+  );
 
   // ==========================================
   // INITIAL API CALL
   // ==========================================
 
   useEffect(() => {
-
     fetchData();
-
-  }, []);
-
+  }, [fetchData]);
 
   // ==========================================
   // GET EMPLOYEE NAME
@@ -274,7 +236,6 @@ function Dashboard() {
   const getEmployeeName = (
     mobileNumber
   ) => {
-
     const employee =
       employees.find(
         (emp) =>
@@ -286,9 +247,7 @@ function Dashboard() {
           )
       );
 
-
     if (employee) {
-
       return (
         employee.name ||
         employee.fullName ||
@@ -296,14 +255,10 @@ function Dashboard() {
         employee.firstName ||
         mobileNumber
       );
-
     }
 
-
     return mobileNumber;
-
   };
-
 
   // ==========================================
   // GET EMPLOYEE INITIAL
@@ -312,32 +267,22 @@ function Dashboard() {
   const getEmployeeInitial = (
     mobileNumber
   ) => {
-
     const name =
       getEmployeeName(
         mobileNumber
       );
 
-
     if (!name) {
-
       return "?";
-
     }
-
 
     return String(name)
       .charAt(0)
       .toUpperCase();
-
   };
-
 
   // ==========================================
   // COUNT UNIQUE PRESENT EMPLOYEES
-  //
-  // attendanceList contains ONLY TODAY'S
-  // attendance.
   // ==========================================
 
   const uniqueEmployees =
@@ -350,10 +295,8 @@ function Dashboard() {
         .filter(Boolean)
     );
 
-
   const presentCount =
     uniqueEmployees.size;
-
 
   // ==========================================
   // ABSENT COUNT
@@ -366,13 +309,11 @@ function Dashboard() {
       0
     );
 
-
   // ==========================================
   // STATS
   // ==========================================
 
   const stats = [
-
     {
       title: "Total Employees",
       value: totalEmployees,
@@ -400,16 +341,13 @@ function Dashboard() {
       type: "leave",
       icon: "◷",
     },
-
   ];
-
 
   // ==========================================
   // DOWNLOAD PDF
   // ==========================================
 
   const downloadPDF = () => {
-
     // ----------------------------------------
     // CHECK DATA
     // ----------------------------------------
@@ -417,15 +355,12 @@ function Dashboard() {
     if (
       attendanceList.length === 0
     ) {
-
       alert(
         "No attendance data available for today."
       );
 
       return;
-
     }
-
 
     // ----------------------------------------
     // CREATE PDF
@@ -438,14 +373,12 @@ function Dashboard() {
         format: "a4",
       });
 
-
     // ----------------------------------------
     // TODAY DATE
     // ----------------------------------------
 
     const today =
       new Date();
-
 
     const day =
       String(
@@ -455,7 +388,6 @@ function Dashboard() {
         "0"
       );
 
-
     const month =
       String(
         today.getMonth() + 1
@@ -464,18 +396,14 @@ function Dashboard() {
         "0"
       );
 
-
     const year =
       today.getFullYear();
-
 
     const formattedDate =
       `${day}/${month}/${year}`;
 
-
     const fileDate =
       `${day}-${month}-${year}`;
-
 
     // ----------------------------------------
     // PDF TITLE
@@ -496,7 +424,6 @@ function Dashboard() {
       15
     );
 
-
     // ----------------------------------------
     // SUBTITLE
     // ----------------------------------------
@@ -516,7 +443,6 @@ function Dashboard() {
       24
     );
 
-
     // ----------------------------------------
     // DATE
     // ----------------------------------------
@@ -530,7 +456,6 @@ function Dashboard() {
       14,
       32
     );
-
 
     // ----------------------------------------
     // SUMMARY
@@ -558,7 +483,6 @@ function Dashboard() {
       32
     );
 
-
     // ----------------------------------------
     // PREPARE TABLE DATA
     // ----------------------------------------
@@ -569,12 +493,10 @@ function Dashboard() {
           attendance,
           index
         ) => {
-
           const timestamp =
             new Date(
               attendance.timestamp
             );
-
 
           const time =
             timestamp.toLocaleTimeString(
@@ -586,9 +508,7 @@ function Dashboard() {
               }
             );
 
-
           return [
-
             index + 1,
 
             getEmployeeName(
@@ -611,12 +531,9 @@ function Dashboard() {
 
             attendance.accuracy ||
               "",
-
           ];
-
         }
       );
-
 
     // ----------------------------------------
     // CREATE TABLE
@@ -625,11 +542,9 @@ function Dashboard() {
     autoTable(
       doc,
       {
-
         startY: 40,
 
         head: [
-
           [
             "Sr. No.",
             "Employee Name",
@@ -640,7 +555,6 @@ function Dashboard() {
             "Longitude",
             "GPS Accuracy",
           ],
-
         ],
 
         body: tableData,
@@ -648,27 +562,18 @@ function Dashboard() {
         theme: "grid",
 
         styles: {
-
           fontSize: 8,
-
           cellPadding: 3,
-
           valign: "middle",
-
         },
 
         headStyles: {
-
           fontSize: 8,
-
           fontStyle: "bold",
-
           halign: "center",
-
         },
 
         columnStyles: {
-
           0: {
             cellWidth: 15,
             halign: "center",
@@ -701,20 +606,14 @@ function Dashboard() {
           7: {
             cellWidth: 30,
           },
-
         },
 
         margin: {
-
           left: 10,
-
           right: 10,
-
         },
-
       }
     );
-
 
     // ----------------------------------------
     // FOOTER
@@ -723,28 +622,23 @@ function Dashboard() {
     const pageCount =
       doc.internal.getNumberOfPages();
 
-
     for (
       let page = 1;
       page <= pageCount;
       page++
     ) {
-
       doc.setPage(
         page
       );
-
 
       doc.setFontSize(
         8
       );
 
-
       doc.setFont(
         "helvetica",
         "normal"
       );
-
 
       doc.text(
         "Generated by Shop Attendance System",
@@ -752,15 +646,12 @@ function Dashboard() {
         202
       );
 
-
       doc.text(
         `Page ${page} of ${pageCount}`,
         250,
         202
       );
-
     }
-
 
     // ----------------------------------------
     // DOWNLOAD
@@ -769,18 +660,14 @@ function Dashboard() {
     doc.save(
       `Attendance-${fileDate}.pdf`
     );
-
   };
-
 
   // ==========================================
   // UI
   // ==========================================
 
   return (
-
     <div className="dashboard">
-
 
       {/* ======================================
           PAGE HEADER
@@ -789,7 +676,6 @@ function Dashboard() {
       <div className="dashboard__header">
 
         <div>
-
           <h1>
             Today Attendance
           </h1>
@@ -798,9 +684,7 @@ function Dashboard() {
             Overview of today's employee
             attendance
           </p>
-
         </div>
-
 
         {/* ==================================
             PDF BUTTON
@@ -819,19 +703,16 @@ function Dashboard() {
               attendanceList.length === 0
             }
           >
-
             📄
 
             <span>
               Download PDF
             </span>
-
           </button>
 
         </div>
 
       </div>
-
 
       {/* ======================================
           STATS
@@ -841,7 +722,6 @@ function Dashboard() {
 
         {stats.map(
           (stat) => (
-
             <div
               className={
                 `stat-card stat-card--${stat.type}`
@@ -852,13 +732,10 @@ function Dashboard() {
             >
 
               <div className="stat-card__icon">
-
                 {
                   stat.icon
                 }
-
               </div>
-
 
               <div>
 
@@ -877,12 +754,10 @@ function Dashboard() {
               </div>
 
             </div>
-
           )
         )}
 
       </section>
-
 
       {/* ======================================
           ATTENDANCE CONTENT
@@ -890,13 +765,11 @@ function Dashboard() {
 
       <section className="dashboard-grid">
 
-
         {/* ====================================
             ATTENDANCE
         ==================================== */}
 
         <div className="attendance-card">
-
 
           {/* ==================================
               HEADER
@@ -907,7 +780,6 @@ function Dashboard() {
             <h2>
               Today's Attendance List
             </h2>
-
 
             <div className="attendance-actions">
 
@@ -924,14 +796,12 @@ function Dashboard() {
                   refreshing
                 }
               >
-
-                {refreshing
-                  ? "↻ Refreshing..."
-                  : "↻ Refresh"
+                {
+                  refreshing
+                    ? "↻ Refreshing..."
+                    : "↻ Refresh"
                 }
-
               </button>
-
 
               {/* =================================
                   PDF BUTTON
@@ -948,30 +818,22 @@ function Dashboard() {
                   attendanceList.length === 0
                 }
               >
-
                 Download PDF
-
               </button>
 
             </div>
 
           </div>
 
-
           {/* ==================================
               LOADING
           ================================== */}
 
           {loading && (
-
             <div className="attendance-placeholder">
-
               Loading attendance...
-
             </div>
-
           )}
-
 
           {/* ==================================
               ERROR
@@ -979,17 +841,12 @@ function Dashboard() {
 
           {!loading &&
             error && (
-
               <div className="attendance-placeholder">
-
                 {
                   error
                 }
-
               </div>
-
             )}
-
 
           {/* ==================================
               NO DATA
@@ -998,15 +855,10 @@ function Dashboard() {
           {!loading &&
             !error &&
             attendanceList.length === 0 && (
-
               <div className="attendance-placeholder">
-
                 No attendance records found for today.
-
               </div>
-
             )}
-
 
           {/* ==================================
               ATTENDANCE LIST
@@ -1017,7 +869,6 @@ function Dashboard() {
             attendanceList.length > 0 && (
 
               <Box className="attendance-list">
-
 
                 {/* ==============================
                     LIST HEADER
@@ -1039,7 +890,6 @@ function Dashboard() {
 
                 </Box>
 
-
                 {/* ==============================
                     ATTENDANCE ROWS
                 ============================== */}
@@ -1054,7 +904,6 @@ function Dashboard() {
                         attendance.timestamp
                       );
 
-
                     const time =
                       timestamp.toLocaleTimeString(
                         "en-IN",
@@ -1065,22 +914,18 @@ function Dashboard() {
                         }
                       );
 
-
                     const employeeName =
                       getEmployeeName(
                         attendance.mobileNumber
                       );
 
-
                     return (
-
                       <Box
                         key={
                           attendance._id
                         }
                         className="attendance-list__row"
                       >
-
 
                         {/* ==================
                             EMPLOYEE
@@ -1099,43 +944,34 @@ function Dashboard() {
                                 "linear-gradient(135deg, #1976d2, #42a5f5)",
                             }}
                           >
-
                             {
                               getEmployeeInitial(
                                 attendance.mobileNumber
                               )
                             }
-
                           </Avatar>
-
 
                           <Box>
 
                             <Typography
                               className="attendance-user__number"
                             >
-
                               {
                                 employeeName
                               }
-
                             </Typography>
-
 
                             <Typography
                               className="attendance-user__label"
                             >
-
                               {
                                 attendance.mobileNumber
                               }
-
                             </Typography>
 
                           </Box>
 
                         </Box>
-
 
                         {/* ==================
                             DATE
@@ -1144,13 +980,10 @@ function Dashboard() {
                         <Typography
                           className="attendance-date"
                         >
-
                           {
                             attendance.date
                           }
-
                         </Typography>
-
 
                         {/* ==================
                             TIME
@@ -1165,14 +998,11 @@ function Dashboard() {
                         />
 
                       </Box>
-
                     );
-
                   }
                 )}
 
               </Box>
-
             )}
 
         </div>
@@ -1180,10 +1010,7 @@ function Dashboard() {
       </section>
 
     </div>
-
   );
-
 }
-
 
 export default Dashboard;
