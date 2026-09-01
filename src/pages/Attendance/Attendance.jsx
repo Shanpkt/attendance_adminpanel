@@ -6,22 +6,42 @@ import React, {
 
 import axios from "axios";
 
+import {
+  Box,
+  FormControl,
+  ListItemIcon,
+  ListItemText,
+  MenuItem,
+  Select,
+  Typography,
+} from "@mui/material";
+
+import {
+  Groups,
+  CheckCircle,
+  EventAvailable,
+  Cancel,
+  PictureAsPdf,
+} from "@mui/icons-material";
+
 import "./Attendance.scss";
 
-// ==========================================
-// API URL
-// ==========================================
+// ======================================================
+// API URLS
+// ======================================================
 
-const API_URL =
+const ATTENDANCE_API =
   "https://attendance-backend-hs75.onrender.com/api/attendance";
 
-// ==========================================
-// FORMAT SELECTED DATE FOR DISPLAY
-// Example:
-// 2026-08-25
-// ↓
-// 25 August 2026
-// ==========================================
+const EMPLOYEES_API =
+  "https://attendance-backend-hs75.onrender.com/api/employees";
+
+const LEAVES_API =
+  "https://attendance-backend-hs75.onrender.com/api/leaves";
+
+// ======================================================
+// FORMAT DATE
+// ======================================================
 
 const formatDate = (dateString) => {
   if (!dateString) {
@@ -30,7 +50,7 @@ const formatDate = (dateString) => {
 
   const date = new Date(`${dateString}T00:00:00`);
 
-  if (isNaN(date.getTime())) {
+  if (Number.isNaN(date.getTime())) {
     return dateString;
   }
 
@@ -41,9 +61,9 @@ const formatDate = (dateString) => {
   });
 };
 
-// ==========================================
+// ======================================================
 // GET YYYY-MM-DD
-// ==========================================
+// ======================================================
 
 const getDateString = (date) => {
   const year = date.getFullYear();
@@ -59,28 +79,24 @@ const getDateString = (date) => {
   return `${year}-${month}-${day}`;
 };
 
-// ==========================================
-// CONVERT API DATE TO YYYY-MM-DD
-//
-// API:
-// 25/8/2026
-//
-// Converts to:
-// 2026-08-25
-// ==========================================
+// ======================================================
+// NORMALIZE API DATE
+// ======================================================
 
 const normalizeApiDate = (apiDate) => {
   if (!apiDate) {
     return "";
   }
 
+  const value = String(apiDate).trim();
+
   // Already YYYY-MM-DD
-  if (/^\d{4}-\d{2}-\d{2}$/.test(apiDate)) {
-    return apiDate;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return value;
   }
 
-  // API format: DD/M/YYYY
-  const parts = apiDate.split("/");
+  // DD/MM/YYYY
+  const parts = value.split("/");
 
   if (parts.length === 3) {
     const day = String(parts[0]).padStart(2, "0");
@@ -90,29 +106,30 @@ const normalizeApiDate = (apiDate) => {
     return `${year}-${month}-${day}`;
   }
 
-  return apiDate;
+  return value;
 };
 
-// ==========================================
+// ======================================================
 // GET INITIALS
-// ==========================================
+// ======================================================
 
 const getInitials = (name) => {
   if (!name) {
     return "U";
   }
 
-  return name
-    .split(" ")
+  return String(name)
+    .trim()
+    .split(/\s+/)
     .map((word) => word.charAt(0))
     .join("")
     .slice(0, 2)
     .toUpperCase();
 };
 
-// ==========================================
+// ======================================================
 // FORMAT TIME
-// ==========================================
+// ======================================================
 
 const formatTime = (timestamp) => {
   if (!timestamp) {
@@ -121,7 +138,7 @@ const formatTime = (timestamp) => {
 
   const date = new Date(timestamp);
 
-  if (isNaN(date.getTime())) {
+  if (Number.isNaN(date.getTime())) {
     return "--";
   }
 
@@ -133,48 +150,56 @@ const formatTime = (timestamp) => {
   });
 };
 
-// ==========================================
-// ATTENDANCE PAGE
-// ==========================================
+// ======================================================
+// COMPONENT
+// ======================================================
 
 function Attendance() {
-  // ========================================
-  // SELECTED DATE
-  // ========================================
+  // ====================================================
+  // DATE
+  // ====================================================
 
-  const [selectedDate, setSelectedDate] =
-    useState("2026-08-25");
+  const [selectedDate, setSelectedDate] = useState(
+    getDateString(new Date())
+  );
 
-  // ========================================
-  // ALL ATTENDANCE DATA
-  // ========================================
+  // ====================================================
+  // DATA
+  // ====================================================
 
-  const [attendanceData, setAttendanceData] =
-    useState([]);
+  const [attendanceData, setAttendanceData] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  const [leaveData, setLeaveData] = useState([]);
 
-  // ========================================
+  // ====================================================
   // LOADING
-  // ========================================
+  // ====================================================
 
-  const [loading, setLoading] =
-    useState(true);
+  const [loading, setLoading] = useState(true);
+  const [leaveLoading, setLeaveLoading] = useState(false);
 
-  // ========================================
+  // ====================================================
   // ERROR
-  // ========================================
+  // ====================================================
 
-  const [error, setError] =
-    useState("");
+  const [error, setError] = useState("");
 
-  // ========================================
+  // ====================================================
+  // STATUS FILTER
+  // ====================================================
+
+  const [selectedStatus, setSelectedStatus] =
+    useState("all");
+
+  // ====================================================
   // DATE INPUT REF
-  // ========================================
+  // ====================================================
 
   const dateInputRef = useRef(null);
 
-  // ========================================
+  // ====================================================
   // FETCH ATTENDANCE
-  // ========================================
+  // ====================================================
 
   useEffect(() => {
     const fetchAttendance = async () => {
@@ -183,26 +208,20 @@ function Attendance() {
         setError("");
 
         const response = await axios.get(
-          API_URL
+          ATTENDANCE_API
         );
 
         console.log(
-          "Attendance API response:",
+          "Attendance API:",
           response.data
         );
 
-        const data =
-          response.data?.data || [];
-
-        console.log(
-          "Attendance data:",
-          data
+        setAttendanceData(
+          response.data?.data || []
         );
-
-        setAttendanceData(data);
       } catch (err) {
         console.error(
-          "Error fetching attendance:",
+          "Attendance fetch error:",
           err
         );
 
@@ -217,38 +236,223 @@ function Attendance() {
     fetchAttendance();
   }, []);
 
-  // ========================================
-  // OPEN CALENDAR
-  // ========================================
+  // ====================================================
+  // FETCH EMPLOYEES
+  // ====================================================
+
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      try {
+        const response = await axios.get(
+          EMPLOYEES_API
+        );
+
+        console.log(
+          "Employees API:",
+          response.data
+        );
+
+        setEmployees(
+          response.data?.data || []
+        );
+      } catch (err) {
+        console.error(
+          "Employee fetch error:",
+          err
+        );
+      }
+    };
+
+    fetchEmployees();
+  }, []);
+
+  // ====================================================
+  // FETCH LEAVES FOR SELECTED DATE
+  // ====================================================
+
+  useEffect(() => {
+    const fetchLeaves = async () => {
+      try {
+        setLeaveLoading(true);
+
+        const response = await axios.get(
+          LEAVES_API,
+          {
+            params: {
+              date: selectedDate,
+              status: "Scheduled",
+            },
+          }
+        );
+
+        console.log(
+          "Leave API:",
+          response.data
+        );
+
+        setLeaveData(
+          response.data?.data || []
+        );
+      } catch (err) {
+        console.error(
+          "Leave fetch error:",
+          err
+        );
+
+        setLeaveData([]);
+      } finally {
+        setLeaveLoading(false);
+      }
+    };
+
+    fetchLeaves();
+  }, [selectedDate]);
+
+  // ====================================================
+  // GET EMPLOYEE BY MOBILE NUMBER
+  // ====================================================
+
+  const getEmployee = (mobileNumber) => {
+    return employees.find(
+      (employee) =>
+        String(employee.mobileNumber) ===
+        String(mobileNumber)
+    );
+  };
+
+  // ====================================================
+  // GET EMPLOYEE NAME
+  // ====================================================
+
+  const getEmployeeName = (mobileNumber) => {
+    const employee =
+      getEmployee(mobileNumber);
+
+    if (!employee) {
+      return String(mobileNumber || "Unknown");
+    }
+
+    return (
+      employee.name ||
+      employee.fullName ||
+      employee.employeeName ||
+      employee.firstName ||
+      String(mobileNumber)
+    );
+  };
+
+  // ====================================================
+  // FILTER ATTENDANCE BY DATE
+  // ====================================================
+
+  const filteredAttendance =
+    attendanceData.filter((attendance) => {
+      return (
+        normalizeApiDate(
+          attendance.date
+        ) === selectedDate
+      );
+    });
+
+  // ====================================================
+  // PRESENT MOBILE NUMBERS
+  // ====================================================
+
+  const presentMobileNumbers = new Set(
+    filteredAttendance
+      .map((attendance) =>
+        String(attendance.mobileNumber)
+      )
+      .filter(Boolean)
+  );
+
+  // ====================================================
+  // CHECK LEAVE
+  // ====================================================
+
+  const isEmployeeOnLeave = (
+    mobileNumber
+  ) => {
+    return leaveData.some(
+      (leave) =>
+        String(leave.mobileNumber) ===
+        String(mobileNumber)
+    );
+  };
+
+  // ====================================================
+  // PRESENT EMPLOYEES
+  // ====================================================
+
+  const presentEmployees =
+    employees.filter((employee) =>
+      presentMobileNumbers.has(
+        String(employee.mobileNumber)
+      )
+    );
+
+  // ====================================================
+  // LEAVE EMPLOYEES
+  // ====================================================
+
+  const leaveEmployees =
+    employees.filter((employee) =>
+      isEmployeeOnLeave(
+        employee.mobileNumber
+      )
+    );
+
+  // ====================================================
+  // ABSENT EMPLOYEES
+  // ====================================================
+
+  const absentEmployees =
+    employees.filter((employee) => {
+      const mobileNumber = String(
+        employee.mobileNumber
+      );
+
+      const isPresent =
+        presentMobileNumbers.has(
+          mobileNumber
+        );
+
+      const isLeave =
+        isEmployeeOnLeave(
+          mobileNumber
+        );
+
+      return !isPresent && !isLeave;
+    });
+
+  // ====================================================
+  // OPEN DATE PICKER
+  // ====================================================
 
   const openDatePicker = () => {
-    if (dateInputRef.current) {
-      try {
-        dateInputRef.current.showPicker();
-      } catch (error) {
-        dateInputRef.current.focus();
-      }
+    if (!dateInputRef.current) {
+      return;
+    }
+
+    try {
+      dateInputRef.current.showPicker();
+    } catch (err) {
+      dateInputRef.current.focus();
     }
   };
 
-  // ========================================
+  // ====================================================
   // DATE CHANGE
-  // ========================================
+  // ====================================================
 
   const handleDateChange = (event) => {
-    const value = event.target.value;
-
-    console.log(
-      "Selected date:",
-      value
-    );
-
-    setSelectedDate(value);
+    setSelectedDate(event.target.value);
+    setSelectedStatus("all");
   };
 
-  // ========================================
+  // ====================================================
   // PREVIOUS DAY
-  // ========================================
+  // ====================================================
 
   const handlePreviousDay = () => {
     const currentDate = new Date(
@@ -259,20 +463,16 @@ function Attendance() {
       currentDate.getDate() - 1
     );
 
-    const newDate =
-      getDateString(currentDate);
-
-    console.log(
-      "Previous date:",
-      newDate
+    setSelectedDate(
+      getDateString(currentDate)
     );
 
-    setSelectedDate(newDate);
+    setSelectedStatus("all");
   };
 
-  // ========================================
+  // ====================================================
   // NEXT DAY
-  // ========================================
+  // ====================================================
 
   const handleNextDay = () => {
     const currentDate = new Date(
@@ -283,78 +483,253 @@ function Attendance() {
       currentDate.getDate() + 1
     );
 
-    const newDate =
-      getDateString(currentDate);
-
-    console.log(
-      "Next date:",
-      newDate
+    setSelectedDate(
+      getDateString(currentDate)
     );
 
-    setSelectedDate(newDate);
+    setSelectedStatus("all");
   };
 
-  // ========================================
+  // ====================================================
   // TODAY
-  // ========================================
+  // ====================================================
 
   const handleToday = () => {
-    const today = new Date();
-
-    const todayString =
-      getDateString(today);
-
-    console.log(
-      "Today:",
-      todayString
+    setSelectedDate(
+      getDateString(new Date())
     );
 
-    setSelectedDate(todayString);
+    setSelectedStatus("all");
   };
 
-  // ========================================
-  // FILTER ATTENDANCE BY DATE
-  // ========================================
+  // ====================================================
+  // STATUS CHANGE
+  // ====================================================
 
-  const filteredAttendance =
-    attendanceData.filter(
-      (attendance) => {
-        const apiDate =
-          normalizeApiDate(
-            attendance.date
-          );
+  const handleStatusSelect = (event) => {
+    setSelectedStatus(
+      event.target.value
+    );
+  };
 
-        const isMatch =
-          apiDate === selectedDate;
+  // ====================================================
+  // PRINT / PDF
+  // ====================================================
 
-        console.log(
-          "DATE FILTER:",
-          {
-            apiDate: attendance.date,
-            normalizedApiDate: apiDate,
-            selectedDate,
-            isMatch,
-          }
+  const handlePrint = () => {
+    window.print();
+  };
+
+  // ====================================================
+  // DROPDOWN TITLE
+  // ====================================================
+
+  const getDropdownTitle = () => {
+    switch (selectedStatus) {
+      case "present":
+        return "Present Employees";
+
+      case "leave":
+        return "Employees On Leave";
+
+      case "absent":
+        return "Absent Employees";
+
+      default:
+        return "All Employee Status";
+    }
+  };
+
+  // ====================================================
+  // DROPDOWN ICON
+  // ====================================================
+
+  const getStatusIcon = () => {
+    switch (selectedStatus) {
+      case "present":
+        return (
+          <CheckCircle
+            sx={{
+              color: "#16a34a",
+              fontSize: 22,
+            }}
+          />
         );
 
-        return isMatch;
-      }
+      case "leave":
+        return (
+          <EventAvailable
+            sx={{
+              color: "#ca8a04",
+              fontSize: 22,
+            }}
+          />
+        );
+
+      case "absent":
+        return (
+          <Cancel
+            sx={{
+              color: "#dc2626",
+              fontSize: 22,
+            }}
+          />
+        );
+
+      default:
+        return (
+          <Groups
+            sx={{
+              color: "#2563eb",
+              fontSize: 22,
+            }}
+          />
+        );
+    }
+  };
+
+  // ====================================================
+  // RENDER PRESENT ROW
+  // ====================================================
+
+  const renderPresentRow = (
+    attendance,
+    index
+  ) => {
+    const employee = getEmployee(
+      attendance.mobileNumber
     );
 
-  // ========================================
+    const employeeName =
+      employee?.name ||
+      employee?.fullName ||
+      employee?.employeeName ||
+      employee?.firstName ||
+      getEmployeeName(
+        attendance.mobileNumber
+      );
+
+    return (
+      <div
+        className="attendance-table__row"
+        key={
+          attendance._id ||
+          `${attendance.mobileNumber}-${index}`
+        }
+      >
+        <div className="column-number">
+          {index + 1}
+        </div>
+
+        <div className="column-employee">
+          <div className="employee-avatar">
+            {getInitials(employeeName)}
+          </div>
+
+          <span>
+            {employeeName}
+          </span>
+        </div>
+
+        <div className="column-mobile">
+          {attendance.mobileNumber}
+        </div>
+
+        <div className="column-time">
+          {formatTime(
+            attendance.timestamp
+          )}
+        </div>
+
+        <div className="column-status">
+          <span className="status status--present">
+            <span className="status-dot" />
+            Present
+          </span>
+        </div>
+      </div>
+    );
+  };
+
+  // ====================================================
+  // RENDER EMPLOYEE ROW
+  // ====================================================
+
+  const renderEmployeeRow = (
+    employee,
+    index,
+    status
+  ) => {
+    const employeeName =
+      employee.name ||
+      employee.fullName ||
+      employee.employeeName ||
+      employee.firstName ||
+      "Unknown";
+
+    return (
+      <div
+        className="attendance-table__row"
+        key={
+          employee._id ||
+          `${employee.mobileNumber}-${index}`
+        }
+      >
+        <div className="column-number">
+          {index + 1}
+        </div>
+
+        <div className="column-employee">
+          <div
+            className={`employee-avatar employee-avatar--${status}`}
+          >
+            {getInitials(employeeName)}
+          </div>
+
+          <span>
+            {employeeName}
+          </span>
+        </div>
+
+        <div className="column-mobile">
+          {employee.mobileNumber}
+        </div>
+
+        <div className="column-time">
+          --
+        </div>
+
+        <div className="column-status">
+          {status === "leave" && (
+            <span className="status status--leave">
+              <span className="status-dot" />
+              On Leave
+            </span>
+          )}
+
+          {status === "absent" && (
+            <span className="status status--absent">
+              <span className="status-dot" />
+              Absent
+            </span>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // ====================================================
   // UI
-  // ========================================
+  // ====================================================
 
   return (
     <div className="attendance-page">
 
-      {/* ==================================
+      {/* ==================================================
           HEADER
-      ================================== */}
+      ================================================== */}
 
       <div className="attendance-page__header">
-
-        {/* TITLE */}
 
         <div className="attendance-title">
 
@@ -378,8 +753,6 @@ function Attendance() {
 
         <div className="attendance-date-control">
 
-          {/* PREVIOUS */}
-
           <button
             type="button"
             className="date-arrow"
@@ -389,8 +762,6 @@ function Attendance() {
           >
             ‹
           </button>
-
-          {/* DATE PICKER */}
 
           <div
             className="date-picker"
@@ -404,9 +775,7 @@ function Attendance() {
             </span>
 
             <span className="date-picker__value">
-              {formatDate(
-                selectedDate
-              )}
+              {formatDate(selectedDate)}
             </span>
 
             <span className="date-down">
@@ -425,8 +794,6 @@ function Attendance() {
 
           </div>
 
-          {/* NEXT */}
-
           <button
             type="button"
             className="date-arrow"
@@ -441,31 +808,394 @@ function Attendance() {
 
       </div>
 
-      {/* ==================================
-          TODAY BUTTON
-      ================================== */}
+      {/* ==================================================
+          ACTIONS
+      ================================================== */}
 
       <div className="attendance-actions">
 
         <button
           type="button"
           className="today-button"
-          onClick={
-            handleToday
-          }
+          onClick={handleToday}
         >
           Today
         </button>
 
+        {/* MATERIAL UI DROPDOWN */}
+
+        <FormControl
+          className="mui-status-dropdown"
+          size="small"
+        >
+          <Select
+            value={selectedStatus}
+            onChange={
+              handleStatusSelect
+            }
+            displayEmpty
+            renderValue={() => (
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1.2,
+                }}
+              >
+                {getStatusIcon()}
+
+                <Typography
+                  sx={{
+                    fontSize: "14px",
+                    fontWeight: 600,
+                    color: "#1e293b",
+                  }}
+                >
+                  {getDropdownTitle()}
+                </Typography>
+              </Box>
+            )}
+            sx={{
+              minWidth: 255,
+              height: 46,
+              borderRadius: "10px",
+              backgroundColor: "#ffffff",
+
+              "& .MuiOutlinedInput-notchedOutline": {
+                borderColor: "#e2e8f0",
+              },
+
+              "&:hover .MuiOutlinedInput-notchedOutline": {
+                borderColor: "#3b82f6",
+              },
+
+              "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                borderColor: "#2563eb",
+              },
+
+              "& .MuiSelect-select": {
+                display: "flex",
+                alignItems: "center",
+                padding:
+                  "8px 40px 8px 14px",
+              },
+            }}
+          >
+
+            {/* ALL */}
+
+            <MenuItem
+              value="all"
+              sx={{
+                minHeight: 62,
+                borderRadius: "8px",
+                mx: 0.5,
+                my: 0.3,
+
+                "&.Mui-selected": {
+                  backgroundColor: "#eff6ff",
+                },
+
+                "&.Mui-selected:hover": {
+                  backgroundColor: "#dbeafe",
+                },
+              }}
+            >
+              <ListItemIcon>
+                <Box
+                  sx={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: "10px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: "#eff6ff",
+                  }}
+                >
+                  <Groups
+                    sx={{
+                      color: "#2563eb",
+                      fontSize: 20,
+                    }}
+                  />
+                </Box>
+              </ListItemIcon>
+
+              <ListItemText
+                primary={
+                  <Typography
+                    sx={{
+                      fontSize: "14px",
+                      fontWeight: 600,
+                    }}
+                  >
+                    All Employees
+                  </Typography>
+                }
+                secondary={
+                  <Typography
+                    sx={{
+                      fontSize: "12px",
+                      color: "#64748b",
+                    }}
+                  >
+                    {employees.length} employees
+                  </Typography>
+                }
+              />
+            </MenuItem>
+
+            {/* PRESENT */}
+
+            <MenuItem
+              value="present"
+              sx={{
+                minHeight: 62,
+                borderRadius: "8px",
+                mx: 0.5,
+                my: 0.3,
+
+                "&.Mui-selected": {
+                  backgroundColor: "#f0fdf4",
+                },
+
+                "&.Mui-selected:hover": {
+                  backgroundColor: "#dcfce7",
+                },
+              }}
+            >
+              <ListItemIcon>
+                <Box
+                  sx={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: "10px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: "#dcfce7",
+                  }}
+                >
+                  <CheckCircle
+                    sx={{
+                      color: "#16a34a",
+                      fontSize: 20,
+                    }}
+                  />
+                </Box>
+              </ListItemIcon>
+
+              <ListItemText
+                primary={
+                  <Typography
+                    sx={{
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      color: "#15803d",
+                    }}
+                  >
+                    Present
+                  </Typography>
+                }
+                secondary={
+                  <Typography
+                    sx={{
+                      fontSize: "12px",
+                      color: "#64748b",
+                    }}
+                  >
+                    {presentEmployees.length} employees
+                  </Typography>
+                }
+              />
+            </MenuItem>
+
+            {/* LEAVE */}
+
+            <MenuItem
+              value="leave"
+              sx={{
+                minHeight: 62,
+                borderRadius: "8px",
+                mx: 0.5,
+                my: 0.3,
+
+                "&.Mui-selected": {
+                  backgroundColor: "#fefce8",
+                },
+
+                "&.Mui-selected:hover": {
+                  backgroundColor: "#fef9c3",
+                },
+              }}
+            >
+              <ListItemIcon>
+                <Box
+                  sx={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: "10px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: "#fef9c3",
+                  }}
+                >
+                  <EventAvailable
+                    sx={{
+                      color: "#ca8a04",
+                      fontSize: 20,
+                    }}
+                  />
+                </Box>
+              </ListItemIcon>
+
+              <ListItemText
+                primary={
+                  <Typography
+                    sx={{
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      color: "#a16207",
+                    }}
+                  >
+                    On Leave
+                  </Typography>
+                }
+                secondary={
+                  <Typography
+                    sx={{
+                      fontSize: "12px",
+                      color: "#64748b",
+                    }}
+                  >
+                    {leaveLoading
+                      ? "Loading..."
+                      : `${leaveEmployees.length} employees`}
+                  </Typography>
+                }
+              />
+            </MenuItem>
+
+            {/* ABSENT */}
+
+            <MenuItem
+              value="absent"
+              sx={{
+                minHeight: 62,
+                borderRadius: "8px",
+                mx: 0.5,
+                my: 0.3,
+
+                "&.Mui-selected": {
+                  backgroundColor: "#fef2f2",
+                },
+
+                "&.Mui-selected:hover": {
+                  backgroundColor: "#fee2e2",
+                },
+              }}
+            >
+              <ListItemIcon>
+                <Box
+                  sx={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: "10px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: "#fee2e2",
+                  }}
+                >
+                  <Cancel
+                    sx={{
+                      color: "#dc2626",
+                      fontSize: 20,
+                    }}
+                  />
+                </Box>
+              </ListItemIcon>
+
+              <ListItemText
+                primary={
+                  <Typography
+                    sx={{
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      color: "#dc2626",
+                    }}
+                  >
+                    Absent
+                  </Typography>
+                }
+                secondary={
+                  <Typography
+                    sx={{
+                      fontSize: "12px",
+                      color: "#64748b",
+                    }}
+                  >
+                    {absentEmployees.length} employees
+                  </Typography>
+                }
+              />
+            </MenuItem>
+
+          </Select>
+        </FormControl>
+
+        {/* PRINT BUTTON */}
+
+        <button
+          type="button"
+          className="print-button"
+          onClick={handlePrint}
+        >
+          <PictureAsPdf fontSize="small" />
+          Print PDF
+        </button>
+
       </div>
 
-      {/* ==================================
+      {/* ==================================================
+          STATUS SUMMARY
+      ================================================== */}
+
+      <div className="status-summary">
+
+        <div className="status-summary__item status-summary__item--present">
+          <span className="status-summary__dot" />
+          <span>Present</span>
+          <strong>
+            {presentEmployees.length}
+          </strong>
+        </div>
+
+        <div className="status-summary__item status-summary__item--leave">
+          <span className="status-summary__dot" />
+          <span>On Leave</span>
+          <strong>
+            {leaveEmployees.length}
+          </strong>
+        </div>
+
+        <div className="status-summary__item status-summary__item--absent">
+          <span className="status-summary__dot" />
+          <span>Absent</span>
+          <strong>
+            {absentEmployees.length}
+          </strong>
+        </div>
+
+      </div>
+
+      {/* ==================================================
           TABLE
-      ================================== */}
+      ================================================== */}
 
       <div className="attendance-table-card">
-
-        {/* TABLE HEADER */}
 
         <div className="attendance-table__header">
 
@@ -491,13 +1221,12 @@ function Attendance() {
 
         </div>
 
-        {/* ==================================
+        {/* ==================================================
             LOADING
-        ================================== */}
+        ================================================== */}
 
         {loading && (
           <div className="no-attendance">
-
             <div className="no-attendance__icon">
               ⏳
             </div>
@@ -505,167 +1234,205 @@ function Attendance() {
             <h3>
               Loading attendance...
             </h3>
+          </div>
+        )}
+
+        {/* ==================================================
+            ERROR
+        ================================================== */}
+
+        {!loading && error && (
+          <div className="no-attendance">
+
+            <div className="no-attendance__icon">
+              ⚠️
+            </div>
+
+            <h3>
+              {error}
+            </h3>
 
           </div>
         )}
 
-        {/* ==================================
-            ERROR
-        ================================== */}
-
-        {!loading &&
-          error && (
-            <div className="no-attendance">
-
-              <div className="no-attendance__icon">
-                ⚠️
-              </div>
-
-              <h3>
-                {error}
-              </h3>
-
-            </div>
-          )}
-
-        {/* ==================================
-            ATTENDANCE LIST
-        ================================== */}
+        {/* ==================================================
+            ALL
+        ================================================== */}
 
         {!loading &&
           !error &&
-          filteredAttendance.length > 0 &&
-          filteredAttendance.map(
-            (attendance, index) => {
+          selectedStatus === "all" && (
+            <>
+              {filteredAttendance.map(
+                renderPresentRow
+              )}
 
-              return (
-                <div
-                  className="attendance-table__row"
-                  key={
-                    attendance._id ||
-                    index
-                  }
-                >
+              {filteredAttendance.length === 0 && (
+                <div className="no-attendance">
 
-                  {/* NUMBER */}
-
-                  <div className="column-number">
-                    {index + 1}
+                  <div className="no-attendance__icon">
+                    📅
                   </div>
 
-                  {/* EMPLOYEE */}
+                  <h3>
+                    No attendance records
+                  </h3>
 
-                  <div className="column-employee">
-
-                    <div className="employee-avatar">
-
-                      {getInitials(
-                        attendance.mobileNumber
-                      )}
-
-                    </div>
-
-                    <span>
-                      {attendance.mobileNumber}
-                    </span>
-
-                  </div>
-
-                  {/* MOBILE */}
-
-                  <div className="column-mobile">
-
-                    {attendance.mobileNumber}
-
-                  </div>
-
-                  {/* TIME */}
-
-                  <div className="column-time">
-
-                    {formatTime(
-                      attendance.timestamp
-                    )}
-
-                  </div>
-
-                  {/* STATUS */}
-
-                  <div className="column-status">
-
-                    <span className="status status--present">
-
-                      <span className="status-dot">
-                      </span>
-
-                      Present
-
-                    </span>
-
-                  </div>
+                  <p>
+                    No attendance was recorded
+                    for{" "}
+                    {formatDate(selectedDate)}.
+                  </p>
 
                 </div>
-              );
-            }
+              )}
+            </>
           )}
 
-        {/* ==================================
-            NO DATA
-        ================================== */}
+        {/* ==================================================
+            PRESENT
+        ================================================== */}
 
         {!loading &&
           !error &&
-          filteredAttendance.length === 0 && (
+          selectedStatus === "present" && (
+            <>
+              {filteredAttendance.map(
+                renderPresentRow
+              )}
 
-            <div className="no-attendance">
+              {filteredAttendance.length === 0 && (
+                <div className="no-attendance">
 
-              <div className="no-attendance__icon">
-                📅
-              </div>
+                  <div className="no-attendance__icon">
+                    🟢
+                  </div>
 
-              <h3>
-                No attendance records
-              </h3>
+                  <h3>
+                    No present employees
+                  </h3>
 
-              <p>
-                No attendance was recorded
-                for{" "}
-                {formatDate(
-                  selectedDate
-                )}
-                .
-              </p>
+                  <p>
+                    No attendance was recorded
+                    for{" "}
+                    {formatDate(selectedDate)}.
+                  </p>
 
-            </div>
+                </div>
+              )}
+            </>
           )}
 
-        {/* ==================================
-            FOOTER
-        ================================== */}
+        {/* ==================================================
+            LEAVE
+        ================================================== */}
 
         {!loading &&
-          !error && (
+          !error &&
+          selectedStatus === "leave" && (
+            <>
+              {leaveEmployees.map(
+                (employee, index) =>
+                  renderEmployeeRow(
+                    employee,
+                    index,
+                    "leave"
+                  )
+              )}
 
-            <div className="attendance-table__footer">
+              {leaveEmployees.length === 0 && (
+                <div className="no-attendance">
 
-              <span>
+                  <div className="no-attendance__icon">
+                    🟡
+                  </div>
 
-                Total Present:
+                  <h3>
+                    No employees on leave
+                  </h3>
 
-                <strong>
-                  {" "}
-                  {
-                    filteredAttendance.length
-                  }
-                </strong>
+                  <p>
+                    No scheduled leave for{" "}
+                    {formatDate(selectedDate)}.
+                  </p>
 
-                {" "}
-                Employees
-
-              </span>
-
-            </div>
+                </div>
+              )}
+            </>
           )}
+
+        {/* ==================================================
+            ABSENT
+        ================================================== */}
+
+        {!loading &&
+          !error &&
+          selectedStatus === "absent" && (
+            <>
+              {absentEmployees.map(
+                (employee, index) =>
+                  renderEmployeeRow(
+                    employee,
+                    index,
+                    "absent"
+                  )
+              )}
+
+              {absentEmployees.length === 0 && (
+                <div className="no-attendance">
+
+                  <div className="no-attendance__icon">
+                    🎉
+                  </div>
+
+                  <h3>
+                    No absent employees
+                  </h3>
+
+                  <p>
+                    All employees are accounted
+                    for on{" "}
+                    {formatDate(selectedDate)}.
+                  </p>
+
+                </div>
+              )}
+            </>
+          )}
+
+        {/* ==================================================
+            FOOTER
+        ================================================== */}
+
+        {!loading && !error && (
+          <div className="attendance-table__footer">
+
+            <span>
+              Total Present:
+              <strong>
+                {" "}
+                {presentEmployees.length}
+              </strong>
+            </span>
+
+            <span>
+              On Leave:
+              <strong>
+                {" "}
+                {leaveEmployees.length}
+              </strong>
+            </span>
+
+            <span>
+              Absent:
+              <strong>
+                {" "}
+                {absentEmployees.length}
+              </strong>
+            </span>
+
+          </div>
+        )}
 
       </div>
 

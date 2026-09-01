@@ -24,6 +24,8 @@ import {
   ChevronRight,
   CalendarPlus,
   Trash2,
+  Printer,
+  IndianRupee,
 } from "lucide-react";
 
 import "./Profile.scss";
@@ -65,36 +67,33 @@ function Profile() {
   const [attendance, setAttendance] = useState([]);
   const [attendanceLoading, setAttendanceLoading] = useState(true);
 
-  const [showPresentPopup, setShowPresentPopup] =
-    useState(false);
+  const [showPresentPopup, setShowPresentPopup] = useState(false);
+
+  // ==================================================
+  // SALARY
+  // ==================================================
+
+  const [showSalaryPopup, setShowSalaryPopup] = useState(false);
 
   // ==================================================
   // LEAVE STATES
   // ==================================================
 
-  const [scheduledLeaves, setScheduledLeaves] =
-    useState([]);
+  const [scheduledLeaves, setScheduledLeaves] = useState([]);
 
-  const [leaveLoading, setLeaveLoading] =
-    useState(false);
+  const [leaveLoading, setLeaveLoading] = useState(false);
 
-  const [leaveSaving, setLeaveSaving] =
-    useState(false);
+  const [leaveSaving, setLeaveSaving] = useState(false);
 
-  const [showLeaveCalendar, setShowLeaveCalendar] =
-    useState(false);
+  const [showLeaveCalendar, setShowLeaveCalendar] = useState(false);
 
-  const [showScheduleLeave, setShowScheduleLeave] =
-    useState(false);
+  const [showScheduleLeave, setShowScheduleLeave] = useState(false);
 
-  const [selectedLeaveDate, setSelectedLeaveDate] =
-    useState("");
+  const [selectedLeaveDate, setSelectedLeaveDate] = useState("");
 
-  const [leaveReason, setLeaveReason] =
-    useState("");
+  const [leaveReason, setLeaveReason] = useState("");
 
-  const [leaveType, setLeaveType] =
-    useState("full");
+  const [leaveType, setLeaveType] = useState("full");
 
   const [leaveCalendarMonth, setLeaveCalendarMonth] =
     useState(getCurrentMonthValue());
@@ -127,24 +126,20 @@ function Profile() {
       setLoading(true);
       setError("");
 
-      const response = await axios.get(
-        EMPLOYEE_API
-      );
+      const response = await axios.get(EMPLOYEE_API);
 
       console.log(
         "Employee API response:",
         response.data
       );
 
-      const employees =
-        response.data?.data || [];
+      const employees = response.data?.data || [];
 
-      const selectedEmployee =
-        employees.find(
-          (item) =>
-            String(item?._id || item?.id) ===
-            String(employeeId)
-        );
+      const selectedEmployee = employees.find(
+        (item) =>
+          String(item?._id || item?.id) ===
+          String(employeeId)
+      );
 
       if (!selectedEmployee) {
         setError("Employee not found.");
@@ -155,24 +150,20 @@ function Profile() {
       setEmployee(selectedEmployee);
 
       setFormData({
-        fullName:
-          selectedEmployee.name || "",
+        fullName: selectedEmployee.name || "",
 
         employeeId:
           selectedEmployee._id ||
           selectedEmployee.id ||
           "",
 
-        email:
-          selectedEmployee.email || "",
+        email: selectedEmployee.email || "",
 
-        phone:
-          selectedEmployee.mobileNumber || "",
+        phone: selectedEmployee.mobileNumber || "",
 
-        joiningDate:
-          formatDateForInput(
-            selectedEmployee.joiningDate
-          ),
+        joiningDate: formatDateForInput(
+          selectedEmployee.joiningDate
+        ),
       });
     } catch (err) {
       console.error(
@@ -192,42 +183,37 @@ function Profile() {
   // FETCH ATTENDANCE
   // ==================================================
 
-  const fetchAttendance = useCallback(
-    async () => {
-      try {
-        setAttendanceLoading(true);
+  const fetchAttendance = useCallback(async () => {
+    try {
+      setAttendanceLoading(true);
 
-        const response = await axios.get(
-          ATTENDANCE_API
-        );
+      const response = await axios.get(
+        ATTENDANCE_API
+      );
 
-        console.log(
-          "Attendance API response:",
-          response.data
-        );
+      console.log(
+        "Attendance API response:",
+        response.data
+      );
 
-        const attendanceData =
-          response.data?.data || [];
+      const attendanceData =
+        response.data?.data || [];
 
-        setAttendance(attendanceData);
-      } catch (err) {
-        console.error(
-          "Attendance fetch error:",
-          err
-        );
+      setAttendance(attendanceData);
+    } catch (err) {
+      console.error(
+        "Attendance fetch error:",
+        err
+      );
 
-        setAttendance([]);
-      } finally {
-        setAttendanceLoading(false);
-      }
-    },
-    []
-  );
+      setAttendance([]);
+    } finally {
+      setAttendanceLoading(false);
+    }
+  }, []);
 
   // ==================================================
-  // FETCH EMPLOYEE LEAVES FROM BACKEND
-  //
-  // GET /api/leaves/employee/:mobileNumber
+  // FETCH EMPLOYEE LEAVES
   // ==================================================
 
   const fetchLeaves = useCallback(
@@ -240,21 +226,18 @@ function Profile() {
       try {
         setLeaveLoading(true);
 
-        const cleanMobileNumber =
-          String(mobileNumber).replace(
-            /\D/g,
-            ""
-          );
+        const cleanMobileNumber = String(
+          mobileNumber
+        ).replace(/\D/g, "");
 
         console.log(
           "Fetching leaves for:",
           cleanMobileNumber
         );
 
-        const response =
-          await axios.get(
-            `${LEAVE_API}/employee/${cleanMobileNumber}`
-          );
+        const response = await axios.get(
+          `${LEAVE_API}/employee/${cleanMobileNumber}`
+        );
 
         console.log(
           "Leave API response:",
@@ -263,24 +246,6 @@ function Profile() {
 
         const leaves =
           response.data?.data || [];
-
-        /*
-          Backend stores:
-
-          startDate
-          endDate
-          leaveType
-          reason
-          _id
-          status
-
-          Frontend calendar works with:
-
-          date
-          leaveType: full / half
-          reason
-          id
-        */
 
         const normalizedLeaves = [];
 
@@ -395,7 +360,7 @@ function Profile() {
   ]);
 
   // ==================================================
-  // LOAD LEAVES AFTER EMPLOYEE IS AVAILABLE
+  // LOAD LEAVES AFTER EMPLOYEE AVAILABLE
   // ==================================================
 
   useEffect(() => {
@@ -451,21 +416,11 @@ function Profile() {
           formData.joiningDate,
       };
 
-      console.log(
-        "Updating employee:",
-        requestData
-      );
-
       const response =
         await axios.put(
           `${EMPLOYEE_API}/${employeeId}`,
           requestData
         );
-
-      console.log(
-        "Update response:",
-        response.data
-      );
 
       if (response.data?.data) {
         setEmployee(
@@ -479,10 +434,6 @@ function Profile() {
 
       await fetchEmployee();
 
-      /*
-        If phone number was changed,
-        refresh leaves using the new number.
-      */
       await fetchLeaves(
         requestData.mobileNumber
       );
@@ -552,7 +503,10 @@ function Profile() {
             String(
               record?.mobileNumber ||
                 ""
-            ).replace(/\D/g, "");
+            ).replace(
+              /\D/g,
+              ""
+            );
 
           return (
             recordPhone ===
@@ -649,7 +603,7 @@ function Profile() {
     ]);
 
   // ==================================================
-  // ABSENT
+  // ABSENT DAYS
   // ==================================================
 
   const absentDays =
@@ -679,8 +633,6 @@ function Profile() {
 
   // ==================================================
   // SCHEDULE LEAVE
-  //
-  // POST /api/leaves
   // ==================================================
 
   const handleScheduleLeave =
@@ -706,11 +658,6 @@ function Profile() {
         return;
       }
 
-      /*
-        Prevent duplicate date
-        in frontend.
-      */
-
       const alreadyScheduled =
         scheduledLeaves.some(
           (leave) =>
@@ -729,23 +676,6 @@ function Profile() {
 
       try {
         setLeaveSaving(true);
-
-        /*
-          Backend expects:
-
-          {
-            employeeId,
-            leaveType,
-            startDate,
-            endDate,
-            reason
-          }
-
-          Your UI has:
-
-          full -> Full Day
-          half -> Half Day
-        */
 
         const requestData = {
           employeeId:
@@ -767,21 +697,11 @@ function Profile() {
             "Personal Leave",
         };
 
-        console.log(
-          "Creating leave:",
-          requestData
-        );
-
         const response =
           await axios.post(
             LEAVE_API,
             requestData
           );
-
-        console.log(
-          "Leave POST response:",
-          response.data
-        );
 
         if (
           response.data?.success &&
@@ -789,11 +709,6 @@ function Profile() {
         ) {
           const savedLeave =
             response.data.data;
-
-          /*
-            Add backend saved leave
-            immediately to UI.
-          */
 
           setScheduledLeaves(
             (previous) => [
@@ -877,12 +792,6 @@ function Profile() {
           )}.`
         );
 
-        /*
-          Refresh from backend so
-          UI and database are always
-          synchronized.
-        */
-
         await fetchLeaves(phone);
       } catch (err) {
         console.error(
@@ -901,8 +810,6 @@ function Profile() {
 
   // ==================================================
   // DELETE LEAVE
-  //
-  // DELETE /api/leaves/:id
   // ==================================================
 
   const handleDeleteLeave =
@@ -926,25 +833,10 @@ function Profile() {
       try {
         setLeaveLoading(true);
 
-        console.log(
-          "Deleting leave:",
-          leaveId
-        );
-
         const response =
           await axios.delete(
             `${LEAVE_API}/${leaveId}`
           );
-
-        console.log(
-          "Delete leave response:",
-          response.data
-        );
-
-        /*
-          Remove deleted leave
-          from frontend immediately.
-        */
 
         setScheduledLeaves(
           (previous) =>
@@ -952,7 +844,8 @@ function Profile() {
               (leave) =>
                 leave.backendId !==
                   leaveId &&
-                leave.id !== leaveId
+                leave.id !==
+                  leaveId
             )
         );
 
@@ -1016,6 +909,7 @@ function Profile() {
     return (
       <div className="profile-page">
         <div className="profile-loading">
+
           <div className="profile-spinner" />
 
           <h2>
@@ -1026,6 +920,7 @@ function Profile() {
             Please wait while we fetch
             the employee information.
           </p>
+
         </div>
       </div>
     );
@@ -1039,6 +934,7 @@ function Profile() {
     return (
       <div className="profile-page">
         <div className="profile-error">
+
           <div className="error-icon">
             !
           </div>
@@ -1056,6 +952,7 @@ function Profile() {
             <ArrowLeft size={17} />
             Back to Employees
           </button>
+
         </div>
       </div>
     );
@@ -1296,7 +1193,7 @@ function Profile() {
       </div>
 
       {/* ==================================================
-          LEAVE ACTIONS
+          LEAVE MANAGEMENT
       ================================================== */}
 
       <section className="leave-section">
@@ -1317,8 +1214,6 @@ function Profile() {
           </div>
 
           <div className="leave-actions">
-
-            {/* SCHEDULE LEAVE */}
 
             <button
               type="button"
@@ -1352,8 +1247,6 @@ function Profile() {
 
               Schedule Leave
             </button>
-
-            {/* CALENDAR */}
 
             <div className="leave-calendar-wrapper">
 
@@ -1516,6 +1409,12 @@ function Profile() {
             true
           )
         }
+
+        onSalaryClick={() =>
+          setShowSalaryPopup(
+            true
+          )
+        }
       />
 
       {/* ================= ATTENDANCE HISTORY ================= */}
@@ -1553,6 +1452,56 @@ function Profile() {
 
           onClose={() =>
             setShowPresentPopup(
+              false
+            )
+          }
+        />
+
+      )}
+
+      {/* ================= SALARY MODAL ================= */}
+
+      {showSalaryPopup && (
+
+        <SalaryCalculationModal
+          employee={
+            employee
+          }
+
+          employeeName={
+            name
+          }
+
+          employeeId={
+            employeeMongoId
+          }
+
+          selectedMonth={
+            selectedMonth
+          }
+
+          attendance={
+            selectedMonthAttendance
+          }
+
+          presentDays={
+            presentDays
+          }
+
+          absentDays={
+            absentDays
+          }
+
+          leaveDays={
+            leaveDays
+          }
+
+          workingDays={
+            workingDays
+          }
+
+          onClose={() =>
+            setShowSalaryPopup(
               false
             )
           }
@@ -1690,8 +1639,6 @@ function ScheduleLeavePopup({
         }
       >
 
-        {/* HEADER */}
-
         <div className="schedule-popup-header">
 
           <div className="schedule-popup-header-content">
@@ -1724,11 +1671,7 @@ function ScheduleLeavePopup({
 
         </div>
 
-        {/* BODY */}
-
         <div className="schedule-popup-body">
-
-          {/* DATE */}
 
           <div className="leave-form-field">
 
@@ -1756,8 +1699,6 @@ function ScheduleLeavePopup({
 
           </div>
 
-          {/* LEAVE TYPE */}
-
           <div className="leave-form-field">
 
             <label>
@@ -1765,8 +1706,6 @@ function ScheduleLeavePopup({
             </label>
 
             <div className="leave-type-options">
-
-              {/* FULL DAY */}
 
               <button
                 type="button"
@@ -1804,8 +1743,6 @@ function ScheduleLeavePopup({
                 </div>
 
               </button>
-
-              {/* HALF DAY */}
 
               <button
                 type="button"
@@ -1848,8 +1785,6 @@ function ScheduleLeavePopup({
 
           </div>
 
-          {/* REASON */}
-
           <div className="leave-form-field">
 
             <label>
@@ -1870,8 +1805,6 @@ function ScheduleLeavePopup({
           </div>
 
         </div>
-
-        {/* FOOTER */}
 
         <div className="schedule-popup-footer">
 
@@ -1946,10 +1879,6 @@ function LeaveCalendarPopup({
           "Cancelled"
     );
 
-  // ==================================================
-  // PREVIOUS MONTH
-  // ==================================================
-
   const goPreviousMonth = () => {
     const [
       year,
@@ -1972,10 +1901,6 @@ function LeaveCalendarPopup({
 
     setSelectedCalendarDate(null);
   };
-
-  // ==================================================
-  // NEXT MONTH
-  // ==================================================
 
   const goNextMonth = () => {
     const [
@@ -2000,10 +1925,6 @@ function LeaveCalendarPopup({
     setSelectedCalendarDate(null);
   };
 
-  // ==================================================
-  // SELECTED LEAVE
-  // ==================================================
-
   const selectedLeave =
     leaves.find(
       (leave) =>
@@ -2015,8 +1936,6 @@ function LeaveCalendarPopup({
 
   return (
     <div className="leave-calendar-popup">
-
-      {/* HEADER */}
 
       <div className="leave-calendar-header">
 
@@ -2043,8 +1962,6 @@ function LeaveCalendarPopup({
         </button>
 
       </div>
-
-      {/* MONTH NAVIGATION */}
 
       <div className="calendar-navigation">
 
@@ -2074,15 +1991,11 @@ function LeaveCalendarPopup({
 
       </div>
 
-      {/* LOADING */}
-
       {loading && (
         <div className="calendar-loading">
           Loading leaves...
         </div>
       )}
-
-      {/* WEEK DAYS */}
 
       <div className="calendar-weekdays">
 
@@ -2103,8 +2016,6 @@ function LeaveCalendarPopup({
         ))}
 
       </div>
-
-      {/* CALENDAR */}
 
       <div className="calendar-grid">
 
@@ -2207,8 +2118,6 @@ function LeaveCalendarPopup({
 
       </div>
 
-      {/* LEGEND */}
-
       <div className="calendar-legend">
 
         <div>
@@ -2229,8 +2138,6 @@ function LeaveCalendarPopup({
         </div>
 
       </div>
-
-      {/* SELECTED LEAVE */}
 
       {selectedLeave && (
 
@@ -2294,8 +2201,6 @@ function LeaveCalendarPopup({
         </div>
 
       )}
-
-      {/* LEAVE LIST */}
 
       <div className="calendar-leave-list">
 
@@ -2441,6 +2346,7 @@ function AttendanceSummary({
   punchCount,
   workingDays,
   onPresentClick,
+  onSalaryClick,
 }) {
   const summary = [
     {
@@ -2505,21 +2411,39 @@ function AttendanceSummary({
 
         </div>
 
-        <div className="month-picker">
+        <div className="attendance-summary-actions">
 
-          <CalendarDays size={18} />
+          <div className="month-picker">
 
-          <input
-            type="month"
-            value={
-              selectedMonth
+            <CalendarDays size={18} />
+
+            <input
+              type="month"
+              value={
+                selectedMonth
+              }
+              onChange={(event) =>
+                setSelectedMonth(
+                  event.target.value
+                )
+              }
+            />
+
+          </div>
+
+          <button
+            type="button"
+            className="salary-button"
+            onClick={
+              onSalaryClick
             }
-            onChange={(event) =>
-              setSelectedMonth(
-                event.target.value
-              )
-            }
-          />
+          >
+
+            <IndianRupee size={17} />
+
+            Salary Calculation
+
+          </button>
 
         </div>
 
@@ -2711,7 +2635,7 @@ function AttendanceRecords({
                       <span className="location-text">
 
                         <MapPinned size={14} />
-
+                      {record.locationName}
                         {Number(
                           record.latitude
                         ).toFixed(4)}
@@ -2754,11 +2678,13 @@ function AttendanceRecords({
                   </span>
 
                 </div>
+
               );
             }
           )}
 
         </div>
+
       )}
 
     </section>
@@ -2919,6 +2845,7 @@ function PresentPunchModal({
                       </div>
 
                     </div>
+
                   );
                 }
               )}
@@ -2938,6 +2865,998 @@ function PresentPunchModal({
           <span>
             total punches
           </span>
+
+        </div>
+
+      </div>
+
+    </div>
+  );
+}
+
+// ==================================================
+// SALARY CALCULATION MODAL
+// ==================================================
+
+function SalaryCalculationModal({
+  employee,
+  employeeName,
+  employeeId,
+  selectedMonth,
+  attendance,
+  presentDays,
+  absentDays,
+  leaveDays,
+  workingDays,
+  onClose,
+}) {
+  const [monthlySalary, setMonthlySalary] =
+    useState(
+      employee?.salary || ""
+    );
+
+  const salaryNumber =
+    Number(monthlySalary) || 0;
+
+  // ==================================================
+  // SALARY CALCULATIONS
+  // ==================================================
+
+  const perDaySalary =
+    workingDays > 0
+      ? salaryNumber / workingDays
+      : 0;
+
+  const presentSalary =
+    presentDays * perDaySalary;
+
+  const leaveDeduction =
+    leaveDays * perDaySalary;
+
+  const absentDeduction =
+    absentDays * perDaySalary;
+
+  const finalSalary =
+    Math.max(
+      salaryNumber -
+        leaveDeduction -
+        absentDeduction,
+      0
+    );
+
+  // ==================================================
+  // PRINT REPORT
+  // ==================================================
+
+  const printAttendance = () => {
+    const printWindow =
+      window.open(
+        "",
+        "_blank",
+        "width=1100,height=850"
+      );
+
+    if (!printWindow) {
+      alert(
+        "Please allow popups to print."
+      );
+      return;
+    }
+
+    const sortedAttendance =
+      [...attendance].sort(
+        (a, b) =>
+          getRecordTimestamp(a) -
+          getRecordTimestamp(b)
+      );
+
+    const attendanceRows =
+      sortedAttendance
+        .map(
+          (record, index) => {
+
+            const date =
+              getRecordDate(
+                record
+              );
+
+            const time =
+              getRecordTime(
+                record
+              );
+
+            const latitude =
+              record.latitude !==
+              undefined
+                ? Number(
+                    record.latitude
+                  ).toFixed(4)
+                : "—";
+
+            const longitude =
+              record.longitude !==
+              undefined
+                ? Number(
+                    record.longitude
+                  ).toFixed(4)
+                : "—";
+
+            const accuracy =
+              record.accuracy !==
+                undefined &&
+              record.accuracy !==
+                null
+                ? `${Math.round(
+                    Number(
+                      record.accuracy
+                    )
+                  )} m`
+                : "—";
+
+            return `
+              <tr>
+                <td>${index + 1}</td>
+                <td>${formatDate(
+                  date
+                )}</td>
+                <td>${time}</td>
+                <td>
+                  ${latitude},
+                  ${longitude}
+                </td>
+                <td>${accuracy}</td>
+                <td>
+                  <span class="present-status">
+                    Present
+                  </span>
+                </td>
+              </tr>
+            `;
+          }
+        )
+        .join("");
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+
+      <html>
+
+        <head>
+
+          <title>
+            Attendance & Salary Report
+          </title>
+
+          <style>
+
+            * {
+              box-sizing: border-box;
+            }
+
+            body {
+              font-family:
+                Arial,
+                Helvetica,
+                sans-serif;
+
+              margin: 0;
+
+              padding: 30px;
+
+              color: #222;
+
+              background: #fff;
+            }
+
+            .report-header {
+              border-bottom:
+                2px solid #222;
+
+              padding-bottom: 18px;
+
+              margin-bottom: 24px;
+            }
+
+            .report-header h1 {
+              margin: 0 0 6px;
+
+              font-size: 25px;
+            }
+
+            .report-header p {
+              margin: 0;
+
+              color: #666;
+
+              font-size: 14px;
+            }
+
+            .employee-info {
+              display: grid;
+
+              grid-template-columns:
+                1fr 1fr;
+
+              gap: 12px;
+
+              padding: 15px;
+
+              border:
+                1px solid #ddd;
+
+              border-radius: 8px;
+
+              margin-bottom: 25px;
+            }
+
+            .employee-info div {
+              font-size: 13px;
+
+              line-height: 1.5;
+            }
+
+            .employee-info strong {
+              display: inline-block;
+
+              min-width: 115px;
+            }
+
+            h2 {
+              font-size: 18px;
+
+              margin:
+                25px 0 12px;
+            }
+
+            .summary {
+              display: grid;
+
+              grid-template-columns:
+                repeat(4, 1fr);
+
+              gap: 12px;
+            }
+
+            .summary-box {
+              border:
+                1px solid #ddd;
+
+              border-radius: 8px;
+
+              padding: 15px;
+            }
+
+            .summary-box span {
+              display: block;
+
+              font-size: 12px;
+
+              color: #666;
+
+              margin-bottom: 7px;
+            }
+
+            .summary-box strong {
+              font-size: 22px;
+            }
+
+            table {
+              width: 100%;
+
+              border-collapse:
+                collapse;
+
+              margin-top: 10px;
+            }
+
+            th,
+            td {
+              border:
+                1px solid #ddd;
+
+              padding: 9px;
+
+              text-align: left;
+
+              font-size: 12px;
+            }
+
+            th {
+              background:
+                #f5f5f5;
+
+              font-weight: 700;
+            }
+
+            .salary-table {
+              width: 560px;
+
+              max-width: 100%;
+            }
+
+            .salary-table td {
+              font-size: 13px;
+            }
+
+            .salary-table td:last-child {
+              text-align: right;
+
+              font-weight: 700;
+            }
+
+            .deduction {
+              color: #c62828;
+            }
+
+            .final-salary {
+              background:
+                #f5f5f5;
+            }
+
+            .final-salary td {
+              font-size: 16px;
+            }
+
+            .present-status {
+              font-weight: 700;
+            }
+
+            .footer {
+              margin-top: 35px;
+
+              padding-top: 12px;
+
+              border-top:
+                1px solid #ddd;
+
+              font-size: 11px;
+
+              color: #777;
+            }
+
+            @media print {
+
+              body {
+                padding: 15px;
+              }
+
+              .report-header {
+                margin-bottom: 15px;
+              }
+
+              h2 {
+                margin-top: 18px;
+              }
+
+              .summary-box {
+                padding: 10px;
+              }
+
+            }
+
+          </style>
+
+        </head>
+
+        <body>
+
+          <div class="report-header">
+
+            <h1>
+              Attendance & Salary Report
+            </h1>
+
+            <p>
+              ${formatMonthName(
+                selectedMonth
+              )}
+            </p>
+
+          </div>
+
+          <div class="employee-info">
+
+            <div>
+              <strong>
+                Employee Name:
+              </strong>
+
+              ${employeeName}
+            </div>
+
+            <div>
+              <strong>
+                Employee ID:
+              </strong>
+
+              ${employeeId}
+            </div>
+
+            <div>
+              <strong>
+                Phone:
+              </strong>
+
+              ${
+                employee?.mobileNumber ||
+                "N/A"
+              }
+            </div>
+
+            <div>
+              <strong>
+                Email:
+              </strong>
+
+              ${
+                employee?.email ||
+                "N/A"
+              }
+            </div>
+
+          </div>
+
+          <h2>
+            Attendance Summary
+          </h2>
+
+          <div class="summary">
+
+            <div class="summary-box">
+
+              <span>
+                Working Days
+              </span>
+
+              <strong>
+                ${workingDays}
+              </strong>
+
+            </div>
+
+            <div class="summary-box">
+
+              <span>
+                Present Days
+              </span>
+
+              <strong>
+                ${presentDays}
+              </strong>
+
+            </div>
+
+            <div class="summary-box">
+
+              <span>
+                Leave Days
+              </span>
+
+              <strong>
+                ${leaveDays}
+              </strong>
+
+            </div>
+
+            <div class="summary-box">
+
+              <span>
+                Absent Days
+              </span>
+
+              <strong>
+                ${absentDays}
+              </strong>
+
+            </div>
+
+          </div>
+
+          <h2>
+            Salary Calculation
+          </h2>
+
+          <table class="salary-table">
+
+            <tbody>
+
+              <tr>
+                <td>
+                  Monthly Salary
+                </td>
+
+                <td>
+                  ₹${salaryNumber.toFixed(
+                    2
+                  )}
+                </td>
+              </tr>
+
+              <tr>
+                <td>
+                  Working Days
+                </td>
+
+                <td>
+                  ${workingDays}
+                </td>
+              </tr>
+
+              <tr>
+                <td>
+                  Per Day Salary
+                </td>
+
+                <td>
+                  ₹${perDaySalary.toFixed(
+                    2
+                  )}
+                </td>
+              </tr>
+
+              <tr>
+                <td>
+                  Present Days
+                </td>
+
+                <td>
+                  ${presentDays}
+                </td>
+              </tr>
+
+              <tr>
+                <td>
+                  Present Salary
+                </td>
+
+                <td>
+                  ₹${presentSalary.toFixed(
+                    2
+                  )}
+                </td>
+              </tr>
+
+              <tr>
+                <td>
+                  Leave Deduction
+                </td>
+
+                <td class="deduction">
+                  - ₹${leaveDeduction.toFixed(
+                    2
+                  )}
+                </td>
+              </tr>
+
+              <tr>
+                <td>
+                  Absent Deduction
+                </td>
+
+                <td class="deduction">
+                  - ₹${absentDeduction.toFixed(
+                    2
+                  )}
+                </td>
+              </tr>
+
+              <tr class="final-salary">
+
+                <td>
+                  <strong>
+                    Final Salary
+                  </strong>
+                </td>
+
+                <td>
+                  <strong>
+                    ₹${finalSalary.toFixed(
+                      2
+                    )}
+                  </strong>
+                </td>
+
+              </tr>
+
+            </tbody>
+
+          </table>
+
+          <h2>
+            Attendance Details
+          </h2>
+
+          ${
+            sortedAttendance.length ===
+            0
+              ? `
+                <p>
+                  No attendance records found
+                  for this month.
+                </p>
+              `
+              : `
+                <table>
+
+                  <thead>
+
+                    <tr>
+
+                      <th>#</th>
+
+                      <th>
+                        Date
+                      </th>
+
+                      <th>
+                        Time
+                      </th>
+
+                      <th>
+                        Location
+                      </th>
+
+                      <th>
+                        Accuracy
+                      </th>
+
+                      <th>
+                        Status
+                      </th>
+
+                    </tr>
+
+                  </thead>
+
+                  <tbody>
+
+                    ${attendanceRows}
+
+                  </tbody>
+
+                </table>
+              `
+          }
+
+          <div class="footer">
+
+            Generated on:
+            ${new Date().toLocaleString(
+              "en-IN"
+            )}
+
+          </div>
+
+        </body>
+
+      </html>
+    `);
+
+    printWindow.document.close();
+
+    printWindow.focus();
+
+    setTimeout(() => {
+      printWindow.print();
+    }, 400);
+  };
+
+  return (
+    <div
+      className="salary-modal-overlay"
+      onMouseDown={onClose}
+    >
+
+      <div
+        className="salary-modal"
+        onMouseDown={(event) =>
+          event.stopPropagation()
+        }
+      >
+
+        {/* HEADER */}
+
+        <div className="salary-modal-header">
+
+          <div className="salary-modal-title">
+
+            <div className="salary-modal-icon">
+              <IndianRupee size={20} />
+            </div>
+
+            <div>
+
+              <h2>
+                Salary Calculation
+              </h2>
+
+              <p>
+                {employeeName}
+
+                <span>•</span>
+
+                {formatMonthName(
+                  selectedMonth
+                )}
+              </p>
+
+            </div>
+
+          </div>
+
+          <button
+            type="button"
+            className="salary-close-button"
+            onClick={onClose}
+          >
+            <X size={19} />
+          </button>
+
+        </div>
+
+        {/* BODY */}
+
+        <div className="salary-modal-body">
+
+          {/* EMPLOYEE */}
+
+          <div className="salary-employee-info">
+
+            <div>
+
+              <span>
+                Employee
+              </span>
+
+              <strong>
+                {employeeName}
+              </strong>
+
+            </div>
+
+            <div>
+
+              <span>
+                Employee ID
+              </span>
+
+              <strong>
+                {employeeId}
+              </strong>
+
+            </div>
+
+          </div>
+
+          {/* SALARY INPUT */}
+
+          <div className="salary-input-field">
+
+            <label>
+              Monthly Salary
+            </label>
+
+            <div className="salary-input-wrapper">
+
+              <IndianRupee size={17} />
+
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="Enter monthly salary"
+                value={
+                  monthlySalary
+                }
+                onChange={(event) =>
+                  setMonthlySalary(
+                    event.target.value
+                  )
+                }
+              />
+
+            </div>
+
+          </div>
+
+          {/* ATTENDANCE */}
+
+          <div className="salary-section">
+
+            <h3>
+              Attendance
+            </h3>
+
+            <div className="salary-stats">
+
+              <div className="salary-stat">
+
+                <span>
+                  Working Days
+                </span>
+
+                <strong>
+                  {workingDays}
+                </strong>
+
+              </div>
+
+              <div className="salary-stat salary-stat--present">
+
+                <span>
+                  Present
+                </span>
+
+                <strong>
+                  {presentDays}
+                </strong>
+
+              </div>
+
+              <div className="salary-stat salary-stat--leave">
+
+                <span>
+                  Leave
+                </span>
+
+                <strong>
+                  {leaveDays}
+                </strong>
+
+              </div>
+
+              <div className="salary-stat salary-stat--absent">
+
+                <span>
+                  Absent
+                </span>
+
+                <strong>
+                  {absentDays}
+                </strong>
+
+              </div>
+
+            </div>
+
+          </div>
+
+          {/* SALARY BREAKDOWN */}
+
+          <div className="salary-section">
+
+            <h3>
+              Salary Breakdown
+            </h3>
+
+            <div className="salary-breakdown">
+
+              <div>
+
+                <span>
+                  Monthly Salary
+                </span>
+
+                <strong>
+                  ₹{salaryNumber.toFixed(
+                    2
+                  )}
+                </strong>
+
+              </div>
+
+              <div>
+
+                <span>
+                  Per Day Salary
+                </span>
+
+                <strong>
+                  ₹{perDaySalary.toFixed(
+                    2
+                  )}
+                </strong>
+
+              </div>
+
+              <div>
+
+                <span>
+                  Present Salary
+                </span>
+
+                <strong>
+                  ₹{presentSalary.toFixed(
+                    2
+                  )}
+                </strong>
+
+              </div>
+
+              <div>
+
+                <span>
+                  Leave Deduction
+                </span>
+
+                <strong className="deduction">
+                  - ₹{leaveDeduction.toFixed(
+                    2
+                  )}
+                </strong>
+
+              </div>
+
+              <div>
+
+                <span>
+                  Absent Deduction
+                </span>
+
+                <strong className="deduction">
+                  - ₹{absentDeduction.toFixed(
+                    2
+                  )}
+                </strong>
+
+              </div>
+
+            </div>
+
+          </div>
+
+          {/* FINAL SALARY */}
+
+          <div className="salary-final">
+
+            <div>
+
+              <span>
+                Final Salary
+              </span>
+
+              <small>
+                After attendance
+                deductions
+              </small>
+
+            </div>
+
+            <strong>
+              ₹{finalSalary.toFixed(
+                2
+              )}
+            </strong>
+
+          </div>
+
+        </div>
+
+        {/* FOOTER */}
+
+        <div className="salary-modal-footer">
+
+          <button
+            type="button"
+            className="salary-cancel-button"
+            onClick={onClose}
+          >
+            Close
+          </button>
+
+          <button
+            type="button"
+            className="salary-print-button"
+            onClick={
+              printAttendance
+            }
+          >
+
+            <Printer size={17} />
+
+            Print Attendance & Salary
+
+          </button>
 
         </div>
 
@@ -3005,7 +3924,6 @@ function normalizeDateKey(date) {
   const dateString =
     String(date).trim();
 
-  // YYYY-MM-DD
   if (
     /^\d{4}-\d{2}-\d{2}$/.test(
       dateString
@@ -3014,7 +3932,6 @@ function normalizeDateKey(date) {
     return dateString;
   }
 
-  // DD/MM/YYYY
   if (
     /^\d{2}\/\d{2}\/\d{4}$/.test(
       dateString
@@ -3091,7 +4008,7 @@ function normalizeLeaveType(
 }
 
 // ==================================================
-// GET DATES BETWEEN START AND END
+// GET DATES BETWEEN
 // ==================================================
 
 function getDatesBetween(
@@ -3260,8 +4177,6 @@ function getRecordDate(record) {
         record.date
       ).trim();
 
-    // YYYY-MM-DD
-
     if (
       /^\d{4}-\d{2}-\d{2}$/.test(
         dateString
@@ -3281,8 +4196,6 @@ function getRecordDate(record) {
         day
       );
     }
-
-    // DD/MM/YYYY
 
     if (
       /^\d{2}\/\d{2}\/\d{4}$/.test(
@@ -3304,8 +4217,6 @@ function getRecordDate(record) {
       );
     }
   }
-
-  // FALLBACK TO TIMESTAMP
 
   if (record?.timestamp) {
     const date =
@@ -3469,8 +4380,6 @@ function formatDate(date) {
     return "—";
   }
 
-  // YYYY-MM-DD
-
   if (
     typeof date === "string" &&
     /^\d{4}-\d{2}-\d{2}$/.test(
@@ -3501,8 +4410,6 @@ function formatDate(date) {
       }
     );
   }
-
-  // DD/MM/YYYY
 
   if (
     typeof date === "string" &&
@@ -3572,8 +4479,6 @@ function formatDateForInput(
   const dateString =
     String(date).trim();
 
-  // YYYY-MM-DD
-
   if (
     /^\d{4}-\d{2}-\d{2}$/.test(
       dateString
@@ -3581,8 +4486,6 @@ function formatDateForInput(
   ) {
     return dateString;
   }
-
-  // DD/MM/YYYY
 
   if (
     /^\d{2}\/\d{2}\/\d{4}$/.test(
@@ -3658,7 +4561,8 @@ function getWorkingDaysForMonth(
     .split("-")
     .map(Number);
 
-  const now = new Date();
+  const now =
+    new Date();
 
   const currentYear =
     now.getFullYear();
@@ -3669,7 +4573,6 @@ function getWorkingDaysForMonth(
   let lastDay;
 
   // Future month
-
   if (
     year > currentYear ||
     (
@@ -3682,10 +4585,10 @@ function getWorkingDaysForMonth(
   }
 
   // Current month
-
   if (
     year === currentYear &&
-    month - 1 === currentMonth
+    month - 1 ===
+      currentMonth
   ) {
     lastDay =
       now.getDate();
