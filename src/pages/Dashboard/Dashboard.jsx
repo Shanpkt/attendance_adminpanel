@@ -13,6 +13,7 @@ import Avatar from "@mui/material/Avatar";
 import Chip from "@mui/material/Chip";
 import Tooltip from "@mui/material/Tooltip";
 import ContrastIcon from "@mui/icons-material/Contrast";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
 
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -419,24 +420,6 @@ function Dashboard() {
     uniqueHalfDayEmployees.size;
 
   // ==========================================
-  // ACCOUNTED EMPLOYEES
-  // ==========================================
-
-  const accountedEmployees =
-    new Set([
-      ...Array.from(
-        uniqueEmployees
-      ).map(
-        (value) =>
-          String(value)
-      ),
-
-      ...uniqueLeaveEmployees,
-
-      ...uniqueHalfDayEmployees,
-    ]);
-
-  // ==========================================
   // ABSENT EMPLOYEES LIST
   // ==========================================
 
@@ -632,7 +615,9 @@ function Dashboard() {
       title: "Late Comer",
       value: lateCount,
       type: "late",
-      icon: "⏰",
+      icon: (
+        <AccessTimeIcon fontSize="inherit" />
+      ),
     },
   ];
 
