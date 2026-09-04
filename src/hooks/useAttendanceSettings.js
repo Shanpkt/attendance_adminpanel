@@ -4,57 +4,110 @@ import {
   useState,
 } from "react";
 
+import axios from "axios";
+
 import {
-  ATTENDANCE_SETTINGS_EVENT,
-  loadAttendanceSettings,
-  saveAttendanceSettings,
+  DEFAULT_ATTENDANCE_SETTINGS,
+  SETTINGS_API,
+  normalizeSettings,
 } from "../utils/attendanceSettings";
 
 function useAttendanceSettings() {
   const [settings, setSettings] = useState(
-    loadAttendanceSettings
+    DEFAULT_ATTENDANCE_SETTINGS
+  );
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [saving, setSaving] =
+    useState(false);
+
+  const [error, setError] =
+    useState("");
+
+  const fetchSettings = useCallback(
+    async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        const response =
+          await axios.get(
+            SETTINGS_API
+          );
+
+        setSettings(
+          normalizeSettings(
+            response.data?.data
+          )
+        );
+      } catch (fetchError) {
+        console.error(
+          "Error fetching settings:",
+          fetchError
+        );
+
+        setError(
+          "Unable to fetch settings."
+        );
+
+        setSettings(
+          DEFAULT_ATTENDANCE_SETTINGS
+        );
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
   );
 
   useEffect(() => {
-    const syncSettings = () => {
-      setSettings(
-        loadAttendanceSettings()
-      );
-    };
-
-    window.addEventListener(
-      ATTENDANCE_SETTINGS_EVENT,
-      syncSettings
-    );
-
-    window.addEventListener(
-      "storage",
-      syncSettings
-    );
-
-    return () => {
-      window.removeEventListener(
-        ATTENDANCE_SETTINGS_EVENT,
-        syncSettings
-      );
-
-      window.removeEventListener(
-        "storage",
-        syncSettings
-      );
-    };
-  }, []);
+    fetchSettings();
+  }, [fetchSettings]);
 
   const saveSettings = useCallback(
-    (nextSettings) => {
-      const saved =
-        saveAttendanceSettings(
+    async (nextSettings) => {
+      const payload =
+        normalizeSettings(
           nextSettings
         );
 
-      setSettings(saved);
+      setSaving(true);
+      setError("");
 
-      return saved;
+      try {
+        const response =
+          await axios.put(
+            SETTINGS_API,
+            payload
+          );
+
+        const saved =
+          normalizeSettings(
+            response.data?.data
+          );
+
+        setSettings(saved);
+
+        return saved;
+      } catch (saveError) {
+        console.error(
+          "Error saving settings:",
+          saveError
+        );
+
+        const message =
+          saveError.response?.data
+            ?.message ||
+          "Unable to save settings.";
+
+        setError(message);
+
+        throw saveError;
+      } finally {
+        setSaving(false);
+      }
     },
     []
   );
@@ -64,7 +117,11 @@ function useAttendanceSettings() {
       settings.lateComingTime,
     halfDayTime:
       settings.halfDayTime,
+    loading,
+    saving,
+    error,
     saveSettings,
+    fetchSettings,
   };
 }
 

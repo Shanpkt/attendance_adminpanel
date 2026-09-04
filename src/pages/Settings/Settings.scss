@@ -144,6 +144,12 @@
   font-weight: 600;
 }
 
+.settings-status {
+  margin: 0 0 16px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
 .settings-actions {
   display: flex;
   align-items: center;
@@ -168,18 +174,24 @@
   color: #374151;
 }
 
-.settings-reset:hover {
-  background: #f3f6fa;
-}
-
 .settings-save {
   border: 0;
   background: #1976d2;
   color: #ffffff;
 }
 
-.settings-save:hover {
+.settings-save:hover:not(:disabled) {
   background: #1565c0;
+}
+
+.settings-reset:hover:not(:disabled) {
+  background: #f3f6fa;
+}
+
+.settings-reset:disabled,
+.settings-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .settings-saved {

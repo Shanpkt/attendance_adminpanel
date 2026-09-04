@@ -28,6 +28,11 @@ import {
   IndianRupee,
 } from "lucide-react";
 
+import Tooltip from "@mui/material/Tooltip";
+
+import useAttendanceSettings from "../../hooks/useAttendanceSettings";
+import { isPunchAfterTime } from "../../utils/attendanceSettings";
+
 import "./Profile.scss";
 
 // ==================================================
@@ -597,6 +602,25 @@ function Profile() {
           );
         },
         0
+      );
+    }, [
+      selectedMonthLeaves,
+    ]);
+
+  const halfDayLeaveDates =
+    useMemo(() => {
+      return new Set(
+        selectedMonthLeaves
+          .filter(
+            (leave) =>
+              leave.leaveType ===
+              "half"
+          )
+          .map(
+            (leave) =>
+              leave.date
+          )
+          .filter(Boolean)
       );
     }, [
       selectedMonthLeaves,
@@ -1430,6 +1454,10 @@ function Profile() {
 
         loading={
           attendanceLoading
+        }
+
+        halfDayLeaveDates={
+          halfDayLeaveDates
         }
       />
 
@@ -2510,11 +2538,103 @@ function AttendanceSummary({
 // ATTENDANCE RECORDS
 // ==================================================
 
+function PunchTimeCell({
+  punch,
+  type,
+  timeLabel,
+}) {
+  const selfieUrl =
+    getSelfieUrl(punch);
+
+  const punchLabel =
+    type === "in"
+      ? "Punch In"
+      : "Punch Out";
+
+  const punchClass =
+    type === "in"
+      ? "profile-punch profile-punch--in"
+      : "profile-punch profile-punch--out";
+
+  const cell = (
+    <div
+      className={`${punchClass}${
+        selfieUrl
+          ? " profile-punch--has-photo"
+          : ""
+      }`}
+    >
+      <span className="profile-punch__label">
+        {punchLabel}
+      </span>
+
+      <strong>
+        {timeLabel}
+      </strong>
+    </div>
+  );
+
+  if (!selfieUrl) {
+    return cell;
+  }
+
+  return (
+    <Tooltip
+      arrow
+      placement="top"
+      enterDelay={120}
+      leaveDelay={80}
+      slotProps={{
+        tooltip: {
+          className: "selfie-tooltip",
+          sx: {
+            bgcolor: "#ffffff",
+            color: "#111827",
+            padding: "8px",
+            maxWidth: "none",
+            border: "1px solid #e5e7eb",
+            borderRadius: "12px",
+            boxShadow:
+              "0 16px 40px rgba(15, 23, 42, 0.18)",
+          },
+        },
+        arrow: {
+          sx: {
+            color: "#ffffff",
+          },
+        },
+      }}
+      title={
+        <div className="selfie-popup">
+          <p className="selfie-popup__title">
+            {punchLabel} photo
+          </p>
+
+          <img
+            src={selfieUrl}
+            alt={`${punchLabel} selfie`}
+          />
+        </div>
+      }
+    >
+      <span className="profile-punch__hit">
+        {cell}
+      </span>
+    </Tooltip>
+  );
+}
+
 function AttendanceRecords({
   attendance,
   selectedMonth,
   loading,
+  halfDayLeaveDates = new Set(),
 }) {
+  const {
+    lateComingTime,
+    halfDayTime,
+  } = useAttendanceSettings();
+
   return (
     <section className="attendance-records">
 
@@ -2581,9 +2701,9 @@ function AttendanceRecords({
 
             <span>#</span>
             <span>Date</span>
-            <span>Time</span>
-            <span>Location</span>
-            <span>Accuracy</span>
+            <span>Punch In</span>
+            <span>Punch Out</span>
+            <span>Late / Half Day</span>
             <span>Status</span>
 
           </div>
@@ -2596,10 +2716,57 @@ function AttendanceRecords({
                   record
                 );
 
-              const time =
-                getRecordTime(
-                  record
+              const punchIn =
+                record.punchIn ||
+                {};
+
+              const punchOut =
+                record.punchOut ||
+                {};
+
+              const punchInTime =
+                formatPunchTime(
+                  getPunchInTimestamp(
+                    record
+                  )
                 );
+
+              const punchOutTime =
+                formatPunchTime(
+                  punchOut.timestamp
+                );
+
+              const isHalfDayPunch =
+                isPunchAfterTime(
+                  getPunchInTimestamp(
+                    record
+                  ),
+                  halfDayTime
+                );
+
+              const isLate =
+                isPunchAfterTime(
+                  getPunchInTimestamp(
+                    record
+                  ),
+                  lateComingTime
+                ) &&
+                !isHalfDayPunch;
+
+              const isHalfDayLeave =
+                halfDayLeaveDates.has(
+                  getRecordDateKey(
+                    record
+                  )
+                );
+
+              const isHalfDay =
+                isHalfDayPunch ||
+                isHalfDayLeave;
+
+              const status =
+                record.status ||
+                "Present";
 
               return (
 
@@ -2621,58 +2788,56 @@ function AttendanceRecords({
                     )}
                   </span>
 
-                  <span className="time-cell">
-                    {time}
-                  </span>
+                  <PunchTimeCell
+                    punch={punchIn}
+                    type="in"
+                    timeLabel={
+                      punchInTime
+                    }
+                  />
 
-                  <span>
+                  <PunchTimeCell
+                    punch={punchOut}
+                    type="out"
+                    timeLabel={
+                      punchOutTime
+                    }
+                  />
 
-                    {record.latitude !==
-                      undefined &&
-                    record.longitude !==
-                      undefined ? (
+                  <span className="history-flags">
 
-                      <span className="location-text">
-
-                        <MapPinned size={14} />
-                      {record.locationName}
-                        {Number(
-                          record.latitude
-                        ).toFixed(4)}
-
-                        ,{" "}
-
-                        {Number(
-                          record.longitude
-                        ).toFixed(4)}
-
+                    {isLate && (
+                      <span className="history-flag history-flag--late">
+                        Late
                       </span>
-
-                    ) : (
-                      "—"
                     )}
 
-                  </span>
+                    {isHalfDay && (
+                      <span className="history-flag history-flag--halfday">
+                        Half Day
+                      </span>
+                    )}
 
-                  <span>
-
-                    {record.accuracy !==
-                      undefined &&
-                    record.accuracy !==
-                      null
-                      ? `${Math.round(
-                          Number(
-                            record.accuracy
-                          )
-                        )} m`
-                      : "—"}
+                    {!isLate &&
+                      !isHalfDay && (
+                        <span className="history-flag-empty">
+                          —
+                        </span>
+                      )}
 
                   </span>
 
                   <span>
 
-                    <span className="attendance-status">
-                      Present
+                    <span
+                      className={`attendance-status${
+                        status ===
+                        "Punched Out"
+                          ? " attendance-status--out"
+                          : ""
+                      }`}
+                    >
+                      {status}
                     </span>
 
                   </span>
@@ -4198,7 +4363,7 @@ function getRecordDate(record) {
     }
 
     if (
-      /^\d{2}\/\d{2}\/\d{4}$/.test(
+      /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(
         dateString
       )
     ) {
@@ -4218,10 +4383,15 @@ function getRecordDate(record) {
     }
   }
 
-  if (record?.timestamp) {
+  const punchTimestamp =
+    record?.punchIn?.timestamp ||
+    record?.timestamp ||
+    record?.createdAt;
+
+  if (punchTimestamp) {
     const date =
       new Date(
-        record.timestamp
+        punchTimestamp
       );
 
     if (
@@ -4243,10 +4413,15 @@ function getRecordDate(record) {
 function getRecordTimestamp(
   record
 ) {
-  if (record?.timestamp) {
+  const punchTimestamp =
+    getPunchInTimestamp(
+      record
+    );
+
+  if (punchTimestamp) {
     const timestamp =
       new Date(
-        record.timestamp
+        punchTimestamp
       ).getTime();
 
     if (
@@ -4325,14 +4500,40 @@ function getRecordMonth(
 // RECORD TIME
 // ==================================================
 
-function getRecordTime(record) {
-  if (!record?.timestamp) {
+function getPunchInTimestamp(
+  record
+) {
+  return (
+    record?.punchIn?.timestamp ||
+    record?.timestamp ||
+    record?.createdAt ||
+    null
+  );
+}
+
+function getSelfieUrl(punch) {
+  if (!punch) {
+    return "";
+  }
+
+  return (
+    punch.selfieUrl ||
+    punch.selfieURL ||
+    punch.imageUrl ||
+    ""
+  );
+}
+
+function formatPunchTime(
+  timestamp
+) {
+  if (!timestamp) {
     return "—";
   }
 
   const date =
     new Date(
-      record.timestamp
+      timestamp
     );
 
   if (
@@ -4348,9 +4549,16 @@ function getRecordTime(record) {
     {
       hour: "2-digit",
       minute: "2-digit",
-      second: "2-digit",
       hour12: true,
     }
+  );
+}
+
+function getRecordTime(record) {
+  return formatPunchTime(
+    getPunchInTimestamp(
+      record
+    )
   );
 }
 

@@ -19,6 +19,9 @@ function Settings() {
   const {
     lateComingTime,
     halfDayTime,
+    loading,
+    saving,
+    error,
     saveSettings,
   } = useAttendanceSettings();
 
@@ -30,6 +33,9 @@ function Settings() {
 
   const [saved, setSaved] =
     useState(false);
+
+  const [formError, setFormError] =
+    useState("");
 
   useEffect(() => {
     setLateTime(lateComingTime);
@@ -43,17 +49,28 @@ function Settings() {
     timeToMinutes(halfTime) <=
     timeToMinutes(lateTime);
 
-  const handleSave = () => {
-    saveSettings({
-      lateComingTime: lateTime,
-      halfDayTime: halfTime,
-    });
+  const handleSave = async () => {
+    setSaved(false);
+    setFormError("");
 
-    setSaved(true);
+    try {
+      await saveSettings({
+        lateComingTime: lateTime,
+        halfDayTime: halfTime,
+      });
 
-    window.setTimeout(() => {
-      setSaved(false);
-    }, 2500);
+      setSaved(true);
+
+      window.setTimeout(() => {
+        setSaved(false);
+      }, 2500);
+    } catch (saveError) {
+      setFormError(
+        saveError.response?.data
+          ?.message ||
+          "Unable to save settings."
+      );
+    }
   };
 
   const handleReset = () => {
@@ -66,6 +83,7 @@ function Settings() {
     );
 
     setSaved(false);
+    setFormError("");
   };
 
   return (
@@ -88,6 +106,18 @@ function Settings() {
         </div>
 
       </div>
+
+      {loading && (
+        <p className="settings-status">
+          Loading saved limits...
+        </p>
+      )}
+
+      {(formError || error) && (
+        <p className="settings-warning">
+          {formError || error}
+        </p>
+      )}
 
       <section className="settings-grid">
 
@@ -116,11 +146,13 @@ function Settings() {
               id="late-coming-time"
               type="time"
               value={lateTime}
+              disabled={loading || saving}
               onChange={(event) => {
                 setLateTime(
                   event.target.value
                 );
                 setSaved(false);
+                setFormError("");
               }}
             />
 
@@ -158,11 +190,13 @@ function Settings() {
               id="half-day-time"
               type="time"
               value={halfTime}
+              disabled={loading || saving}
               onChange={(event) => {
                 setHalfTime(
                   event.target.value
                 );
                 setSaved(false);
+                setFormError("");
               }}
             />
 
@@ -192,6 +226,7 @@ function Settings() {
           type="button"
           className="settings-reset"
           onClick={handleReset}
+          disabled={loading || saving}
         >
           Reset
         </button>
@@ -200,13 +235,16 @@ function Settings() {
           type="button"
           className="settings-save"
           onClick={handleSave}
+          disabled={loading || saving}
         >
-          Save Limits
+          {saving
+            ? "Saving..."
+            : "Save Limits"}
         </button>
 
         {saved && (
           <span className="settings-saved">
-            Saved. Dashboard and Attendance
+            Saved to database. Dashboard
             will use these times.
           </span>
         )}
