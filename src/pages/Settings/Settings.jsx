@@ -5,11 +5,14 @@ import React, {
 
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import ContrastIcon from "@mui/icons-material/Contrast";
+import MyLocationIcon from "@mui/icons-material/MyLocation";
+import PlaceIcon from "@mui/icons-material/Place";
 
 import useAttendanceSettings from "../../hooks/useAttendanceSettings";
 import {
   DEFAULT_ATTENDANCE_SETTINGS,
   formatTimeLabel,
+  isValidGpsSettings,
   timeToMinutes,
 } from "../../utils/attendanceSettings";
 
@@ -19,6 +22,9 @@ function Settings() {
   const {
     lateComingTime,
     halfDayTime,
+    latitude,
+    longitude,
+    accuracy,
     loading,
     saving,
     error,
@@ -31,6 +37,18 @@ function Settings() {
   const [halfTime, setHalfTime] =
     useState(halfDayTime);
 
+  const [gpsLatitude, setGpsLatitude] =
+    useState(latitude);
+
+  const [gpsLongitude, setGpsLongitude] =
+    useState(longitude);
+
+  const [gpsAccuracy, setGpsAccuracy] =
+    useState(accuracy);
+
+  const [locating, setLocating] =
+    useState(false);
+
   const [saved, setSaved] =
     useState(false);
 
@@ -40,23 +58,98 @@ function Settings() {
   useEffect(() => {
     setLateTime(lateComingTime);
     setHalfTime(halfDayTime);
+    setGpsLatitude(latitude);
+    setGpsLongitude(longitude);
+    setGpsAccuracy(accuracy);
   }, [
     lateComingTime,
     halfDayTime,
+    latitude,
+    longitude,
+    accuracy,
   ]);
 
   const hasInvalidOrder =
     timeToMinutes(halfTime) <=
     timeToMinutes(lateTime);
 
+  const hasInvalidGps = !isValidGpsSettings({
+    latitude: gpsLatitude,
+    longitude: gpsLongitude,
+    accuracy: gpsAccuracy,
+  });
+
+  const updateGpsField = (setter) => {
+    return (event) => {
+      setter(event.target.value);
+      setSaved(false);
+      setFormError("");
+    };
+  };
+
+  const handleUseCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setFormError(
+        "This browser cannot read GPS location."
+      );
+      return;
+    }
+
+    setLocating(true);
+    setFormError("");
+    setSaved(false);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setGpsLatitude(
+          String(position.coords.latitude)
+        );
+        setGpsLongitude(
+          String(position.coords.longitude)
+        );
+        setGpsAccuracy(
+          position.coords.accuracy != null
+            ? String(
+                Math.round(
+                  position.coords.accuracy * 100
+                ) / 100
+              )
+            : ""
+        );
+        setLocating(false);
+      },
+      () => {
+        setLocating(false);
+        setFormError(
+          "Unable to read current GPS location."
+        );
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 12000,
+        maximumAge: 0,
+      }
+    );
+  };
+
   const handleSave = async () => {
     setSaved(false);
     setFormError("");
+
+    if (hasInvalidGps) {
+      setFormError(
+        "Enter a valid latitude, longitude, and accuracy, or leave all GPS fields empty."
+      );
+      return;
+    }
 
     try {
       await saveSettings({
         lateComingTime: lateTime,
         halfDayTime: halfTime,
+        latitude: gpsLatitude,
+        longitude: gpsLongitude,
+        accuracy: gpsAccuracy,
       });
 
       setSaved(true);
@@ -82,6 +175,18 @@ function Settings() {
       DEFAULT_ATTENDANCE_SETTINGS.halfDayTime
     );
 
+    setGpsLatitude(
+      DEFAULT_ATTENDANCE_SETTINGS.latitude
+    );
+
+    setGpsLongitude(
+      DEFAULT_ATTENDANCE_SETTINGS.longitude
+    );
+
+    setGpsAccuracy(
+      DEFAULT_ATTENDANCE_SETTINGS.accuracy
+    );
+
     setSaved(false);
     setFormError("");
   };
@@ -98,9 +203,9 @@ function Settings() {
           </h1>
 
           <p>
-            Set late coming and half day
-            punch-in limits. These apply
-            on Dashboard and Attendance.
+            Set late coming, half day, and
+            GPS location. These save to the
+            settings module in the backend.
           </p>
 
         </div>
@@ -109,7 +214,7 @@ function Settings() {
 
       {loading && (
         <p className="settings-status">
-          Loading saved limits...
+          Loading saved settings...
         </p>
       )}
 
@@ -209,6 +314,118 @@ function Settings() {
 
         </div>
 
+        <div className="settings-card settings-card--gps">
+
+          <div className="settings-card__icon">
+            <PlaceIcon />
+          </div>
+
+          <div className="settings-card__body">
+
+            <h2>
+              GPS Location Spot
+            </h2>
+
+            <p>
+              Office latitude, longitude,
+              and allowed GPS accuracy in
+              meters.
+            </p>
+
+            <div className="settings-gps-fields">
+
+              <div>
+                <label htmlFor="gps-latitude">
+                  Latitude
+                </label>
+                <input
+                  id="gps-latitude"
+                  type="number"
+                  step="any"
+                  min="-90"
+                  max="90"
+                  placeholder="e.g. 28.6139"
+                  value={gpsLatitude}
+                  disabled={
+                    loading || saving || locating
+                  }
+                  onChange={updateGpsField(
+                    setGpsLatitude
+                  )}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="gps-longitude">
+                  Longitude
+                </label>
+                <input
+                  id="gps-longitude"
+                  type="number"
+                  step="any"
+                  min="-180"
+                  max="180"
+                  placeholder="e.g. 77.2090"
+                  value={gpsLongitude}
+                  disabled={
+                    loading || saving || locating
+                  }
+                  onChange={updateGpsField(
+                    setGpsLongitude
+                  )}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="gps-accuracy">
+                  Accuracy (m)
+                </label>
+                <input
+                  id="gps-accuracy"
+                  type="number"
+                  step="any"
+                  min="0"
+                  placeholder="e.g. 50"
+                  value={gpsAccuracy}
+                  disabled={
+                    loading || saving || locating
+                  }
+                  onChange={updateGpsField(
+                    setGpsAccuracy
+                  )}
+                />
+              </div>
+
+            </div>
+
+            <button
+              type="button"
+              className="settings-gps-button"
+              onClick={handleUseCurrentLocation}
+              disabled={
+                loading || saving || locating
+              }
+            >
+              <MyLocationIcon />
+              {locating
+                ? "Reading GPS..."
+                : "Use current location"}
+            </button>
+
+            <span className="settings-card__hint">
+              Saved spot:{" "}
+              {gpsLatitude && gpsLongitude
+                ? `${gpsLatitude}, ${gpsLongitude}`
+                : "not set"}
+              {gpsAccuracy !== ""
+                ? ` · ${gpsAccuracy} m`
+                : ""}
+            </span>
+
+          </div>
+
+        </div>
+
       </section>
 
       {hasInvalidOrder && (
@@ -216,6 +433,15 @@ function Settings() {
         <p className="settings-warning">
           Half day time should usually be
           later than late coming time.
+        </p>
+
+      )}
+
+      {hasInvalidGps && (
+
+        <p className="settings-warning">
+          Fill all GPS fields with valid
+          numbers, or leave them all empty.
         </p>
 
       )}
@@ -235,17 +461,19 @@ function Settings() {
           type="button"
           className="settings-save"
           onClick={handleSave}
-          disabled={loading || saving}
+          disabled={
+            loading || saving || hasInvalidGps
+          }
         >
           {saving
             ? "Saving..."
-            : "Save Limits"}
+            : "Save Settings"}
         </button>
 
         {saved && (
           <span className="settings-saved">
-            Saved to database. Dashboard
-            will use these times.
+            Saved to database. Backend
+            settings now include GPS.
           </span>
         )}
 

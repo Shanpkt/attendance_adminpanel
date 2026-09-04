@@ -32,6 +32,10 @@
   margin-bottom: 20px;
 }
 
+.settings-card--gps {
+  grid-column: 1 / -1;
+}
+
 .settings-card {
   display: flex;
   align-items: flex-start;
@@ -72,6 +76,11 @@
   color: #0891b2;
 }
 
+.settings-card--gps .settings-card__icon {
+  background: #ecfdf5;
+  color: #059669;
+}
+
 .settings-card__body {
   min-width: 0;
   flex: 1;
@@ -99,7 +108,8 @@
     letter-spacing: 0.3px;
   }
 
-  input[type="time"] {
+  input[type="time"],
+  input[type="number"] {
     width: 100%;
     max-width: 220px;
     height: 44px;
@@ -118,10 +128,55 @@
     outline: none;
   }
 
-  input[type="time"]:focus {
+  input[type="time"]:focus,
+  input[type="number"]:focus {
     border-color: #1976d2;
     box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.12);
   }
+}
+
+.settings-gps-fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 14px;
+
+  input[type="number"] {
+    max-width: none;
+  }
+}
+
+.settings-gps-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  min-height: 40px;
+  padding: 0 14px;
+  margin-bottom: 4px;
+
+  border: 1px solid #dbe2ea;
+  border-radius: 8px;
+
+  background: #ffffff;
+  color: #374151;
+
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.settings-gps-button:hover:not(:disabled) {
+  background: #f3f6fa;
+}
+
+.settings-gps-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.settings-gps-button svg {
+  font-size: 18px;
 }
 
 .settings-card__hint {
@@ -206,6 +261,10 @@
   }
 
   .settings-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-gps-fields {
     grid-template-columns: 1fr;
   }
 }

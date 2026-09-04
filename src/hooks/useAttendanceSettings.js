@@ -10,6 +10,7 @@ import {
   DEFAULT_ATTENDANCE_SETTINGS,
   SETTINGS_API,
   normalizeSettings,
+  toSettingsPayload,
 } from "../utils/attendanceSettings";
 
 function useAttendanceSettings() {
@@ -69,9 +70,10 @@ function useAttendanceSettings() {
   const saveSettings = useCallback(
     async (nextSettings) => {
       const payload =
-        normalizeSettings(
-          nextSettings
-        );
+        toSettingsPayload({
+          ...settings,
+          ...nextSettings,
+        });
 
       setSaving(true);
       setError("");
@@ -109,7 +111,7 @@ function useAttendanceSettings() {
         setSaving(false);
       }
     },
-    []
+    [settings]
   );
 
   return {
@@ -117,6 +119,9 @@ function useAttendanceSettings() {
       settings.lateComingTime,
     halfDayTime:
       settings.halfDayTime,
+    latitude: settings.latitude,
+    longitude: settings.longitude,
+    accuracy: settings.accuracy,
     loading,
     saving,
     error,

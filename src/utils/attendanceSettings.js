@@ -4,6 +4,27 @@ export const SETTINGS_API =
 export const DEFAULT_ATTENDANCE_SETTINGS = {
   lateComingTime: "10:00",
   halfDayTime: "13:30",
+  latitude: "",
+  longitude: "",
+  accuracy: "",
+};
+
+const toSettingNumber = (value) => {
+  if (
+    value === undefined ||
+    value === null ||
+    value === ""
+  ) {
+    return "";
+  }
+
+  const number = Number(value);
+
+  if (!Number.isFinite(number)) {
+    return "";
+  }
+
+  return String(number);
 };
 
 export const timeToMinutes = (time) => {
@@ -88,5 +109,73 @@ export const normalizeSettings = (
     halfDayTime:
       data.halfDayTime ||
       DEFAULT_ATTENDANCE_SETTINGS.halfDayTime,
+    latitude: toSettingNumber(
+      data.latitude
+    ),
+    longitude: toSettingNumber(
+      data.longitude
+    ),
+    accuracy: toSettingNumber(
+      data.accuracy
+    ),
   };
+};
+
+export const toSettingsPayload = (
+  data = {}
+) => {
+  const settings = normalizeSettings(data);
+
+  const toNumberOrNull = (value) => {
+    if (value === "") {
+      return null;
+    }
+
+    return Number(value);
+  };
+
+  return {
+    lateComingTime: settings.lateComingTime,
+    halfDayTime: settings.halfDayTime,
+    latitude: toNumberOrNull(
+      settings.latitude
+    ),
+    longitude: toNumberOrNull(
+      settings.longitude
+    ),
+    accuracy: toNumberOrNull(
+      settings.accuracy
+    ),
+  };
+};
+
+export const isValidGpsSettings = ({
+  latitude,
+  longitude,
+  accuracy,
+}) => {
+  const hasAny = [
+    latitude,
+    longitude,
+    accuracy,
+  ].some((value) => value !== "");
+
+  if (!hasAny) {
+    return true;
+  }
+
+  const lat = Number(latitude);
+  const lng = Number(longitude);
+  const acc = Number(accuracy);
+
+  return (
+    Number.isFinite(lat) &&
+    lat >= -90 &&
+    lat <= 90 &&
+    Number.isFinite(lng) &&
+    lng >= -180 &&
+    lng <= 180 &&
+    Number.isFinite(acc) &&
+    acc >= 0
+  );
 };
