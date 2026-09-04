@@ -33,82 +33,47 @@ function Dashboard() {
 
 
   // ==========================================
-  // ATTENDANCE STATE
+  // STATE
   // ==========================================
 
-  const [attendanceList, setAttendanceList] =
-    useState([]);
+  const [attendanceList, setAttendanceList] = useState([]);
 
+  const [employees, setEmployees] = useState([]);
 
-  // ==========================================
-  // EMPLOYEE STATE
-  // ==========================================
+  const [todayLeaves, setTodayLeaves] = useState([]);
 
-  const [employees, setEmployees] =
-    useState([]);
+  const [loading, setLoading] = useState(true);
 
+  const [refreshing, setRefreshing] = useState(false);
 
-  // ==========================================
-  // LEAVE STATE
-  // ==========================================
-
-  const [todayLeaves, setTodayLeaves] =
-    useState([]);
-
-
-  // ==========================================
-  // LOADING STATE
-  // ==========================================
-
-  const [loading, setLoading] =
-    useState(true);
-
-
-  // ==========================================
-  // REFRESH STATE
-  // ==========================================
-
-  const [refreshing, setRefreshing] =
-    useState(false);
-
-
-  // ==========================================
-  // ERROR STATE
-  // ==========================================
-
-  const [error, setError] =
-    useState("");
+  const [error, setError] = useState("");
 
 
   // ==========================================
   // TOTAL EMPLOYEES
   // ==========================================
 
-  const totalEmployees =
-    employees.length;
+  const totalEmployees = employees.length;
 
 
   // ==========================================
-  // GET TODAY DATE FOR ATTENDANCE
+  // GET TODAY DATE
   //
-  // ATTENDANCE FORMAT:
+  // FORMAT:
   // DD/M/YYYY
   //
   // Example:
-  // 1/9/2026
+  // 4/9/2026
   // ==========================================
 
   const getTodayDate = useCallback(() => {
     const today = new Date();
 
-    const day =
-      today.getDate();
+    const day = today.getDate();
 
-    const month =
-      today.getMonth() + 1;
+    const month = today.getMonth() + 1;
 
-    const year =
-      today.getFullYear();
+    const year = today.getFullYear();
 
     return `${day}/${month}/${year}`;
   }, []);
@@ -117,45 +82,88 @@ function Dashboard() {
   // ==========================================
   // GET TODAY DATE FOR LEAVE API
   //
-  // LEAVE DATE FORMAT:
+  // FORMAT:
   // YYYY-MM-DD
-  //
-  // Example:
-  // 2026-09-01
   // ==========================================
 
   const getTodayLeaveDate = useCallback(() => {
     const today = new Date();
 
-    const year =
-      today.getFullYear();
+    const year = today.getFullYear();
 
-    const month =
-      String(
-        today.getMonth() + 1
-      ).padStart(2, "0");
+    const month = String(
+      today.getMonth() + 1
+    ).padStart(2, "0");
 
-    const day =
-      String(
-        today.getDate()
-      ).padStart(2, "0");
+    const day = String(
+      today.getDate()
+    ).padStart(2, "0");
 
     return `${year}-${month}-${day}`;
   }, []);
 
 
   // ==========================================
-  // FETCH ATTENDANCE + EMPLOYEES + LEAVES
+  // FORMAT TIME
+  // ==========================================
+
+  const formatTime = (timestamp) => {
+    if (!timestamp) {
+      return "—";
+    }
+
+    const date = new Date(timestamp);
+
+    if (isNaN(date.getTime())) {
+      return "—";
+    }
+
+    return date.toLocaleTimeString(
+      "en-IN",
+      {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      }
+    );
+  };
+
+
+  // ==========================================
+  // FORMAT SHORT TIME
+  //
+  // Used if you want cleaner dashboard
+  // ==========================================
+
+  const formatShortTime = (timestamp) => {
+    if (!timestamp) {
+      return "—";
+    }
+
+    const date = new Date(timestamp);
+
+    if (isNaN(date.getTime())) {
+      return "—";
+    }
+
+    return date.toLocaleTimeString(
+      "en-IN",
+      {
+        hour: "2-digit",
+        minute: "2-digit",
+      }
+    );
+  };
+
+
+  // ==========================================
+  // FETCH DATA
   // ==========================================
 
   const fetchData = useCallback(
     async (isRefresh = false) => {
 
       try {
-
-        // ======================================
-        // LOADING STATE
-        // ======================================
 
         if (isRefresh) {
           setRefreshing(true);
@@ -167,7 +175,7 @@ function Dashboard() {
 
 
         // ======================================
-        // GET TODAY DATE
+        // TODAY DATES
         // ======================================
 
         const todayAttendanceDate =
@@ -213,7 +221,7 @@ function Dashboard() {
 
 
         // ======================================
-        // FILTER TODAY'S ATTENDANCE
+        // FILTER TODAY
         // ======================================
 
         const todayAttendance =
@@ -239,10 +247,6 @@ function Dashboard() {
         );
 
 
-        // ======================================
-        // SET TODAY'S ATTENDANCE
-        // ======================================
-
         setAttendanceList(
           todayAttendance
         );
@@ -264,12 +268,9 @@ function Dashboard() {
         );
 
 
-        // ======================================
-        // SET EMPLOYEES
-        // ======================================
-
         const employeeData =
           employeeResponse.data.data || [];
+
 
         setEmployees(
           employeeData
@@ -277,7 +278,7 @@ function Dashboard() {
 
 
         // ======================================
-        // GET TODAY'S SCHEDULED LEAVES
+        // GET TODAY'S LEAVES
         // ======================================
 
         const leaveResponse =
@@ -301,23 +302,9 @@ function Dashboard() {
         );
 
 
-        // ======================================
-        // GET LEAVE DATA
-        // ======================================
-
         const leaves =
           leaveResponse.data.data || [];
 
-
-        console.log(
-          "Today's scheduled leaves:",
-          leaves
-        );
-
-
-        // ======================================
-        // SET TODAY'S LEAVES
-        // ======================================
 
         setTodayLeaves(
           leaves
@@ -351,7 +338,7 @@ function Dashboard() {
 
 
   // ==========================================
-  // INITIAL API CALL
+  // INITIAL FETCH
   // ==========================================
 
   useEffect(() => {
@@ -422,7 +409,7 @@ function Dashboard() {
 
 
   // ==========================================
-  // COUNT UNIQUE PRESENT EMPLOYEES
+  // UNIQUE PRESENT EMPLOYEES
   // ==========================================
 
   const uniqueEmployees =
@@ -441,22 +428,44 @@ function Dashboard() {
 
 
   // ==========================================
-  // COUNT UNIQUE EMPLOYEES ON LEAVE
+  // LEAVE TYPE HELPERS
+  // ==========================================
+
+  const getLeaveEmployeeKey = (leave) => {
+    const value =
+      leave.mobileNumber ||
+      leave.employeeId;
+
+    if (!value) {
+      return "";
+    }
+
+    return String(value);
+  };
+
+  const isHalfDayLeave = (leave) => {
+    const leaveType =
+      String(
+        leave.leaveType || ""
+      ).toLowerCase();
+
+    return leaveType.includes("half");
+  };
+
+
+  // ==========================================
+  // UNIQUE FULL-DAY LEAVE EMPLOYEES
   // ==========================================
 
   const uniqueLeaveEmployees =
     new Set(
       todayLeaves
-        .map(
+        .filter(
           (leave) =>
-            leave.mobileNumber ||
-            leave.employeeId
+            !isHalfDayLeave(leave)
         )
+        .map(getLeaveEmployeeKey)
         .filter(Boolean)
-        .map(
-          (value) =>
-            String(value)
-        )
     );
 
 
@@ -465,21 +474,131 @@ function Dashboard() {
 
 
   // ==========================================
-  // ABSENT COUNT
-  //
-  // Employees who are neither:
-  // Present
-  // nor
-  // On Leave
+  // UNIQUE HALF-DAY EMPLOYEES
   // ==========================================
+
+  const uniqueHalfDayEmployees =
+    new Set(
+      todayLeaves
+        .filter(isHalfDayLeave)
+        .map(getLeaveEmployeeKey)
+        .filter(Boolean)
+    );
+
+
+  const halfDayCount =
+    uniqueHalfDayEmployees.size;
+
+
+  // ==========================================
+  // ABSENT COUNT
+  // ==========================================
+
+  const accountedEmployees =
+    new Set([
+      ...Array.from(uniqueEmployees).map(
+        (value) => String(value)
+      ),
+      ...uniqueLeaveEmployees,
+      ...uniqueHalfDayEmployees,
+    ]);
+
 
   const absentCount =
     Math.max(
       totalEmployees -
-        presentCount -
-        leaveCount,
+        accountedEmployees.size,
       0
     );
+
+
+  // ==========================================
+  // LATE COMERS
+  //
+  // Count unique employees who punched in
+  // after 10:00 AM today.
+  // ==========================================
+
+  const LATE_CUTOFF_HOUR = 10;
+
+  const LATE_CUTOFF_MINUTE = 0;
+
+  const getPunchInDate = (attendance) => {
+    const timestamp =
+      attendance?.punchIn?.timestamp ||
+      attendance.timestamp ||
+      attendance.createdAt;
+
+    if (!timestamp) {
+      return null;
+    }
+
+    const date = new Date(timestamp);
+
+    if (isNaN(date.getTime())) {
+      return null;
+    }
+
+    return date;
+  };
+
+  const earliestPunchByEmployee =
+    new Map();
+
+  attendanceList.forEach((attendance) => {
+    const mobileNumber =
+      attendance.mobileNumber;
+
+    if (!mobileNumber) {
+      return;
+    }
+
+    const punchInDate =
+      getPunchInDate(attendance);
+
+    if (!punchInDate) {
+      return;
+    }
+
+    const employeeKey =
+      String(mobileNumber);
+
+    const existingPunch =
+      earliestPunchByEmployee.get(
+        employeeKey
+      );
+
+    if (
+      !existingPunch ||
+      punchInDate < existingPunch
+    ) {
+      earliestPunchByEmployee.set(
+        employeeKey,
+        punchInDate
+      );
+    }
+  });
+
+  let lateCount = 0;
+
+  earliestPunchByEmployee.forEach(
+    (punchInDate) => {
+      const hours =
+        punchInDate.getHours();
+
+      const minutes =
+        punchInDate.getMinutes();
+
+      const isLate =
+        hours > LATE_CUTOFF_HOUR ||
+        (hours === LATE_CUTOFF_HOUR &&
+          minutes > LATE_CUTOFF_MINUTE);
+
+      if (isLate) {
+        lateCount += 1;
+      }
+    }
+  );
 
 
   // ==========================================
@@ -516,7 +635,42 @@ function Dashboard() {
       type: "leave",
       icon: "◷",
     },
+
+    {
+      title: "Half Day",
+      value: String(
+        halfDayCount
+      ).padStart(2, "0"),
+      type: "halfday",
+      icon: "◑",
+    },
+
+    {
+      title: "Late Comer",
+      value: lateCount,
+      type: "late",
+      icon: "⏰",
+    },
   ];
+
+
+  // ==========================================
+  // GET STATUS CLASS
+  // ==========================================
+
+  const getStatusClass = (
+    status
+  ) => {
+
+    if (
+      status ===
+      "Punched Out"
+    ) {
+      return "status-punched-out";
+    }
+
+    return "status-punched-in";
+  };
 
 
   // ==========================================
@@ -554,7 +708,7 @@ function Dashboard() {
 
 
     // ----------------------------------------
-    // TODAY DATE
+    // DATE
     // ----------------------------------------
 
     const today =
@@ -592,7 +746,7 @@ function Dashboard() {
 
 
     // ----------------------------------------
-    // PDF TITLE
+    // TITLE
     // ----------------------------------------
 
     doc.setFontSize(
@@ -655,34 +809,29 @@ function Dashboard() {
     // SUMMARY
     // ----------------------------------------
 
-    doc.setFontSize(
-      10
-    );
-
-
     doc.text(
       `Total Employees: ${totalEmployees}`,
-      90,
+      80,
       32
     );
 
 
     doc.text(
       `Present: ${presentCount}`,
-      170,
+      165,
       32
     );
 
 
     doc.text(
       `Absent: ${absentCount}`,
-      230,
+      220,
       32
     );
 
 
     // ----------------------------------------
-    // PREPARE TABLE DATA
+    // TABLE DATA
     // ----------------------------------------
 
     const tableData =
@@ -692,24 +841,16 @@ function Dashboard() {
           index
         ) => {
 
-          const timestamp =
-            new Date(
-              attendance.timestamp
-            );
+          const punchIn =
+            attendance.punchIn || {};
 
 
-          const time =
-            timestamp.toLocaleTimeString(
-              "en-IN",
-              {
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit",
-              }
-            );
+          const punchOut =
+            attendance.punchOut || {};
 
 
           return [
+
             index + 1,
 
             getEmployeeName(
@@ -722,16 +863,24 @@ function Dashboard() {
             attendance.date ||
               formattedDate,
 
-            time,
+            formatShortTime(
+              punchIn.timestamp
+            ),
 
-            attendance.latitude ||
-              "",
+            formatShortTime(
+              punchOut.timestamp
+            ),
 
-            attendance.longitude ||
-              "",
+            attendance.status ||
+              "Punched In",
 
-            attendance.accuracy ||
-              "",
+            punchIn.accuracy != null
+              ? `${punchIn.accuracy} m`
+              : "",
+
+            punchOut.accuracy != null
+              ? `${punchOut.accuracy} m`
+              : "",
           ];
 
         }
@@ -749,14 +898,15 @@ function Dashboard() {
 
         head: [
           [
-            "Sr. No.",
-            "Employee Name",
-            "Mobile Number",
+            "Sr.",
+            "Employee",
+            "Mobile",
             "Date",
-            "Time",
-            "Latitude",
-            "Longitude",
-            "GPS Accuracy",
+            "Punch In",
+            "Punch Out",
+            "Status",
+            "In Accuracy",
+            "Out Accuracy",
           ],
         ],
 
@@ -765,50 +915,56 @@ function Dashboard() {
         theme: "grid",
 
         styles: {
-          fontSize: 8,
-          cellPadding: 3,
+          fontSize: 7,
+          cellPadding: 2.5,
           valign: "middle",
         },
 
         headStyles: {
-          fontSize: 8,
+          fontSize: 7,
           fontStyle: "bold",
           halign: "center",
         },
 
         columnStyles: {
+
           0: {
-            cellWidth: 15,
+            cellWidth: 12,
             halign: "center",
           },
 
           1: {
-            cellWidth: 45,
+            cellWidth: 38,
           },
 
           2: {
-            cellWidth: 35,
+            cellWidth: 30,
           },
 
           3: {
-            cellWidth: 28,
+            cellWidth: 25,
           },
 
           4: {
-            cellWidth: 30,
+            cellWidth: 25,
           },
 
           5: {
-            cellWidth: 32,
+            cellWidth: 25,
           },
 
           6: {
-            cellWidth: 32,
+            cellWidth: 30,
           },
 
           7: {
-            cellWidth: 30,
+            cellWidth: 25,
           },
+
+          8: {
+            cellWidth: 25,
+          },
+
         },
 
         margin: {
@@ -883,6 +1039,7 @@ function Dashboard() {
 
     <div className="dashboard">
 
+
       {/* ======================================
           PAGE HEADER
       ====================================== */}
@@ -902,10 +1059,6 @@ function Dashboard() {
 
         </div>
 
-
-        {/* ==================================
-            PDF BUTTON
-        ================================== */}
 
         <div className="dashboard__actions">
 
@@ -1006,17 +1159,23 @@ function Dashboard() {
 
           <div className="card-header">
 
-            <h2>
-              Today's Attendance List
-            </h2>
+            <div>
+
+              <h2>
+                Today's Attendance List
+              </h2>
+
+              <p className="attendance-subtitle">
+                Punch in and punch out details
+              </p>
+
+            </div>
 
 
             <div className="attendance-actions">
 
 
-              {/* =================================
-                  REFRESH BUTTON
-              ================================= */}
+              {/* REFRESH */}
 
               <button
                 className="refresh-button"
@@ -1037,9 +1196,7 @@ function Dashboard() {
               </button>
 
 
-              {/* =================================
-                  PDF BUTTON
-              ================================= */}
+              {/* PDF */}
 
               <button
                 className="view-all"
@@ -1069,6 +1226,10 @@ function Dashboard() {
           {loading && (
 
             <div className="attendance-placeholder">
+
+              <div className="dashboard-loader">
+                <span></span>
+              </div>
 
               Loading attendance...
 
@@ -1123,9 +1284,9 @@ function Dashboard() {
               <Box className="attendance-list">
 
 
-                {/* ==============================
+                {/* =================================
                     LIST HEADER
-                ============================== */}
+                ================================= */}
 
                 <Box className="attendance-list__header">
 
@@ -1138,42 +1299,75 @@ function Dashboard() {
                   </Typography>
 
                   <Typography>
-                    Time
+                    Punch In
+                  </Typography>
+
+                  <Typography>
+                    Punch Out
+                  </Typography>
+
+                  <Typography>
+                    Status
                   </Typography>
 
                 </Box>
 
 
-                {/* ==============================
-                    ATTENDANCE ROWS
-                ============================== */}
+                {/* =================================
+                    ROWS
+                ================================= */}
 
                 {attendanceList.map(
                   (
                     attendance
                   ) => {
 
-                    const timestamp =
-                      new Date(
-                        attendance.timestamp
+                    // --------------------------------
+                    // NEW NESTED DATA
+                    // --------------------------------
+
+                    const punchIn =
+                      attendance.punchIn ||
+                      {};
+
+                    const punchOut =
+                      attendance.punchOut ||
+                      {};
+
+
+                    // --------------------------------
+                    // TIMES
+                    // --------------------------------
+
+                    const punchInTime =
+                      formatShortTime(
+                        punchIn.timestamp
                       );
 
 
-                    const time =
-                      timestamp.toLocaleTimeString(
-                        "en-IN",
-                        {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          second: "2-digit",
-                        }
+                    const punchOutTime =
+                      formatShortTime(
+                        punchOut.timestamp
                       );
 
+
+                    // --------------------------------
+                    // EMPLOYEE
+                    // --------------------------------
 
                     const employeeName =
                       getEmployeeName(
                         attendance.mobileNumber
                       );
+
+
+                    // --------------------------------
+                    // STATUS
+                    // --------------------------------
+
+                    const status =
+                      attendance.status ||
+                      "Punched In";
 
 
                     return (
@@ -1186,9 +1380,9 @@ function Dashboard() {
                       >
 
 
-                        {/* ==================
+                        {/* ==========================
                             EMPLOYEE
-                        ================== */}
+                        ========================== */}
 
                         <Box
                           className="attendance-user"
@@ -1241,9 +1435,9 @@ function Dashboard() {
                         </Box>
 
 
-                        {/* ==================
+                        {/* ==========================
                             DATE
-                        ================== */}
+                        ========================== */}
 
                         <Typography
                           className="attendance-date"
@@ -1256,16 +1450,62 @@ function Dashboard() {
                         </Typography>
 
 
-                        {/* ==================
-                            TIME
-                        ================== */}
+                        {/* ==========================
+                            PUNCH IN
+                        ========================== */}
+
+                        <Box
+                          className="attendance-punch attendance-punch--in"
+                        >
+
+                          <span className="punch-label">
+                            Punch In
+                          </span>
+
+                          <strong>
+                            {
+                              punchInTime
+                            }
+                          </strong>
+
+                        </Box>
+
+
+                        {/* ==========================
+                            PUNCH OUT
+                        ========================== */}
+
+                        <Box
+                          className="attendance-punch attendance-punch--out"
+                        >
+
+                          <span className="punch-label">
+                            Punch Out
+                          </span>
+
+                          <strong>
+                            {
+                              punchOutTime
+                            }
+                          </strong>
+
+                        </Box>
+
+
+                        {/* ==========================
+                            STATUS
+                        ========================== */}
 
                         <Chip
                           label={
-                            time
+                            status
                           }
                           size="small"
-                          className="attendance-time"
+                          className={
+                            `attendance-status ${getStatusClass(
+                              status
+                            )}`
+                          }
                         />
 
                       </Box>

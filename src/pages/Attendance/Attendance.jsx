@@ -22,6 +22,8 @@ import {
   EventAvailable,
   Cancel,
   PictureAsPdf,
+  AccessTime,
+  Contrast,
 } from "@mui/icons-material";
 
 import "./Attendance.scss";
@@ -145,9 +147,65 @@ const formatTime = (timestamp) => {
   return date.toLocaleTimeString("en-IN", {
     hour: "2-digit",
     minute: "2-digit",
-    second: "2-digit",
     hour12: true,
   });
+};
+
+const LATE_CUTOFF_HOUR = 10;
+const LATE_CUTOFF_MINUTE = 0;
+
+const isHalfDayLeaveType = (leave) => {
+  const leaveType = String(
+    leave?.leaveType || ""
+  ).toLowerCase();
+
+  return leaveType.includes("half");
+};
+
+const getLeaveEmployeeKey = (leave) => {
+  const value =
+    leave?.mobileNumber ||
+    leave?.employeeId;
+
+  if (!value) {
+    return "";
+  }
+
+  return String(value);
+};
+
+const getPunchInTimestamp = (attendance) => {
+  return (
+    attendance?.punchIn?.timestamp ||
+    attendance?.timestamp ||
+    attendance?.createdAt ||
+    null
+  );
+};
+
+const getPunchOutTimestamp = (attendance) => {
+  return attendance?.punchOut?.timestamp || null;
+};
+
+const isLatePunchTime = (timestamp) => {
+  if (!timestamp) {
+    return false;
+  }
+
+  const date = new Date(timestamp);
+
+  if (Number.isNaN(date.getTime())) {
+    return false;
+  }
+
+  const hours = date.getHours();
+  const minutes = date.getMinutes();
+
+  return (
+    hours > LATE_CUTOFF_HOUR ||
+    (hours === LATE_CUTOFF_HOUR &&
+      minutes > LATE_CUTOFF_MINUTE)
+  );
 };
 
 // ======================================================
@@ -367,16 +425,65 @@ function Attendance() {
   );
 
   // ====================================================
-  // CHECK LEAVE
+  // LEAVE AND HALF DAY SETS
   // ====================================================
 
-  const isEmployeeOnLeave = (
-    mobileNumber
-  ) => {
-    return leaveData.some(
-      (leave) =>
-        String(leave.mobileNumber) ===
-        String(mobileNumber)
+  const fullLeaveKeys = new Set(
+    leaveData
+      .filter(
+        (leave) => !isHalfDayLeaveType(leave)
+      )
+      .map(getLeaveEmployeeKey)
+      .filter(Boolean)
+  );
+
+  const halfDayKeys = new Set(
+    leaveData
+      .filter(isHalfDayLeaveType)
+      .map(getLeaveEmployeeKey)
+      .filter(Boolean)
+  );
+
+  const getEmployeeKeys = (employee) => {
+    return [
+      String(employee.mobileNumber || ""),
+      String(employee._id || ""),
+      String(employee.id || ""),
+      String(employee.employeeId || ""),
+    ].filter(Boolean);
+  };
+
+  const employeeHasKey = (employee, keySet) => {
+    return getEmployeeKeys(employee).some(
+      (key) => keySet.has(key)
+    );
+  };
+
+  const isEmployeeOnLeave = (employee) => {
+    if (!employee) {
+      return false;
+    }
+
+    return employeeHasKey(
+      employee,
+      fullLeaveKeys
+    );
+  };
+
+  const isEmployeeHalfDay = (employee) => {
+    if (!employee) {
+      return false;
+    }
+
+    return employeeHasKey(
+      employee,
+      halfDayKeys
+    );
+  };
+
+  const isMobileHalfDay = (mobileNumber) => {
+    return halfDayKeys.has(
+      String(mobileNumber || "")
     );
   };
 
@@ -397,8 +504,41 @@ function Attendance() {
 
   const leaveEmployees =
     employees.filter((employee) =>
-      isEmployeeOnLeave(
-        employee.mobileNumber
+      isEmployeeOnLeave(employee)
+    );
+
+  // ====================================================
+  // HALF DAY EMPLOYEES
+  // ====================================================
+
+  const halfDayEmployees =
+    employees.filter((employee) =>
+      isEmployeeHalfDay(employee)
+    );
+
+  // ====================================================
+  // LATE ATTENDANCE
+  // ====================================================
+
+  const lateAttendanceList =
+    filteredAttendance.filter((attendance) =>
+      isLatePunchTime(
+        getPunchInTimestamp(attendance)
+      )
+    );
+
+  const lateMobileNumbers = new Set(
+    lateAttendanceList
+      .map((attendance) =>
+        String(attendance.mobileNumber)
+      )
+      .filter(Boolean)
+  );
+
+  const lateEmployees =
+    employees.filter((employee) =>
+      lateMobileNumbers.has(
+        String(employee.mobileNumber)
       )
     );
 
@@ -418,11 +558,12 @@ function Attendance() {
         );
 
       const isLeave =
-        isEmployeeOnLeave(
-          mobileNumber
-        );
+        isEmployeeOnLeave(employee);
 
-      return !isPresent && !isLeave;
+      const isHalfDay =
+        isEmployeeHalfDay(employee);
+
+      return !isPresent && !isLeave && !isHalfDay;
     });
 
   // ====================================================
@@ -535,6 +676,12 @@ function Attendance() {
       case "absent":
         return "Absent Employees";
 
+      case "late":
+        return "Late Comers";
+
+      case "halfday":
+        return "Half Day Employees";
+
       default:
         return "All Employee Status";
     }
@@ -576,6 +723,26 @@ function Attendance() {
           />
         );
 
+      case "late":
+        return (
+          <AccessTime
+            sx={{
+              color: "#ca8a04",
+              fontSize: 22,
+            }}
+          />
+        );
+
+      case "halfday":
+        return (
+          <Contrast
+            sx={{
+              color: "#0891b2",
+              fontSize: 22,
+            }}
+          />
+        );
+
       default:
         return (
           <Groups
@@ -609,6 +776,27 @@ function Attendance() {
         attendance.mobileNumber
       );
 
+    const punchInTime = formatTime(
+      getPunchInTimestamp(attendance)
+    );
+
+    const punchOutTime = formatTime(
+      getPunchOutTimestamp(attendance)
+    );
+
+    const isLate = isLatePunchTime(
+      getPunchInTimestamp(attendance)
+    );
+
+    const isHalfDay =
+      isEmployeeHalfDay(employee) ||
+      isMobileHalfDay(
+        attendance.mobileNumber
+      );
+
+    const punchStatus =
+      attendance.status || "Punched In";
+
     return (
       <div
         className="attendance-table__row"
@@ -635,16 +823,60 @@ function Attendance() {
           {attendance.mobileNumber}
         </div>
 
-        <div className="column-time">
-          {formatTime(
-            attendance.timestamp
+        <div className="column-time column-punch">
+          <span className="punch-box punch-box--in">
+            <span className="punch-box__label">
+              Punch In
+            </span>
+            <strong>
+              {punchInTime}
+            </strong>
+          </span>
+        </div>
+
+        <div className="column-time column-punch">
+          <span className="punch-box punch-box--out">
+            <span className="punch-box__label">
+              Punch Out
+            </span>
+            <strong>
+              {punchOutTime}
+            </strong>
+          </span>
+        </div>
+
+        <div className="column-flag">
+          {isLate ? (
+            <span className="status status--late">
+              <span className="status-dot" />
+              Late
+            </span>
+          ) : (
+            <span className="empty-flag">—</span>
+          )}
+        </div>
+
+        <div className="column-flag">
+          {isHalfDay ? (
+            <span className="status status--halfday">
+              <span className="status-dot" />
+              Half Day
+            </span>
+          ) : (
+            <span className="empty-flag">—</span>
           )}
         </div>
 
         <div className="column-status">
-          <span className="status status--present">
+          <span
+            className={
+              punchStatus === "Punched Out"
+                ? "status status--present"
+                : "status status--punched-in"
+            }
+          >
             <span className="status-dot" />
-            Present
+            {punchStatus}
           </span>
         </div>
       </div>
@@ -695,8 +927,27 @@ function Attendance() {
           {employee.mobileNumber}
         </div>
 
-        <div className="column-time">
-          --
+        <div className="column-time column-punch">
+          <span className="empty-flag">—</span>
+        </div>
+
+        <div className="column-time column-punch">
+          <span className="empty-flag">—</span>
+        </div>
+
+        <div className="column-flag">
+          <span className="empty-flag">—</span>
+        </div>
+
+        <div className="column-flag">
+          {status === "halfday" ? (
+            <span className="status status--halfday">
+              <span className="status-dot" />
+              Half Day
+            </span>
+          ) : (
+            <span className="empty-flag">—</span>
+          )}
         </div>
 
         <div className="column-status">
@@ -704,6 +955,13 @@ function Attendance() {
             <span className="status status--leave">
               <span className="status-dot" />
               On Leave
+            </span>
+          )}
+
+          {status === "halfday" && (
+            <span className="status status--halfday">
+              <span className="status-dot" />
+              Half Day
             </span>
           )}
 
@@ -715,6 +973,37 @@ function Attendance() {
           )}
         </div>
       </div>
+    );
+  };
+
+  const getAttendanceByMobile = (mobileNumber) => {
+    return filteredAttendance.find(
+      (attendance) =>
+        String(attendance.mobileNumber) ===
+        String(mobileNumber)
+    );
+  };
+
+  const renderHalfDayEmployeeRow = (
+    employee,
+    index
+  ) => {
+    const attendance =
+      getAttendanceByMobile(
+        employee.mobileNumber
+      );
+
+    if (attendance) {
+      return renderPresentRow(
+        attendance,
+        index
+      );
+    }
+
+    return renderEmployeeRow(
+      employee,
+      index,
+      "halfday"
     );
   };
 
@@ -1143,6 +1432,138 @@ function Attendance() {
               />
             </MenuItem>
 
+            {/* LATE */}
+
+            <MenuItem
+              value="late"
+              sx={{
+                minHeight: 62,
+                borderRadius: "8px",
+                mx: 0.5,
+                my: 0.3,
+
+                "&.Mui-selected": {
+                  backgroundColor: "#fefce8",
+                },
+
+                "&.Mui-selected:hover": {
+                  backgroundColor: "#fef9c3",
+                },
+              }}
+            >
+              <ListItemIcon>
+                <Box
+                  sx={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: "10px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: "#fef9c3",
+                  }}
+                >
+                  <AccessTime
+                    sx={{
+                      color: "#ca8a04",
+                      fontSize: 20,
+                    }}
+                  />
+                </Box>
+              </ListItemIcon>
+
+              <ListItemText
+                primary={
+                  <Typography
+                    sx={{
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      color: "#a16207",
+                    }}
+                  >
+                    Late Comer
+                  </Typography>
+                }
+                secondary={
+                  <Typography
+                    sx={{
+                      fontSize: "12px",
+                      color: "#64748b",
+                    }}
+                  >
+                    {lateEmployees.length} employees
+                  </Typography>
+                }
+              />
+            </MenuItem>
+
+            {/* HALF DAY */}
+
+            <MenuItem
+              value="halfday"
+              sx={{
+                minHeight: 62,
+                borderRadius: "8px",
+                mx: 0.5,
+                my: 0.3,
+
+                "&.Mui-selected": {
+                  backgroundColor: "#ecfeff",
+                },
+
+                "&.Mui-selected:hover": {
+                  backgroundColor: "#cffafe",
+                },
+              }}
+            >
+              <ListItemIcon>
+                <Box
+                  sx={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: "10px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: "#cffafe",
+                  }}
+                >
+                  <Contrast
+                    sx={{
+                      color: "#0891b2",
+                      fontSize: 20,
+                    }}
+                  />
+                </Box>
+              </ListItemIcon>
+
+              <ListItemText
+                primary={
+                  <Typography
+                    sx={{
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      color: "#0e7490",
+                    }}
+                  >
+                    Half Day
+                  </Typography>
+                }
+                secondary={
+                  <Typography
+                    sx={{
+                      fontSize: "12px",
+                      color: "#64748b",
+                    }}
+                  >
+                    {leaveLoading
+                      ? "Loading..."
+                      : `${halfDayEmployees.length} employees`}
+                  </Typography>
+                }
+              />
+            </MenuItem>
+
           </Select>
         </FormControl>
 
@@ -1189,6 +1610,22 @@ function Attendance() {
           </strong>
         </div>
 
+        <div className="status-summary__item status-summary__item--late">
+          <span className="status-summary__dot" />
+          <span>Late</span>
+          <strong>
+            {lateEmployees.length}
+          </strong>
+        </div>
+
+        <div className="status-summary__item status-summary__item--halfday">
+          <span className="status-summary__dot" />
+          <span>Half Day</span>
+          <strong>
+            {halfDayEmployees.length}
+          </strong>
+        </div>
+
       </div>
 
       {/* ==================================================
@@ -1212,7 +1649,19 @@ function Attendance() {
           </div>
 
           <div className="column-time">
-            Check In Time
+            Punch In
+          </div>
+
+          <div className="column-time">
+            Punch Out
+          </div>
+
+          <div className="column-flag">
+            Late
+          </div>
+
+          <div className="column-flag">
+            Half Day
           </div>
 
           <div className="column-status">
@@ -1401,6 +1850,74 @@ function Attendance() {
           )}
 
         {/* ==================================================
+            LATE
+        ================================================== */}
+
+        {!loading &&
+          !error &&
+          selectedStatus === "late" && (
+            <>
+              {lateAttendanceList.map(
+                renderPresentRow
+              )}
+
+              {lateAttendanceList.length === 0 && (
+                <div className="no-attendance">
+
+                  <div className="no-attendance__icon">
+                    ⏰
+                  </div>
+
+                  <h3>
+                    No late comers
+                  </h3>
+
+                  <p>
+                    No employees punched in after
+                    10:00 AM on{" "}
+                    {formatDate(selectedDate)}.
+                  </p>
+
+                </div>
+              )}
+            </>
+          )}
+
+        {/* ==================================================
+            HALF DAY
+        ================================================== */}
+
+        {!loading &&
+          !error &&
+          selectedStatus === "halfday" && (
+            <>
+              {halfDayEmployees.map(
+                renderHalfDayEmployeeRow
+              )}
+
+              {halfDayEmployees.length === 0 && (
+                <div className="no-attendance">
+
+                  <div className="no-attendance__icon">
+                    ◑
+                  </div>
+
+                  <h3>
+                    No half day employees
+                  </h3>
+
+                  <p>
+                    No half day leave scheduled
+                    for{" "}
+                    {formatDate(selectedDate)}.
+                  </p>
+
+                </div>
+              )}
+            </>
+          )}
+
+        {/* ==================================================
             FOOTER
         ================================================== */}
 
@@ -1428,6 +1945,22 @@ function Attendance() {
               <strong>
                 {" "}
                 {absentEmployees.length}
+              </strong>
+            </span>
+
+            <span>
+              Late:
+              <strong>
+                {" "}
+                {lateEmployees.length}
+              </strong>
+            </span>
+
+            <span>
+              Half Day:
+              <strong>
+                {" "}
+                {halfDayEmployees.length}
               </strong>
             </span>
 

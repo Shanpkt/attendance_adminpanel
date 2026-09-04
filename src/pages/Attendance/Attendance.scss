@@ -308,6 +308,24 @@
   background: #ef4444;
 }
 
+.status-summary__item--late {
+  background: #fefce8;
+  color: #a16207;
+}
+
+.status-summary__item--late .status-summary__dot {
+  background: #eab308;
+}
+
+.status-summary__item--halfday {
+  background: #ecfeff;
+  color: #0e7490;
+}
+
+.status-summary__item--halfday .status-summary__dot {
+  background: #06b6d4;
+}
+
 /* ==========================================
    TABLE CARD
 ========================================== */
@@ -329,11 +347,14 @@
 .attendance-table__row {
   display: grid;
   grid-template-columns:
-    70px
-    minmax(250px, 1.5fr)
-    1.2fr
-    1fr
-    1fr;
+    55px
+    minmax(180px, 1.4fr)
+    minmax(120px, 1fr)
+    minmax(110px, 0.95fr)
+    minmax(110px, 0.95fr)
+    minmax(90px, 0.75fr)
+    minmax(100px, 0.8fr)
+    minmax(110px, 0.9fr);
   align-items: center;
 }
 
@@ -396,6 +417,70 @@
   font-weight: 500;
 }
 
+.column-punch {
+  min-width: 0;
+}
+
+.punch-box {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  min-width: 86px;
+  padding: 6px 10px;
+  border-radius: 7px;
+  box-sizing: border-box;
+}
+
+.punch-box__label {
+  margin-bottom: 2px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.punch-box strong {
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.punch-box--in {
+  background: #ecfdf5;
+}
+
+.punch-box--in .punch-box__label {
+  color: #16a34a;
+}
+
+.punch-box--in strong {
+  color: #166534;
+}
+
+.punch-box--out {
+  background: #eff6ff;
+}
+
+.punch-box--out .punch-box__label {
+  color: #2563eb;
+}
+
+.punch-box--out strong {
+  color: #1e40af;
+}
+
+.column-flag {
+  display: flex;
+  align-items: center;
+}
+
+.empty-flag {
+  color: #94a3b8;
+  font-size: 14px;
+  font-weight: 500;
+}
+
 .column-status {
   display: flex;
   align-items: center;
@@ -441,6 +526,11 @@
 .employee-avatar--absent {
   background: #fee2e2;
   color: #dc2626;
+}
+
+.employee-avatar--halfday {
+  background: #cffafe;
+  color: #0e7490;
 }
 
 /* ==========================================
@@ -496,6 +586,33 @@
 
 .status--absent .status-dot {
   background: #ef4444;
+}
+
+.status--late {
+  background: #fefce8;
+  color: #a16207;
+}
+
+.status--late .status-dot {
+  background: #eab308;
+}
+
+.status--halfday {
+  background: #ecfeff;
+  color: #0e7490;
+}
+
+.status--halfday .status-dot {
+  background: #06b6d4;
+}
+
+.status--punched-in {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.status--punched-in .status-dot {
+  background: #ea580c;
 }
 
 /* ==========================================
@@ -595,7 +712,7 @@
 
   .attendance-table__header,
   .attendance-table__row {
-    min-width: 850px;
+    min-width: 1180px;
   }
 }
 
@@ -721,10 +838,6 @@
     box-sizing: border-box;
   }
 
-  .status-summary__item--absent {
-    grid-column: 1 / -1;
-  }
-
   .attendance-table-card {
     border-radius: 10px;
   }
@@ -794,10 +907,6 @@
 
   .status-summary {
     grid-template-columns: 1fr;
-  }
-
-  .status-summary__item--absent {
-    grid-column: auto;
   }
 
   .attendance-table__footer {
@@ -993,7 +1102,7 @@
 
     display: grid !important;
 
-    grid-template-columns: repeat(3, 1fr) !important;
+    grid-template-columns: repeat(5, 1fr) !important;
 
     gap: 14px !important;
 
@@ -1070,6 +1179,28 @@
     background: #ef4444 !important;
   }
 
+  .status-summary__item--late {
+    background: #fefce8 !important;
+    border: 1px solid #fde68a !important;
+    color: #a16207 !important;
+  }
+
+  .status-summary__item--late
+    .status-summary__dot {
+    background: #eab308 !important;
+  }
+
+  .status-summary__item--halfday {
+    background: #ecfeff !important;
+    border: 1px solid #a5f3fc !important;
+    color: #0e7490 !important;
+  }
+
+  .status-summary__item--halfday
+    .status-summary__dot {
+    background: #06b6d4 !important;
+  }
+
   /* ==========================================
      TABLE
   ========================================== */
@@ -1102,11 +1233,14 @@
     min-width: 0 !important;
 
     grid-template-columns:
-      55px
-      minmax(220px, 2fr)
-      1.3fr
-      1.2fr
-      1fr !important;
+      40px
+      minmax(140px, 1.6fr)
+      0.9fr
+      0.85fr
+      0.85fr
+      0.7fr
+      0.75fr
+      0.85fr !important;
 
     box-sizing: border-box;
   }
@@ -1211,6 +1345,11 @@
     color: #dc2626 !important;
   }
 
+  .employee-avatar--halfday {
+    background: #cffafe !important;
+    color: #0e7490 !important;
+  }
+
   .column-employee span {
     color: #1e293b !important;
 
@@ -1245,6 +1384,27 @@
     font-size: 12px !important;
 
     font-weight: 500 !important;
+  }
+
+  .punch-box {
+    min-width: 72px !important;
+    padding: 5px 8px !important;
+  }
+
+  .punch-box__label {
+    font-size: 8px !important;
+  }
+
+  .punch-box strong {
+    font-size: 11px !important;
+  }
+
+  .punch-box--in {
+    background: #ecfdf5 !important;
+  }
+
+  .punch-box--out {
+    background: #eff6ff !important;
   }
 
   /* ==========================================
@@ -1303,6 +1463,33 @@
 
   .status--absent .status-dot {
     background: #ef4444 !important;
+  }
+
+  .status--late {
+    background: #fef3c7 !important;
+    color: #a16207 !important;
+  }
+
+  .status--late .status-dot {
+    background: #eab308 !important;
+  }
+
+  .status--halfday {
+    background: #cffafe !important;
+    color: #0e7490 !important;
+  }
+
+  .status--halfday .status-dot {
+    background: #06b6d4 !important;
+  }
+
+  .status--punched-in {
+    background: #ffedd5 !important;
+    color: #c2410c !important;
+  }
+
+  .status--punched-in .status-dot {
+    background: #ea580c !important;
   }
 
   /* ==========================================
