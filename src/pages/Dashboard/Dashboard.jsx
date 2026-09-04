@@ -12,6 +12,7 @@ import Typography from "@mui/material/Typography";
 import Avatar from "@mui/material/Avatar";
 import Chip from "@mui/material/Chip";
 import Tooltip from "@mui/material/Tooltip";
+import ContrastIcon from "@mui/icons-material/Contrast";
 
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -622,7 +623,9 @@ function Dashboard() {
         halfDayCount
       ).padStart(2, "0"),
       type: "halfday",
-      icon: "◑",
+      icon: (
+        <ContrastIcon fontSize="inherit" />
+      ),
     },
 
     {
