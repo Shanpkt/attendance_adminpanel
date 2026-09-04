@@ -20,6 +20,9 @@ import Attendance
 import Employees
   from "./pages/Employees/Employees";
 
+import Settings
+  from "./pages/Settings/Settings";
+
 
 function App() {
 
@@ -93,6 +96,16 @@ function App() {
               path="/profile"
               element={
                 <Profile />
+              }
+            />
+
+
+            {/* SETTINGS */}
+
+            <Route
+              path="/settings"
+              element={
+                <Settings />
               }
             />
 

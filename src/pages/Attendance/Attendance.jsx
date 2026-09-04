@@ -28,6 +28,9 @@ import {
 
 import "./Attendance.scss";
 
+import useAttendanceSettings from "../../hooks/useAttendanceSettings";
+import { isPunchAfterTime } from "../../utils/attendanceSettings";
+
 // ======================================================
 // API URLS
 // ======================================================
@@ -151,9 +154,6 @@ const formatTime = (timestamp) => {
   });
 };
 
-const LATE_CUTOFF_HOUR = 10;
-const LATE_CUTOFF_MINUTE = 0;
-
 const isHalfDayLeaveType = (leave) => {
   const leaveType = String(
     leave?.leaveType || ""
@@ -187,32 +187,16 @@ const getPunchOutTimestamp = (attendance) => {
   return attendance?.punchOut?.timestamp || null;
 };
 
-const isLatePunchTime = (timestamp) => {
-  if (!timestamp) {
-    return false;
-  }
-
-  const date = new Date(timestamp);
-
-  if (Number.isNaN(date.getTime())) {
-    return false;
-  }
-
-  const hours = date.getHours();
-  const minutes = date.getMinutes();
-
-  return (
-    hours > LATE_CUTOFF_HOUR ||
-    (hours === LATE_CUTOFF_HOUR &&
-      minutes > LATE_CUTOFF_MINUTE)
-  );
-};
-
 // ======================================================
 // COMPONENT
 // ======================================================
 
 function Attendance() {
+  const {
+    lateComingTime,
+    halfDayTime,
+  } = useAttendanceSettings();
+
   // ====================================================
   // DATE
   // ====================================================
@@ -366,6 +350,20 @@ function Attendance() {
     fetchLeaves();
   }, [selectedDate]);
 
+  const isLatePunchTime = (timestamp) => {
+    return isPunchAfterTime(
+      timestamp,
+      lateComingTime
+    );
+  };
+
+  const isHalfDayPunchTime = (timestamp) => {
+    return isPunchAfterTime(
+      timestamp,
+      halfDayTime
+    );
+  };
+
   // ====================================================
   // GET EMPLOYEE BY MOBILE NUMBER
   // ====================================================
@@ -487,6 +485,25 @@ function Attendance() {
     );
   };
 
+  const halfDayPunchNumbers = new Set(
+    filteredAttendance
+      .filter((attendance) =>
+        isHalfDayPunchTime(
+          getPunchInTimestamp(attendance)
+        )
+      )
+      .map((attendance) =>
+        String(attendance.mobileNumber)
+      )
+      .filter(Boolean)
+  );
+
+  const isHalfDayByPunch = (mobileNumber) => {
+    return halfDayPunchNumbers.has(
+      String(mobileNumber || "")
+    );
+  };
+
   // ====================================================
   // PRESENT EMPLOYEES
   // ====================================================
@@ -513,7 +530,10 @@ function Attendance() {
 
   const halfDayEmployees =
     employees.filter((employee) =>
-      isEmployeeHalfDay(employee)
+      isEmployeeHalfDay(employee) ||
+      isHalfDayByPunch(
+        employee.mobileNumber
+      )
     );
 
   // ====================================================
@@ -521,11 +541,15 @@ function Attendance() {
   // ====================================================
 
   const lateAttendanceList =
-    filteredAttendance.filter((attendance) =>
-      isLatePunchTime(
-        getPunchInTimestamp(attendance)
-      )
-    );
+    filteredAttendance.filter((attendance) => {
+      const timestamp =
+        getPunchInTimestamp(attendance);
+
+      return (
+        isLatePunchTime(timestamp) &&
+        !isHalfDayPunchTime(timestamp)
+      );
+    });
 
   const lateMobileNumbers = new Set(
     lateAttendanceList
@@ -784,15 +808,22 @@ function Attendance() {
       getPunchOutTimestamp(attendance)
     );
 
-    const isLate = isLatePunchTime(
-      getPunchInTimestamp(attendance)
-    );
+    const isHalfDayPunch =
+      isHalfDayPunchTime(
+        getPunchInTimestamp(attendance)
+      );
+
+    const isLate =
+      isLatePunchTime(
+        getPunchInTimestamp(attendance)
+      ) && !isHalfDayPunch;
 
     const isHalfDay =
       isEmployeeHalfDay(employee) ||
       isMobileHalfDay(
         attendance.mobileNumber
-      );
+      ) ||
+      isHalfDayPunch;
 
     const punchStatus =
       attendance.status || "Punched In";

@@ -16,11 +16,18 @@ import ContrastIcon from "@mui/icons-material/Contrast";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 
 import jsPDF from "jspdf";
+import useAttendanceSettings from "../../hooks/useAttendanceSettings";
+import { isPunchAfterTime } from "../../utils/attendanceSettings";
 import autoTable from "jspdf-autotable";
 
 import "./Dashboard.scss";
 
 function Dashboard() {
+  const {
+    lateComingTime,
+    halfDayTime,
+  } = useAttendanceSettings();
+
   // ==========================================
   // API URLS
   // ==========================================
@@ -93,6 +100,120 @@ function Dashboard() {
 
     return `${year}-${month}-${day}`;
   }, []);
+
+  const normalizeLeaveDate = (value) => {
+    if (!value) {
+      return "";
+    }
+
+    const text =
+      String(value).trim();
+
+    if (
+      /^\d{4}-\d{2}-\d{2}/.test(
+        text
+      )
+    ) {
+      return text.slice(0, 10);
+    }
+
+    const slashParts =
+      text.split("/");
+
+    if (
+      slashParts.length === 3
+    ) {
+      const day = String(
+        slashParts[0]
+      ).padStart(2, "0");
+
+      const month = String(
+        slashParts[1]
+      ).padStart(2, "0");
+
+      const year = String(
+        slashParts[2]
+      ).slice(0, 4);
+
+      if (
+        day &&
+        month &&
+        year.length === 4
+      ) {
+        return `${year}-${month}-${day}`;
+      }
+    }
+
+    const parsed =
+      new Date(value);
+
+    if (
+      isNaN(
+        parsed.getTime()
+      )
+    ) {
+      return "";
+    }
+
+    const year =
+      parsed.getFullYear();
+
+    const month = String(
+      parsed.getMonth() + 1
+    ).padStart(2, "0");
+
+    const day = String(
+      parsed.getDate()
+    ).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  };
+
+  const isLeaveOnToday = (
+    leave
+  ) => {
+    const today =
+      getTodayLeaveDate();
+
+    const startDate =
+      normalizeLeaveDate(
+        leave.startDate
+      );
+
+    const endDate =
+      normalizeLeaveDate(
+        leave.endDate
+      );
+
+    const leaveDate =
+      normalizeLeaveDate(
+        leave.date
+      );
+
+    if (
+      startDate &&
+      endDate
+    ) {
+      return (
+        today >= startDate &&
+        today <= endDate
+      );
+    }
+
+    if (leaveDate) {
+      return leaveDate === today;
+    }
+
+    if (startDate) {
+      return startDate === today;
+    }
+
+    if (endDate) {
+      return endDate === today;
+    }
+
+    return false;
+  };
 
   // ==========================================
   // FORMAT SHORT TIME
@@ -380,13 +501,18 @@ function Dashboard() {
     return leaveType.includes("half");
   };
 
+  const currentDayLeaves =
+    todayLeaves.filter(
+      isLeaveOnToday
+    );
+
   // ==========================================
   // UNIQUE FULL-DAY LEAVE EMPLOYEES
   // ==========================================
 
   const uniqueLeaveEmployees =
     new Set(
-      todayLeaves
+      currentDayLeaves
         .filter(
           (leave) =>
             !isHalfDayLeave(leave)
@@ -400,13 +526,108 @@ function Dashboard() {
   const leaveCount =
     uniqueLeaveEmployees.size;
 
+  const getLeaveDisplayName = (
+    leave
+  ) => {
+    if (
+      leave.employeeName ||
+      leave.name ||
+      leave.fullName
+    ) {
+      return (
+        leave.employeeName ||
+        leave.name ||
+        leave.fullName
+      );
+    }
+
+    const key =
+      getLeaveEmployeeKey(leave);
+
+    const employee =
+      employees.find(
+        (emp) =>
+          String(
+            emp.mobileNumber || ""
+          ) === key ||
+          String(
+            emp._id || ""
+          ) ===
+            String(
+              leave.employeeId || ""
+            )
+      );
+
+    if (employee) {
+      return (
+        employee.name ||
+        employee.fullName ||
+        employee.employeeName ||
+        employee.firstName ||
+        key ||
+        "Unknown Employee"
+      );
+    }
+
+    return key || "Unknown Employee";
+  };
+
+  const onLeaveEmployees = [];
+
+  const seenLeaveKeys = new Set();
+
+  currentDayLeaves
+    .filter(
+      (leave) =>
+        !isHalfDayLeave(leave)
+    )
+    .forEach((leave) => {
+      const uniqueKey =
+        getLeaveEmployeeKey(leave) ||
+        String(
+          leave._id ||
+            leave.id ||
+            ""
+        );
+
+      if (
+        !uniqueKey ||
+        seenLeaveKeys.has(
+          uniqueKey
+        )
+      ) {
+        return;
+      }
+
+      seenLeaveKeys.add(
+        uniqueKey
+      );
+
+      onLeaveEmployees.push({
+        id:
+          leave._id ||
+          uniqueKey,
+        name: getLeaveDisplayName(
+          leave
+        ),
+        mobileNumber:
+          leave.mobileNumber ||
+          uniqueKey,
+        leaveType:
+          leave.leaveType ||
+          "Full Day",
+        reason:
+          leave.reason || "",
+      });
+    });
+
   // ==========================================
   // UNIQUE HALF-DAY EMPLOYEES
   // ==========================================
 
   const uniqueHalfDayEmployees =
     new Set(
-      todayLeaves
+      currentDayLeaves
         .filter(
           isHalfDayLeave
         )
@@ -415,9 +636,6 @@ function Dashboard() {
         )
         .filter(Boolean)
     );
-
-  const halfDayCount =
-    uniqueHalfDayEmployees.size;
 
   // ==========================================
   // ABSENT EMPLOYEES LIST
@@ -466,12 +684,8 @@ function Dashboard() {
     absentEmployees.length;
 
   // ==========================================
-  // LATE COMERS
+  // LATE COMERS AND HALF DAY BY PUNCH TIME
   // ==========================================
-
-  const LATE_CUTOFF_HOUR = 10;
-
-  const LATE_CUTOFF_MINUTE = 0;
 
   const getPunchInDate = (
     attendance
@@ -540,30 +754,44 @@ function Dashboard() {
     }
   );
 
+  const halfDayByPunchKeys =
+    new Set();
+
   let lateCount = 0;
 
   earliestPunchByEmployee.forEach(
-    (punchInDate) => {
-      const hours =
-        punchInDate.getHours();
-
-      const minutes =
-        punchInDate.getMinutes();
-
-      const isLate =
-        hours > LATE_CUTOFF_HOUR ||
-        (
-          hours ===
-            LATE_CUTOFF_HOUR &&
-          minutes >
-            LATE_CUTOFF_MINUTE
+    (punchInDate, employeeKey) => {
+      const isHalfDayPunch =
+        isPunchAfterTime(
+          punchInDate,
+          halfDayTime
         );
 
-      if (isLate) {
+      const isLate =
+        isPunchAfterTime(
+          punchInDate,
+          lateComingTime
+        );
+
+      if (isHalfDayPunch) {
+        halfDayByPunchKeys.add(
+          employeeKey
+        );
+      }
+
+      if (
+        isLate &&
+        !isHalfDayPunch
+      ) {
         lateCount += 1;
       }
     }
   );
+
+  const halfDayCount = new Set([
+    ...uniqueHalfDayEmployees,
+    ...halfDayByPunchKeys,
+  ]).size;
 
   // ==========================================
   // STATS
@@ -1178,6 +1406,103 @@ function Dashboard() {
 
                       <p className="no-absent">
                         No absent employees 🎉
+                      </p>
+
+                    )}
+
+                  </div>
+
+                </div>
+
+              )}
+
+              {/* ==============================
+                  ON LEAVE EMPLOYEE POPUP
+              ============================== */}
+
+              {stat.type === "leave" && (
+
+                <div className="absent-popup leave-popup">
+
+                  <div className="absent-popup__header">
+
+                    <h3>
+                      On Leave Today
+                    </h3>
+
+                    <span>
+                      {onLeaveEmployees.length}
+                    </span>
+
+                  </div>
+
+                  <div className="absent-popup__list">
+
+                    {onLeaveEmployees.length > 0 ? (
+
+                      onLeaveEmployees.map(
+                        (employee) => (
+
+                          <div
+                            className="absent-popup__employee"
+                            key={
+                              employee.id
+                            }
+                          >
+
+                            <div className="absent-popup__avatar">
+
+                              {
+                                String(
+                                  employee.name
+                                )
+                                  .charAt(0)
+                                  .toUpperCase()
+                              }
+
+                            </div>
+
+                            <div>
+
+                              <strong>
+                                {employee.name}
+                              </strong>
+
+                              <span>
+                                {
+                                  employee.mobileNumber
+                                }
+                              </span>
+
+                              {(
+                                employee.leaveType ||
+                                employee.reason
+                              ) && (
+
+                                <span className="leave-popup__meta">
+                                  {
+                                    employee.leaveType
+                                  }
+                                  {
+                                    employee.reason
+                                      ? ` · ${employee.reason}`
+                                      : ""
+                                  }
+                                </span>
+
+                              )}
+
+                            </div>
+
+                          </div>
+
+                        )
+                      )
+
+                    ) : (
+
+                      <p className="no-absent">
+                        No employees on leave today
                       </p>
 
                     )}
