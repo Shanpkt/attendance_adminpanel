@@ -4,7 +4,7 @@ import {
   Route,
 } from "react-router-dom";
 
-import Sidebar from "./components/sidebar/sidebar";
+import AdminLayout from "./layouts/AdminLayout";
 
 import "./app.scss";
 
@@ -30,90 +30,62 @@ function App() {
 
     <BrowserRouter>
 
-      <div className="admin-layout">
+      <AdminLayout>
 
-        {/* SIDEBAR */}
+        <Routes>
 
-        <Sidebar />
+          <Route
+            path="/"
+            element={
+              <Dashboard />
+            }
+          />
 
+          <Route
+            path="/dashboard"
+            element={
+              <Dashboard />
+            }
+          />
 
-        {/* CONTENT */}
+          <Route
+            path="/attendance"
+            element={
+              <Attendance />
+            }
+          />
 
-        <main className="admin-content">
+          <Route
+            path="/employees"
+            element={
+              <Employees />
+            }
+          />
 
-          <Routes>
+          <Route
+            path="/profile/:employeeId"
+            element={
+              <Profile />
+            }
+          />
 
-            {/* DASHBOARD */}
+          <Route
+            path="/profile"
+            element={
+              <Profile />
+            }
+          />
 
-            <Route
-              path="/"
-              element={
-                <Dashboard />
-              }
-            />
+          <Route
+            path="/settings"
+            element={
+              <Settings />
+            }
+          />
 
-            <Route
-              path="/dashboard"
-              element={
-                <Dashboard />
-              }
-            />
+        </Routes>
 
-
-            {/* ATTENDANCE */}
-
-            <Route
-              path="/attendance"
-              element={
-                <Attendance />
-              }
-            />
-
-
-            {/* EMPLOYEES */}
-
-            <Route
-              path="/employees"
-              element={
-                <Employees />
-              }
-            />
-
-
-            {/* EMPLOYEE PROFILE */}
-
-            <Route
-              path="/profile/:employeeId"
-              element={
-                <Profile />
-              }
-            />
-
-
-            {/* OPTIONAL OLD PROFILE ROUTE */}
-
-            <Route
-              path="/profile"
-              element={
-                <Profile />
-              }
-            />
-
-
-            {/* SETTINGS */}
-
-            <Route
-              path="/settings"
-              element={
-                <Settings />
-              }
-            />
-
-          </Routes>
-
-        </main>
-
-      </div>
+      </AdminLayout>
 
     </BrowserRouter>
 

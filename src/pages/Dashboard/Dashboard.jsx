@@ -57,6 +57,9 @@ function Dashboard() {
 
   const [error, setError] = useState("");
 
+  const [openStatPopup, setOpenStatPopup] =
+    useState("");
+
   // ==========================================
   // TOTAL EMPLOYEES
   // ==========================================
@@ -1303,9 +1306,32 @@ function Dashboard() {
 
             <div
               className={
-                `stat-card stat-card--${stat.type}`
+                `stat-card stat-card--${stat.type}${
+                  openStatPopup ===
+                  stat.type
+                    ? " is-open"
+                    : ""
+                }`
               }
               key={stat.title}
+              onClick={() => {
+                if (
+                  stat.type !==
+                    "absent" &&
+                  stat.type !==
+                    "leave"
+                ) {
+                  return;
+                }
+
+                setOpenStatPopup(
+                  (current) =>
+                    current ===
+                    stat.type
+                      ? ""
+                      : stat.type
+                );
+              }}
             >
 
               <div className="stat-card__icon">
@@ -1314,7 +1340,7 @@ function Dashboard() {
 
               </div>
 
-              <div>
+              <div className="stat-card__content">
 
                 <p>
                   {stat.title}
@@ -1332,7 +1358,12 @@ function Dashboard() {
 
               {stat.type === "absent" && (
 
-                <div className="absent-popup">
+                <div
+                  className="absent-popup"
+                  onClick={(event) =>
+                    event.stopPropagation()
+                  }
+                >
 
                   <div className="absent-popup__header">
 
@@ -1422,7 +1453,12 @@ function Dashboard() {
 
               {stat.type === "leave" && (
 
-                <div className="absent-popup leave-popup">
+                <div
+                  className="absent-popup leave-popup"
+                  onClick={(event) =>
+                    event.stopPropagation()
+                  }
+                >
 
                   <div className="absent-popup__header">
 

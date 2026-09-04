@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+import CloseIcon from "@mui/icons-material/Close";
 import "./sidebar.scss";
 
 const menuItems = [
@@ -63,6 +64,15 @@ function Sidebar({ isOpen, onClose }) {
               System
             </span>
           </div>
+
+          <button
+            type="button"
+            className="sidebar__close"
+            aria-label="Close menu"
+            onClick={onClose}
+          >
+            <CloseIcon />
+          </button>
         </div>
 
         {/* ================================

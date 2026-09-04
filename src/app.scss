@@ -1,18 +1,5 @@
-.admin-layout {
-  min-height: 100vh;
-  display: flex;
-  background: #f6f8fb;
-}
-
-.admin-content {
-  flex: 1;
-  min-width: 0;
-  min-height: 100vh;
-
-  margin-left: 250px;
-
-  padding: 24px;
-  box-sizing: border-box;
-
-  overflow-x: hidden;
+html,
+body,
+#root {
+  min-height: 100%;
 }
