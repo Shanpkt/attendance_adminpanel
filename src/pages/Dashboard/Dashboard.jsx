@@ -104,35 +104,7 @@ function Dashboard() {
 
 
   // ==========================================
-  // FORMAT TIME
-  // ==========================================
-
-  const formatTime = (timestamp) => {
-    if (!timestamp) {
-      return "—";
-    }
-
-    const date = new Date(timestamp);
-
-    if (isNaN(date.getTime())) {
-      return "—";
-    }
-
-    return date.toLocaleTimeString(
-      "en-IN",
-      {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      }
-    );
-  };
-
-
-  // ==========================================
   // FORMAT SHORT TIME
-  //
-  // Used if you want cleaner dashboard
   // ==========================================
 
   const formatShortTime = (timestamp) => {
