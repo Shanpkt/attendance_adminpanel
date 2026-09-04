@@ -1,3 +1,4 @@
+
 .dashboard {
   width: 100%;
   min-height: 100%;
@@ -86,6 +87,8 @@
 }
 
 .stat-card {
+  position: relative;
+
   display: flex;
   align-items: center;
   gap: 15px;
@@ -155,6 +158,8 @@
 }
 
 .stat-card--absent {
+  cursor: pointer;
+
   .stat-card__icon {
     background: #fef2f2;
     color: #dc2626;
@@ -180,6 +185,257 @@
     background: #fefce8;
     color: #ca8a04;
   }
+}
+
+/* ==========================================
+   ABSENT EMPLOYEE POPUP
+========================================== */
+
+.absent-popup {
+  position: absolute;
+
+  top: calc(100% + 12px);
+  left: 50%;
+
+  width: 300px;
+
+  transform:
+    translateX(-50%)
+    translateY(-10px);
+
+  padding: 16px;
+
+  box-sizing: border-box;
+
+  background: #ffffff;
+
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+
+  box-shadow:
+    0 15px 40px
+    rgba(15, 23, 42, 0.18);
+
+  z-index: 999;
+
+  opacity: 0;
+  visibility: hidden;
+
+  pointer-events: none;
+
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease,
+    visibility 0.25s ease;
+}
+
+/* SHOW POPUP ON HOVER */
+
+.stat-card--absent:hover .absent-popup {
+  opacity: 1;
+
+  visibility: visible;
+
+  transform:
+    translateX(-50%)
+    translateY(0);
+
+  pointer-events: auto;
+}
+
+/* POPUP ARROW */
+
+.absent-popup::before {
+  content: "";
+
+  position: absolute;
+
+  top: -7px;
+  left: 50%;
+
+  width: 12px;
+  height: 12px;
+
+  background: #ffffff;
+
+  border-left: 1px solid #e5e7eb;
+  border-top: 1px solid #e5e7eb;
+
+  transform:
+    translateX(-50%)
+    rotate(45deg);
+}
+
+/* ==========================================
+   POPUP HEADER
+========================================== */
+
+.absent-popup__header {
+  position: relative;
+
+  z-index: 1;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  padding-bottom: 12px;
+
+  margin-bottom: 6px;
+
+  border-bottom: 1px solid #edf0f4;
+}
+
+.absent-popup__header h3 {
+  margin: 0;
+
+  color: #1f2937;
+
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.absent-popup__header span {
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  min-width: 28px;
+  height: 28px;
+
+  padding: 0 8px;
+
+  box-sizing: border-box;
+
+  border-radius: 50px;
+
+  background: #fef2f2;
+  color: #dc2626;
+
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* ==========================================
+   ABSENT EMPLOYEE LIST
+========================================== */
+
+.absent-popup__list {
+  max-height: 260px;
+
+  overflow-y: auto;
+
+  padding-right: 4px;
+}
+
+.absent-popup__employee {
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  padding: 10px 4px;
+
+  border-bottom: 1px solid #f1f3f5;
+
+  transition: background 0.2s ease;
+
+  &:hover {
+    background: #f9fafb;
+  }
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.absent-popup__avatar {
+  width: 38px;
+  height: 38px;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background:
+    linear-gradient(
+      135deg,
+      #ef4444,
+      #f87171
+    );
+
+  color: #ffffff;
+
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.absent-popup__employee strong {
+  display: block;
+
+  max-width: 190px;
+
+  overflow: hidden;
+
+  color: #374151;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.absent-popup__employee span {
+  display: block;
+
+  margin-top: 3px;
+
+  color: #9ca3af;
+
+  font-size: 11px;
+}
+
+.no-absent {
+  margin: 0;
+
+  padding: 20px 5px;
+
+  text-align: center;
+
+  color: #6b7280;
+
+  font-size: 13px;
+}
+
+/* ==========================================
+   POPUP SCROLLBAR
+========================================== */
+
+.absent-popup__list::-webkit-scrollbar {
+  width: 5px;
+}
+
+.absent-popup__list::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 10px;
+}
+
+.absent-popup__list::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+.absent-popup__list::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 /* ==========================================
@@ -493,6 +749,11 @@
    PUNCH TIME
 ========================================== */
 
+.attendance-punch__hit {
+  display: inline-flex;
+  width: fit-content;
+}
+
 .attendance-punch {
   display: flex;
   flex-direction: column;
@@ -557,6 +818,60 @@
   strong {
     color: #1e40af;
   }
+}
+
+.attendance-punch--has-photo {
+  cursor: pointer;
+  outline: 1px solid transparent;
+  transition: outline-color 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
+  }
+}
+
+.attendance-punch--in.attendance-punch--has-photo:hover {
+  outline-color: #86efac;
+}
+
+.attendance-punch--out.attendance-punch--has-photo:hover {
+  outline-color: #93c5fd;
+}
+
+.selfie-tooltip {
+  padding: 8px !important;
+  max-width: none !important;
+  background: #ffffff !important;
+  color: #111827 !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 12px !important;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18) !important;
+}
+
+.selfie-tooltip__arrow {
+  color: #ffffff !important;
+}
+
+.selfie-popup {
+  width: 220px;
+}
+
+.selfie-popup__title {
+  margin: 0 0 8px;
+  color: #4b5563;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.selfie-popup img {
+  display: block;
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  border-radius: 8px;
+  background: #f3f4f6;
 }
 
 /* ==========================================
@@ -689,6 +1004,30 @@
     }
   }
 
+  /* ABSENT POPUP ON MOBILE */
+
+  .absent-popup {
+    position: fixed;
+
+    top: 50%;
+    left: 50%;
+
+    width: calc(100% - 40px);
+    max-width: 330px;
+
+    transform:
+      translate(-50%, -45%);
+  }
+
+  .stat-card--absent:hover .absent-popup {
+    transform:
+      translate(-50%, -50%);
+  }
+
+  .absent-popup::before {
+    display: none;
+  }
+
   .card-header {
     align-items: flex-start;
     flex-direction: column;
@@ -767,3 +1106,4 @@
     flex: none;
   }
 }
+
