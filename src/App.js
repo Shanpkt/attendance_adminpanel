@@ -23,6 +23,9 @@ import Employees
 import Settings
   from "./pages/Settings/Settings";
 
+import CleanupDrive
+  from "./pages/CleanupDrive/CleanupDrive";
+
 
 function App() {
 
@@ -80,6 +83,13 @@ function App() {
             path="/settings"
             element={
               <Settings />
+            }
+          />
+
+          <Route
+            path="/cleanup-drive"
+            element={
+              <CleanupDrive />
             }
           />
 

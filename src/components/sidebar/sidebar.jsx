@@ -30,6 +30,14 @@ const menuItems = [
   },
 ];
 
+const storageItems = [
+  {
+    label: "Cleanup Drive",
+    icon: "♻",
+    path: "/cleanup-drive",
+  },
+];
+
 function Sidebar({ isOpen, onClose }) {
   return (
     <>
@@ -90,6 +98,31 @@ function Sidebar({ isOpen, onClose }) {
               to={item.path}
               key={item.label}
               end={item.path === "/"}
+              onClick={onClose}
+              className={({ isActive }) =>
+                `sidebar__item ${
+                  isActive ? "active" : ""
+                }`
+              }
+            >
+              <span className="sidebar__item-icon">
+                {item.icon}
+              </span>
+
+              <span>
+                {item.label}
+              </span>
+            </NavLink>
+          ))}
+
+          <p className="sidebar__section-title sidebar__section-title--spaced">
+            STORAGE
+          </p>
+
+          {storageItems.map((item) => (
+            <NavLink
+              to={item.path}
+              key={item.label}
               onClick={onClose}
               className={({ isActive }) =>
                 `sidebar__item ${

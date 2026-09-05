@@ -9,7 +9,6 @@ import axios from "axios";
 // Material UI
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import Avatar from "@mui/material/Avatar";
 import Chip from "@mui/material/Chip";
 import Tooltip from "@mui/material/Tooltip";
 import ContrastIcon from "@mui/icons-material/Contrast";
@@ -18,6 +17,7 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import jsPDF from "jspdf";
 import useAttendanceSettings from "../../hooks/useAttendanceSettings";
 import { isPunchAfterTime } from "../../utils/attendanceSettings";
+import EmployeePhoto from "../../components/EmployeePhoto";
 import autoTable from "jspdf-autotable";
 
 import "./Dashboard.scss";
@@ -435,25 +435,14 @@ function Dashboard() {
     return mobileNumber;
   };
 
-  // ==========================================
-  // GET EMPLOYEE INITIAL
-  // ==========================================
+  const getEmployeePhoto = (mobileNumber) => {
+    const employee = employees.find(
+      (emp) =>
+        String(emp.mobileNumber) ===
+        String(mobileNumber)
+    );
 
-  const getEmployeeInitial = (
-    mobileNumber
-  ) => {
-    const name =
-      getEmployeeName(
-        mobileNumber
-      );
-
-    if (!name) {
-      return "?";
-    }
-
-    return String(name)
-      .charAt(0)
-      .toUpperCase();
+    return employee?.profilePic || "";
   };
 
   // ==========================================
@@ -606,6 +595,16 @@ function Dashboard() {
         uniqueKey
       );
 
+      const matchedEmployee =
+        employees.find(
+          (emp) =>
+            String(
+              emp.mobileNumber || ""
+            ) === uniqueKey ||
+            String(emp._id || "") ===
+              String(leave.employeeId || "")
+        );
+
       onLeaveEmployees.push({
         id:
           leave._id ||
@@ -616,6 +615,8 @@ function Dashboard() {
         mobileNumber:
           leave.mobileNumber ||
           uniqueKey,
+        profilePic:
+          matchedEmployee?.profilePic || "",
         leaveType:
           leave.leaveType ||
           "Full Day",
@@ -1401,17 +1402,11 @@ function Dashboard() {
                               }
                             >
 
-                              <div className="absent-popup__avatar">
-
-                                {
-                                  String(
-                                    employeeName
-                                  )
-                                    .charAt(0)
-                                    .toUpperCase()
-                                }
-
-                              </div>
+                              <EmployeePhoto
+                                className="absent-popup__avatar"
+                                src={employee.profilePic}
+                                name={employeeName}
+                              />
 
                               <div>
 
@@ -1486,17 +1481,11 @@ function Dashboard() {
                             }
                           >
 
-                            <div className="absent-popup__avatar">
-
-                              {
-                                String(
-                                  employee.name
-                                )
-                                  .charAt(0)
-                                  .toUpperCase()
-                              }
-
-                            </div>
+                            <EmployeePhoto
+                              className="absent-popup__avatar"
+                              src={employee.profilePic}
+                              name={employee.name}
+                            />
 
                             <div>
 
@@ -1738,23 +1727,12 @@ function Dashboard() {
 
                         <Box className="attendance-user">
 
-                          <Avatar
-                            sx={{
-                              width: 38,
-                              height: 38,
-                              fontSize: "14px",
-                              background:
-                                "linear-gradient(135deg, #1976d2, #42a5f5)",
-                            }}
-                          >
-
-                            {
-                              getEmployeeInitial(
-                                attendance.mobileNumber
-                              )
-                            }
-
-                          </Avatar>
+                          <EmployeePhoto
+                            src={getEmployeePhoto(
+                              attendance.mobileNumber
+                            )}
+                            name={employeeName}
+                          />
 
                           <Box>
 
