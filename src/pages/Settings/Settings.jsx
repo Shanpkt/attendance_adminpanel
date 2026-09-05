@@ -25,6 +25,7 @@ function Settings() {
     latitude,
     longitude,
     accuracy,
+    gpsTolerance,
     loading,
     saving,
     error,
@@ -46,6 +47,9 @@ function Settings() {
   const [gpsAccuracy, setGpsAccuracy] =
     useState(accuracy);
 
+  const [keepGpsTolerance, setKeepGpsTolerance] =
+    useState(gpsTolerance);
+
   const [locating, setLocating] =
     useState(false);
 
@@ -61,12 +65,14 @@ function Settings() {
     setGpsLatitude(latitude);
     setGpsLongitude(longitude);
     setGpsAccuracy(accuracy);
+    setKeepGpsTolerance(gpsTolerance);
   }, [
     lateComingTime,
     halfDayTime,
     latitude,
     longitude,
     accuracy,
+    gpsTolerance,
   ]);
 
   const hasInvalidOrder =
@@ -150,6 +156,7 @@ function Settings() {
         latitude: gpsLatitude,
         longitude: gpsLongitude,
         accuracy: gpsAccuracy,
+        gpsTolerance: keepGpsTolerance,
       });
 
       setSaved(true);
@@ -185,6 +192,10 @@ function Settings() {
 
     setGpsAccuracy(
       DEFAULT_ATTENDANCE_SETTINGS.accuracy
+    );
+
+    setKeepGpsTolerance(
+      DEFAULT_ATTENDANCE_SETTINGS.gpsTolerance
     );
 
     setSaved(false);
@@ -412,6 +423,46 @@ function Settings() {
                 : "Use current location"}
             </button>
 
+            <div className="settings-gps-tolerance">
+              <div>
+                <label htmlFor="gps-tolerance">
+                  GPS Tolerance
+                </label>
+                <p>
+                  On keeps GPS accuracy
+                  checks. Off tells the punch
+                  app to ignore GPS
+                  tolerance.
+                </p>
+              </div>
+
+              <label
+                className="settings-switch"
+                htmlFor="gps-tolerance"
+              >
+                <input
+                  id="gps-tolerance"
+                  type="checkbox"
+                  role="switch"
+                  checked={keepGpsTolerance}
+                  disabled={loading || saving}
+                  onChange={(event) => {
+                    setKeepGpsTolerance(
+                      event.target.checked
+                    );
+                    setSaved(false);
+                    setFormError("");
+                  }}
+                />
+                <span className="settings-switch__slider" />
+                <span className="settings-switch__label">
+                  {keepGpsTolerance
+                    ? "Keep"
+                    : "Ignore"}
+                </span>
+              </label>
+            </div>
+
             <span className="settings-card__hint">
               Saved spot:{" "}
               {gpsLatitude && gpsLongitude
@@ -420,6 +471,10 @@ function Settings() {
               {gpsAccuracy !== ""
                 ? ` · ${gpsAccuracy} m`
                 : ""}
+              {" · "}
+              {keepGpsTolerance
+                ? "GPS tolerance on"
+                : "GPS tolerance ignored"}
             </span>
 
           </div>

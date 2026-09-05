@@ -2,6 +2,7 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -26,11 +27,17 @@ import {
   Trash2,
   Printer,
   IndianRupee,
+  Camera,
 } from "lucide-react";
 
 import Tooltip from "@mui/material/Tooltip";
 
+import EmployeePhoto from "../../components/EmployeePhoto";
 import useAttendanceSettings from "../../hooks/useAttendanceSettings";
+import {
+  deleteProfilePic,
+  uploadProfilePic,
+} from "../../services/uploadProfilePic";
 import { isPunchAfterTime } from "../../utils/attendanceSettings";
 
 import "./Profile.scss";
@@ -122,6 +129,11 @@ function Profile() {
     joiningDate: "",
   });
 
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState("");
+  const [photoRemoved, setPhotoRemoved] = useState(false);
+  const photoInputRef = useRef(null);
+
   // ==================================================
   // FETCH EMPLOYEE
   // ==================================================
@@ -170,6 +182,10 @@ function Profile() {
           selectedEmployee.joiningDate
         ),
       });
+
+      setPhotoFile(null);
+      setPhotoRemoved(false);
+      setPhotoPreview(selectedEmployee.profilePic || "");
     } catch (err) {
       console.error(
         "Employee fetch error:",
@@ -381,6 +397,14 @@ function Profile() {
     fetchLeaves,
   ]);
 
+  useEffect(() => {
+    return () => {
+      if (photoPreview && photoPreview.startsWith("blob:")) {
+        URL.revokeObjectURL(photoPreview);
+      }
+    };
+  }, [photoPreview]);
+
   // ==================================================
   // FORM CHANGE
   // ==================================================
@@ -397,6 +421,54 @@ function Profile() {
     }));
   };
 
+  const handlePhotoPick = () => {
+    photoInputRef.current?.click();
+  };
+
+  const handlePhotoChange = (event) => {
+    const file = event.target.files?.[0];
+
+    event.target.value = "";
+
+    if (!file) {
+      return;
+    }
+
+    if (!String(file.type || "").startsWith("image/")) {
+      alert("Please choose an image file.");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Please choose a photo smaller than 5 MB.");
+      return;
+    }
+
+    setPhotoPreview((previous) => {
+      if (previous && previous.startsWith("blob:")) {
+        URL.revokeObjectURL(previous);
+      }
+
+      return URL.createObjectURL(file);
+    });
+
+    setPhotoFile(file);
+    setPhotoRemoved(false);
+  };
+
+  const handlePhotoRemove = () => {
+    setPhotoPreview((previous) => {
+      if (previous && previous.startsWith("blob:")) {
+        URL.revokeObjectURL(previous);
+      }
+
+      return "";
+    });
+
+    setPhotoFile(null);
+    setPhotoRemoved(true);
+  };
+
   // ==================================================
   // SAVE EMPLOYEE
   // ==================================================
@@ -404,8 +476,22 @@ function Profile() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
+    const previousPhoto = employee?.profilePic || "";
+    let nextPhoto = previousPhoto;
+
     try {
       setSaving(true);
+
+      if (photoFile) {
+        const uploaded = await uploadProfilePic(
+          photoFile,
+          employeeId
+        );
+
+        nextPhoto = uploaded.publicUrl;
+      } else if (photoRemoved) {
+        nextPhoto = "";
+      }
 
       const requestData = {
         name:
@@ -419,6 +505,8 @@ function Profile() {
 
         joiningDate:
           formData.joiningDate,
+
+        profilePic: nextPhoto,
       };
 
       const response =
@@ -431,6 +519,20 @@ function Profile() {
         setEmployee(
           response.data.data
         );
+      }
+
+      if (
+        previousPhoto &&
+        previousPhoto !== nextPhoto
+      ) {
+        try {
+          await deleteProfilePic(previousPhoto);
+        } catch (deleteError) {
+          console.error(
+            "Old profile photo delete error:",
+            deleteError
+          );
+        }
       }
 
       alert(
@@ -447,6 +549,20 @@ function Profile() {
         "Update employee error:",
         err
       );
+
+      if (
+        nextPhoto &&
+        nextPhoto !== previousPhoto
+      ) {
+        try {
+          await deleteProfilePic(nextPhoto);
+        } catch (deleteError) {
+          console.error(
+            "New profile photo rollback error:",
+            deleteError
+          );
+        }
+      }
 
       alert(
         err.response?.data?.message ||
@@ -1057,9 +1173,20 @@ function Profile() {
 
           <div className="employee-avatar-wrapper">
 
-            <div className="employee-avatar">
-              {getInitials(name)}
-            </div>
+            <EmployeePhoto
+              src={photoPreview || employee?.profilePic}
+              name={name}
+            />
+
+            <button
+              type="button"
+              className="employee-avatar-camera"
+              onClick={handlePhotoPick}
+              disabled={saving}
+              title="Upload photo"
+            >
+              <Camera size={15} />
+            </button>
 
           </div>
 
@@ -1129,6 +1256,60 @@ function Profile() {
           </div>
 
           <div className="form-grid">
+
+            <div className="form-field form-field--photo">
+              <label htmlFor="profile-photo">
+                Profile Photo
+              </label>
+
+              <input
+                id="profile-photo"
+                ref={photoInputRef}
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={handlePhotoChange}
+              />
+
+              <div className="profile-photo-picker">
+                <EmployeePhoto
+                  src={photoPreview}
+                  name={formData.fullName || name}
+                />
+
+                <div className="profile-photo-picker__actions">
+                  <button
+                    type="button"
+                    className="profile-photo-button"
+                    onClick={handlePhotoPick}
+                    disabled={saving}
+                  >
+                    <Camera size={16} />
+                    {photoPreview
+                      ? "Change photo"
+                      : "Upload from device"}
+                  </button>
+
+                  {photoPreview && (
+                    <button
+                      type="button"
+                      className="profile-photo-button profile-photo-button--remove"
+                      onClick={handlePhotoRemove}
+                      disabled={saving}
+                    >
+                      Remove
+                    </button>
+                  )}
+
+                  <span>
+                    Saved to Supabase in
+                    profilepic. The photo URL
+                    is stored on this
+                    employee.
+                  </span>
+                </div>
+              </div>
+            </div>
 
             <FormInput
               label="Full Name"
@@ -4029,26 +4210,6 @@ function SalaryCalculationModal({
 
     </div>
   );
-}
-
-// ==================================================
-// GET INITIALS
-// ==================================================
-
-function getInitials(name) {
-  if (!name) {
-    return "U";
-  }
-
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .map((word) =>
-      word.charAt(0)
-    )
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
 }
 
 // ==================================================

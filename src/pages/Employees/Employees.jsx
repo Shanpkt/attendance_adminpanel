@@ -3,6 +3,8 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 import EmployeeInfoPop from "./employee_info_pop";
+import EmployeePhoto from "../../components/EmployeePhoto";
+import { deleteProfilePic } from "../../services/uploadProfilePic";
 import "./Employees.scss";
 
 // ==========================================
@@ -19,25 +21,6 @@ import DeleteIcon from "@mui/icons-material/Delete";
 
 const API_URL =
   "https://attendance-backend-hs75.onrender.com/api/employees";
-
-// ==========================================
-// GET INITIALS
-// ==========================================
-
-const getInitials = (name) => {
-  if (!name) {
-    return "U";
-  }
-
-  return name
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((word) => word.charAt(0))
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-};
 
 // ==========================================
 // FORMAT DATE
@@ -314,6 +297,17 @@ function Employees() {
         `${API_URL}/${employeeId}`
       );
 
+      if (employee.profilePic) {
+        try {
+          await deleteProfilePic(employee.profilePic);
+        } catch (deleteError) {
+          console.error(
+            "Profile photo delete error:",
+            deleteError
+          );
+        }
+      }
+
       setEmployees((previous) =>
         previous.filter((item) => {
           const itemId =
@@ -589,9 +583,10 @@ function Employees() {
                       title="View employee profile"
                     >
 
-                      <div className="employee-avatar">
-                        {getInitials(name)}
-                      </div>
+                      <EmployeePhoto
+                        src={employee.profilePic}
+                        name={name}
+                      />
 
                       <div className="employee-info">
 

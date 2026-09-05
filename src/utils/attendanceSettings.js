@@ -7,6 +7,19 @@ export const DEFAULT_ATTENDANCE_SETTINGS = {
   latitude: "",
   longitude: "",
   accuracy: "",
+  gpsTolerance: true,
+};
+
+const toSettingBoolean = (value, fallback) => {
+  if (value === true || value === "true" || value === 1 || value === "1") {
+    return true;
+  }
+
+  if (value === false || value === "false" || value === 0 || value === "0") {
+    return false;
+  }
+
+  return fallback;
 };
 
 const toSettingNumber = (value) => {
@@ -118,6 +131,10 @@ export const normalizeSettings = (
     accuracy: toSettingNumber(
       data.accuracy
     ),
+    gpsTolerance: toSettingBoolean(
+      data.gpsTolerance,
+      DEFAULT_ATTENDANCE_SETTINGS.gpsTolerance
+    ),
   };
 };
 
@@ -146,6 +163,7 @@ export const toSettingsPayload = (
     accuracy: toNumberOrNull(
       settings.accuracy
     ),
+    gpsTolerance: Boolean(settings.gpsTolerance),
   };
 };
 
