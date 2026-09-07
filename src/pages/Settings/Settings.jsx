@@ -1,5 +1,6 @@
 import React, {
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -7,6 +8,7 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import ContrastIcon from "@mui/icons-material/Contrast";
 import MyLocationIcon from "@mui/icons-material/MyLocation";
 import PlaceIcon from "@mui/icons-material/Place";
+import StopCircleIcon from "@mui/icons-material/StopCircle";
 
 import useAttendanceSettings from "../../hooks/useAttendanceSettings";
 import {
@@ -17,6 +19,16 @@ import {
 } from "../../utils/attendanceSettings";
 
 import "./Settings.scss";
+
+const GPS_SCAN_TARGET_METERS = 8;
+
+const formatGpsAccuracy = (value) => {
+  if (value == null || !Number.isFinite(Number(value))) {
+    return "";
+  }
+
+  return String(Math.round(Number(value) * 100) / 100);
+};
 
 function Settings() {
   const {
@@ -50,7 +62,7 @@ function Settings() {
   const [keepGpsTolerance, setKeepGpsTolerance] =
     useState(gpsTolerance);
 
-  const [locating, setLocating] =
+  const [scanning, setScanning] =
     useState(false);
 
   const [saved, setSaved] =
@@ -59,13 +71,21 @@ function Settings() {
   const [formError, setFormError] =
     useState("");
 
+  const watchIdRef = useRef(null);
+  const scanningRef = useRef(false);
+
+  scanningRef.current = scanning;
+
   useEffect(() => {
     setLateTime(lateComingTime);
     setHalfTime(halfDayTime);
-    setGpsLatitude(latitude);
-    setGpsLongitude(longitude);
-    setGpsAccuracy(accuracy);
     setKeepGpsTolerance(gpsTolerance);
+
+    if (!scanningRef.current) {
+      setGpsLatitude(latitude);
+      setGpsLongitude(longitude);
+      setGpsAccuracy(accuracy);
+    }
   }, [
     lateComingTime,
     halfDayTime,
@@ -74,6 +94,16 @@ function Settings() {
     accuracy,
     gpsTolerance,
   ]);
+
+  useEffect(() => {
+    return () => {
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(
+          watchIdRef.current
+        );
+      }
+    };
+  }, []);
 
   const hasInvalidOrder =
     timeToMinutes(halfTime) <=
@@ -93,7 +123,18 @@ function Settings() {
     };
   };
 
-  const handleUseCurrentLocation = () => {
+  const stopGpsScan = () => {
+    if (watchIdRef.current !== null) {
+      navigator.geolocation.clearWatch(
+        watchIdRef.current
+      );
+      watchIdRef.current = null;
+    }
+
+    setScanning(false);
+  };
+
+  const handleScanCurrentLocation = () => {
     if (!navigator.geolocation) {
       setFormError(
         "This browser cannot read GPS location."
@@ -101,41 +142,61 @@ function Settings() {
       return;
     }
 
-    setLocating(true);
+    stopGpsScan();
+    setScanning(true);
     setFormError("");
     setSaved(false);
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setGpsLatitude(
-          String(position.coords.latitude)
-        );
-        setGpsLongitude(
-          String(position.coords.longitude)
-        );
-        setGpsAccuracy(
-          position.coords.accuracy != null
-            ? String(
-                Math.round(
-                  position.coords.accuracy * 100
-                ) / 100
-              )
-            : ""
-        );
-        setLocating(false);
-      },
-      () => {
-        setLocating(false);
-        setFormError(
-          "Unable to read current GPS location."
-        );
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 12000,
-        maximumAge: 0,
-      }
-    );
+    watchIdRef.current =
+      navigator.geolocation.watchPosition(
+        (position) => {
+          const {
+            latitude: currentLatitude,
+            longitude: currentLongitude,
+            accuracy: currentAccuracy,
+          } = position.coords;
+
+          setGpsLatitude(String(currentLatitude));
+          setGpsLongitude(String(currentLongitude));
+          setGpsAccuracy(
+            formatGpsAccuracy(currentAccuracy)
+          );
+
+          if (
+            Number.isFinite(currentAccuracy) &&
+            currentAccuracy <= GPS_SCAN_TARGET_METERS
+          ) {
+            if (watchIdRef.current !== null) {
+              navigator.geolocation.clearWatch(
+                watchIdRef.current
+              );
+              watchIdRef.current = null;
+            }
+
+            setScanning(false);
+          }
+        },
+        (gpsError) => {
+          if (gpsError.code === 1) {
+            if (watchIdRef.current !== null) {
+              navigator.geolocation.clearWatch(
+                watchIdRef.current
+              );
+              watchIdRef.current = null;
+            }
+
+            setScanning(false);
+            setFormError(
+              "Location permission denied. Please allow location access."
+            );
+          }
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 20000,
+          maximumAge: 0,
+        }
+      );
   };
 
   const handleSave = async () => {
@@ -198,6 +259,7 @@ function Settings() {
       DEFAULT_ATTENDANCE_SETTINGS.gpsTolerance
     );
 
+    stopGpsScan();
     setSaved(false);
     setFormError("");
   };
@@ -340,7 +402,10 @@ function Settings() {
             <p>
               Office latitude, longitude,
               and allowed GPS accuracy in
-              meters.
+              meters. Scan current location
+              until GPS accuracy is{" "}
+              {GPS_SCAN_TARGET_METERS}m or
+              better.
             </p>
 
             <div className="settings-gps-fields">
@@ -358,7 +423,7 @@ function Settings() {
                   placeholder="e.g. 28.6139"
                   value={gpsLatitude}
                   disabled={
-                    loading || saving || locating
+                    loading || saving || scanning
                   }
                   onChange={updateGpsField(
                     setGpsLatitude
@@ -379,7 +444,7 @@ function Settings() {
                   placeholder="e.g. 77.2090"
                   value={gpsLongitude}
                   disabled={
-                    loading || saving || locating
+                    loading || saving || scanning
                   }
                   onChange={updateGpsField(
                     setGpsLongitude
@@ -399,7 +464,7 @@ function Settings() {
                   placeholder="e.g. 50"
                   value={gpsAccuracy}
                   disabled={
-                    loading || saving || locating
+                    loading || saving || scanning
                   }
                   onChange={updateGpsField(
                     setGpsAccuracy
@@ -409,19 +474,42 @@ function Settings() {
 
             </div>
 
-            <button
-              type="button"
-              className="settings-gps-button"
-              onClick={handleUseCurrentLocation}
-              disabled={
-                loading || saving || locating
-              }
-            >
-              <MyLocationIcon />
-              {locating
-                ? "Reading GPS..."
-                : "Use current location"}
-            </button>
+            <div className="settings-gps-actions">
+              <button
+                type="button"
+                className="settings-gps-button"
+                onClick={handleScanCurrentLocation}
+                disabled={
+                  loading || saving || scanning
+                }
+              >
+                <MyLocationIcon />
+                {scanning
+                  ? `Scanning... need ${GPS_SCAN_TARGET_METERS}m`
+                  : "Scan current location"}
+              </button>
+
+              <button
+                type="button"
+                className="settings-gps-button settings-gps-button--stop"
+                onClick={stopGpsScan}
+                disabled={!scanning}
+              >
+                <StopCircleIcon />
+                Stop
+              </button>
+            </div>
+
+            {scanning && (
+              <span className="settings-card__hint">
+                Scanning GPS until accuracy
+                is {GPS_SCAN_TARGET_METERS}m
+                or better. Current accuracy:{" "}
+                {gpsAccuracy !== ""
+                  ? `${gpsAccuracy} m`
+                  : "waiting..."}
+              </span>
+            )}
 
             <div className="settings-gps-tolerance">
               <div>
