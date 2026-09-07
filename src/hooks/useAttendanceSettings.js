@@ -123,6 +123,7 @@ function useAttendanceSettings() {
     longitude: settings.longitude,
     accuracy: settings.accuracy,
     tolerance: settings.tolerance,
+    punchAccuracy: settings.punchAccuracy,
     gpsTolerance: settings.gpsTolerance,
     loading,
     saving,

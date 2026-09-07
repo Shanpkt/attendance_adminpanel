@@ -15,6 +15,7 @@ import {
   DEFAULT_ATTENDANCE_SETTINGS,
   formatTimeLabel,
   isValidGpsSettings,
+  isValidPunchAccuracy,
   timeToMinutes,
 } from "../../utils/attendanceSettings";
 
@@ -38,6 +39,7 @@ function Settings() {
     longitude,
     accuracy,
     tolerance,
+    punchAccuracy,
     gpsTolerance,
     loading,
     saving,
@@ -62,6 +64,9 @@ function Settings() {
 
   const [gpsToleranceMeters, setGpsToleranceMeters] =
     useState(tolerance);
+
+  const [punchAccuracyMeters, setPunchAccuracyMeters] =
+    useState(punchAccuracy);
 
   const [keepGpsTolerance, setKeepGpsTolerance] =
     useState(gpsTolerance);
@@ -90,6 +95,7 @@ function Settings() {
       setGpsLongitude(longitude);
       setGpsAccuracy(accuracy);
       setGpsToleranceMeters(tolerance);
+      setPunchAccuracyMeters(punchAccuracy);
     }
   }, [
     lateComingTime,
@@ -98,6 +104,7 @@ function Settings() {
     longitude,
     accuracy,
     tolerance,
+    punchAccuracy,
     gpsTolerance,
   ]);
 
@@ -121,6 +128,9 @@ function Settings() {
     accuracy: gpsAccuracy,
     tolerance: gpsToleranceMeters,
   });
+
+  const hasInvalidPunchAccuracy =
+    !isValidPunchAccuracy(punchAccuracyMeters);
 
   const updateGpsField = (setter) => {
     return (event) => {
@@ -212,7 +222,14 @@ function Settings() {
 
     if (hasInvalidGps) {
       setFormError(
-        "Enter valid latitude, longitude, tolerance, and accuracy, or leave all GPS fields empty."
+        "Enter valid latitude, longitude, tolerance, and spot accuracy, or leave all GPS fields empty."
+      );
+      return;
+    }
+
+    if (hasInvalidPunchAccuracy) {
+      setFormError(
+        "Enter a valid punch accuracy in meters (0 or more)."
       );
       return;
     }
@@ -225,6 +242,7 @@ function Settings() {
         longitude: gpsLongitude,
         accuracy: gpsAccuracy,
         tolerance: gpsToleranceMeters,
+        punchAccuracy: punchAccuracyMeters,
         gpsTolerance: keepGpsTolerance,
       });
 
@@ -265,6 +283,10 @@ function Settings() {
 
     setGpsToleranceMeters(
       DEFAULT_ATTENDANCE_SETTINGS.tolerance
+    );
+
+    setPunchAccuracyMeters(
+      DEFAULT_ATTENDANCE_SETTINGS.punchAccuracy
     );
 
     setKeepGpsTolerance(
@@ -486,14 +508,14 @@ function Settings() {
 
               <div>
                 <label htmlFor="gps-accuracy">
-                  Accuracy (m)
+                  Spot Accuracy (m)
                 </label>
                 <input
                   id="gps-accuracy"
                   type="number"
                   step="any"
                   min="0"
-                  placeholder="e.g. 50"
+                  placeholder="From GPS scan"
                   value={gpsAccuracy}
                   disabled={
                     loading || saving || scanning
@@ -504,6 +526,30 @@ function Settings() {
                 />
               </div>
 
+            </div>
+
+            <div className="settings-gps-punch">
+              <div>
+                <label htmlFor="punch-accuracy">
+                  Punch Accuracy (m)
+                </label>
+                <input
+                  id="punch-accuracy"
+                  type="number"
+                  step="any"
+                  min="0"
+                  placeholder="e.g. 30"
+                  value={punchAccuracyMeters}
+                  disabled={loading || saving}
+                  onChange={updateGpsField(
+                    setPunchAccuracyMeters
+                  )}
+                />
+                <span className="settings-card__hint">
+                  Max GPS accuracy allowed when
+                  employees punch in.
+                </span>
+              </div>
             </div>
 
             <div className="settings-gps-actions">
@@ -593,7 +639,10 @@ function Settings() {
                 ? ` · ${gpsToleranceMeters} m tolerance`
                 : ""}
               {gpsAccuracy !== ""
-                ? ` · ${gpsAccuracy} m accuracy`
+                ? ` · ${gpsAccuracy} m spot`
+                : ""}
+              {punchAccuracyMeters !== ""
+                ? ` · ${punchAccuracyMeters} m punch`
                 : ""}
               {" · "}
               {keepGpsTolerance
@@ -626,6 +675,15 @@ function Settings() {
 
       )}
 
+      {hasInvalidPunchAccuracy && (
+
+        <p className="settings-warning">
+          Enter a valid punch accuracy in
+          meters (0 or more).
+        </p>
+
+      )}
+
       <div className="settings-actions">
 
         <button
@@ -642,7 +700,7 @@ function Settings() {
           className="settings-save"
           onClick={handleSave}
           disabled={
-            loading || saving || hasInvalidGps
+            loading || saving || hasInvalidGps || hasInvalidPunchAccuracy
           }
         >
           {saving

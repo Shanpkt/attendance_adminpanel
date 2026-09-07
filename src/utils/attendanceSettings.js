@@ -8,6 +8,7 @@ export const DEFAULT_ATTENDANCE_SETTINGS = {
   longitude: "",
   accuracy: "",
   tolerance: "30",
+  punchAccuracy: "30",
   gpsTolerance: true,
 };
 
@@ -139,6 +140,13 @@ export const normalizeSettings = (
         ? data.tolerance
         : DEFAULT_ATTENDANCE_SETTINGS.tolerance
     ),
+    punchAccuracy: toSettingNumber(
+      data.punchAccuracy !== undefined &&
+        data.punchAccuracy !== null &&
+        data.punchAccuracy !== ""
+        ? data.punchAccuracy
+        : DEFAULT_ATTENDANCE_SETTINGS.punchAccuracy
+    ),
     gpsTolerance: toSettingBoolean(
       data.gpsTolerance,
       DEFAULT_ATTENDANCE_SETTINGS.gpsTolerance
@@ -185,8 +193,29 @@ export const toSettingsPayload = (
             : DEFAULT_ATTENDANCE_SETTINGS.tolerance
         )
       : null,
+    punchAccuracy: toNumberOrNull(
+      settings.punchAccuracy !== ""
+        ? settings.punchAccuracy
+        : DEFAULT_ATTENDANCE_SETTINGS.punchAccuracy
+    ),
     gpsTolerance: Boolean(settings.gpsTolerance),
   };
+};
+
+export const isValidPunchAccuracy = (
+  punchAccuracy
+) => {
+  if (
+    punchAccuracy === "" ||
+    punchAccuracy === undefined ||
+    punchAccuracy === null
+  ) {
+    return true;
+  }
+
+  const value = Number(punchAccuracy);
+
+  return Number.isFinite(value) && value >= 0;
 };
 
 export const isValidGpsSettings = ({

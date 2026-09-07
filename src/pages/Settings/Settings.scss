@@ -234,6 +234,19 @@
   font-weight: 700;
 }
 
+.settings-gps-punch {
+  max-width: 280px;
+  margin-bottom: 14px;
+
+  input[type="number"] {
+    max-width: none;
+  }
+
+  .settings-card__hint {
+    margin-top: 6px;
+  }
+}
+
 .settings-gps-actions {
   display: flex;
   flex-wrap: wrap;
