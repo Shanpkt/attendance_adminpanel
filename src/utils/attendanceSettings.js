@@ -7,6 +7,7 @@ export const DEFAULT_ATTENDANCE_SETTINGS = {
   latitude: "",
   longitude: "",
   accuracy: "",
+  tolerance: "30",
   gpsTolerance: true,
 };
 
@@ -131,6 +132,13 @@ export const normalizeSettings = (
     accuracy: toSettingNumber(
       data.accuracy
     ),
+    tolerance: toSettingNumber(
+      data.tolerance !== undefined &&
+        data.tolerance !== null &&
+        data.tolerance !== ""
+        ? data.tolerance
+        : DEFAULT_ATTENDANCE_SETTINGS.tolerance
+    ),
     gpsTolerance: toSettingBoolean(
       data.gpsTolerance,
       DEFAULT_ATTENDANCE_SETTINGS.gpsTolerance
@@ -151,18 +159,32 @@ export const toSettingsPayload = (
     return Number(value);
   };
 
+  const latitude = toNumberOrNull(
+    settings.latitude
+  );
+  const longitude = toNumberOrNull(
+    settings.longitude
+  );
+  const hasLocation =
+    latitude != null ||
+    longitude != null ||
+    settings.accuracy !== "";
+
   return {
     lateComingTime: settings.lateComingTime,
     halfDayTime: settings.halfDayTime,
-    latitude: toNumberOrNull(
-      settings.latitude
-    ),
-    longitude: toNumberOrNull(
-      settings.longitude
-    ),
+    latitude,
+    longitude,
     accuracy: toNumberOrNull(
       settings.accuracy
     ),
+    tolerance: hasLocation
+      ? toNumberOrNull(
+          settings.tolerance !== ""
+            ? settings.tolerance
+            : DEFAULT_ATTENDANCE_SETTINGS.tolerance
+        )
+      : null,
     gpsTolerance: Boolean(settings.gpsTolerance),
   };
 };
@@ -171,20 +193,26 @@ export const isValidGpsSettings = ({
   latitude,
   longitude,
   accuracy,
+  tolerance,
 }) => {
-  const hasAny = [
+  const hasLocation = [
     latitude,
     longitude,
     accuracy,
   ].some((value) => value !== "");
 
-  if (!hasAny) {
+  if (!hasLocation) {
     return true;
   }
 
   const lat = Number(latitude);
   const lng = Number(longitude);
   const acc = Number(accuracy);
+  const tol = Number(
+    tolerance !== "" && tolerance != null
+      ? tolerance
+      : DEFAULT_ATTENDANCE_SETTINGS.tolerance
+  );
 
   return (
     Number.isFinite(lat) &&
@@ -194,6 +222,8 @@ export const isValidGpsSettings = ({
     lng >= -180 &&
     lng <= 180 &&
     Number.isFinite(acc) &&
-    acc >= 0
+    acc >= 0 &&
+    Number.isFinite(tol) &&
+    tol > 0
   );
 };

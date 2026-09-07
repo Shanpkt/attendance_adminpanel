@@ -37,6 +37,7 @@ function Settings() {
     latitude,
     longitude,
     accuracy,
+    tolerance,
     gpsTolerance,
     loading,
     saving,
@@ -58,6 +59,9 @@ function Settings() {
 
   const [gpsAccuracy, setGpsAccuracy] =
     useState(accuracy);
+
+  const [gpsToleranceMeters, setGpsToleranceMeters] =
+    useState(tolerance);
 
   const [keepGpsTolerance, setKeepGpsTolerance] =
     useState(gpsTolerance);
@@ -85,6 +89,7 @@ function Settings() {
       setGpsLatitude(latitude);
       setGpsLongitude(longitude);
       setGpsAccuracy(accuracy);
+      setGpsToleranceMeters(tolerance);
     }
   }, [
     lateComingTime,
@@ -92,6 +97,7 @@ function Settings() {
     latitude,
     longitude,
     accuracy,
+    tolerance,
     gpsTolerance,
   ]);
 
@@ -113,6 +119,7 @@ function Settings() {
     latitude: gpsLatitude,
     longitude: gpsLongitude,
     accuracy: gpsAccuracy,
+    tolerance: gpsToleranceMeters,
   });
 
   const updateGpsField = (setter) => {
@@ -205,7 +212,7 @@ function Settings() {
 
     if (hasInvalidGps) {
       setFormError(
-        "Enter a valid latitude, longitude, and accuracy, or leave all GPS fields empty."
+        "Enter valid latitude, longitude, tolerance, and accuracy, or leave all GPS fields empty."
       );
       return;
     }
@@ -217,6 +224,7 @@ function Settings() {
         latitude: gpsLatitude,
         longitude: gpsLongitude,
         accuracy: gpsAccuracy,
+        tolerance: gpsToleranceMeters,
         gpsTolerance: keepGpsTolerance,
       });
 
@@ -253,6 +261,10 @@ function Settings() {
 
     setGpsAccuracy(
       DEFAULT_ATTENDANCE_SETTINGS.accuracy
+    );
+
+    setGpsToleranceMeters(
+      DEFAULT_ATTENDANCE_SETTINGS.tolerance
     );
 
     setKeepGpsTolerance(
@@ -401,11 +413,11 @@ function Settings() {
 
             <p>
               Office latitude, longitude,
-              and allowed GPS accuracy in
-              meters. Scan current location
-              until GPS accuracy is{" "}
-              {GPS_SCAN_TARGET_METERS}m or
-              better.
+              distance tolerance, and GPS
+              accuracy for employee punch-in.
+              Scan current location until GPS
+              accuracy is {GPS_SCAN_TARGET_METERS}m
+              or better.
             </p>
 
             <div className="settings-gps-fields">
@@ -448,6 +460,26 @@ function Settings() {
                   }
                   onChange={updateGpsField(
                     setGpsLongitude
+                  )}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="gps-tolerance-meters">
+                  Tolerance (m)
+                </label>
+                <input
+                  id="gps-tolerance-meters"
+                  type="number"
+                  step="any"
+                  min="1"
+                  placeholder="e.g. 30"
+                  value={gpsToleranceMeters}
+                  disabled={
+                    loading || saving || scanning
+                  }
+                  onChange={updateGpsField(
+                    setGpsToleranceMeters
                   )}
                 />
               </div>
@@ -519,7 +551,8 @@ function Settings() {
                 <p>
                   On keeps GPS accuracy
                   checks. Off tells the punch
-                  app to ignore GPS
+                  app to ignore accuracy and
+                  only check distance
                   tolerance.
                 </p>
               </div>
@@ -556,8 +589,11 @@ function Settings() {
               {gpsLatitude && gpsLongitude
                 ? `${gpsLatitude}, ${gpsLongitude}`
                 : "not set"}
+              {gpsToleranceMeters !== ""
+                ? ` · ${gpsToleranceMeters} m tolerance`
+                : ""}
               {gpsAccuracy !== ""
-                ? ` · ${gpsAccuracy} m`
+                ? ` · ${gpsAccuracy} m accuracy`
                 : ""}
               {" · "}
               {keepGpsTolerance
@@ -584,7 +620,8 @@ function Settings() {
 
         <p className="settings-warning">
           Fill all GPS fields with valid
-          numbers, or leave them all empty.
+          numbers (tolerance must be greater
+          than 0), or leave them all empty.
         </p>
 
       )}
