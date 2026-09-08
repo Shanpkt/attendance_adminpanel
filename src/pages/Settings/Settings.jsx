@@ -592,14 +592,15 @@ function Settings() {
             <div className="settings-gps-tolerance">
               <div>
                 <label htmlFor="gps-tolerance">
-                  GPS Tolerance
+                  GPS Check
                 </label>
                 <p>
-                  On keeps GPS accuracy
-                  checks. Off tells the punch
-                  app to ignore accuracy and
-                  only check distance
-                  tolerance.
+                  On makes the punch app read
+                  user GPS and compare
+                  accuracy and office
+                  distance. Off skips GPS
+                  completely and opens the
+                  camera.
                 </p>
               </div>
 
@@ -624,8 +625,8 @@ function Settings() {
                 <span className="settings-switch__slider" />
                 <span className="settings-switch__label">
                   {keepGpsTolerance
-                    ? "Keep"
-                    : "Ignore"}
+                    ? "On"
+                    : "Off"}
                 </span>
               </label>
             </div>
@@ -646,8 +647,8 @@ function Settings() {
                 : ""}
               {" · "}
               {keepGpsTolerance
-                ? "GPS tolerance on"
-                : "GPS tolerance ignored"}
+                ? "GPS check on"
+                : "GPS check off"}
             </span>
 
           </div>
