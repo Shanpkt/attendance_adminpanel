@@ -6,6 +6,8 @@ export const EMPLOYEES_API = `${API_BASE_URL}/employees`;
 export const LEAVES_API = `${API_BASE_URL}/leaves`;
 export const SETTINGS_API = `${API_BASE_URL}/settings`;
 export const HOLIDAYS_API = `${API_BASE_URL}/holidays`;
+export const ADMIN_LOGIN_API = `${API_BASE_URL}/admin/login`;
+export const ADMIN_VERIFY_API = `${API_BASE_URL}/admin/verify`;
 
 // Aliases used across pages
 export const EMPLOYEE_API = EMPLOYEES_API;
@@ -32,6 +34,8 @@ const api = {
   LEAVE_API,
   SETTINGS_API,
   HOLIDAYS_API,
+  ADMIN_LOGIN_API,
+  ADMIN_VERIFY_API,
   employeeByIdApi,
   leaveByIdApi,
   leavesByEmployeeApi,

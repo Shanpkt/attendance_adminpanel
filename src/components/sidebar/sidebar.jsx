@@ -43,7 +43,7 @@ const storageItems = [
   },
 ];
 
-function Sidebar({ isOpen, onClose }) {
+function Sidebar({ isOpen, onClose, onLogout }) {
   return (
     <>
       {/* Overlay for mobile */}
@@ -156,6 +156,7 @@ function Sidebar({ isOpen, onClose }) {
           <button
             className="sidebar__logout"
             type="button"
+            onClick={onLogout}
           >
             <span className="sidebar__item-icon">
               ⇥

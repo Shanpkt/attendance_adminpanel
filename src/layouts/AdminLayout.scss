@@ -1,5 +1,16 @@
 @import "../styles/variables";
 
+.admin-auth-loading {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f6f8fc;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 650;
+}
+
 .admin-layout {
   min-height: 100vh;
   background: $body-bg;
