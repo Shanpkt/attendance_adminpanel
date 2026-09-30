@@ -24,6 +24,11 @@ const menuItems = [
     path: "/profile",
   },
   {
+    label: "Holidays",
+    icon: "★",
+    path: "/holidays",
+  },
+  {
     label: "Settings",
     icon: "⚙",
     path: "/settings",

@@ -1,6 +1,3 @@
-export const SETTINGS_API =
-  "https://attendance-backend-hs75.onrender.com/api/settings";
-
 export const DEFAULT_ATTENDANCE_SETTINGS = {
   lateComingTime: "10:00",
   halfDayTime: "13:30",
@@ -82,6 +79,30 @@ export const isPunchAfterTime = (
     date.getMinutes();
 
   return punchMinutes > timeToMinutes(time);
+};
+
+export const isPunchBeforeTime = (
+  timestamp,
+  time
+) => {
+  if (!timestamp || !time) {
+    return false;
+  }
+
+  const date =
+    timestamp instanceof Date
+      ? timestamp
+      : new Date(timestamp);
+
+  if (Number.isNaN(date.getTime())) {
+    return false;
+  }
+
+  const punchMinutes =
+    date.getHours() * 60 +
+    date.getMinutes();
+
+  return punchMinutes < timeToMinutes(time);
 };
 
 export const formatTimeLabel = (time) => {

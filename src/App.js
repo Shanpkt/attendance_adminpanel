@@ -23,6 +23,9 @@ import Employees
 import Settings
   from "./pages/Settings/Settings";
 
+import Holidays
+  from "./pages/Holidays/Holidays";
+
 import CleanupDrive
   from "./pages/CleanupDrive/CleanupDrive";
 
@@ -83,6 +86,13 @@ function App() {
             path="/settings"
             element={
               <Settings />
+            }
+          />
+
+          <Route
+            path="/holidays"
+            element={
+              <Holidays />
             }
           />
 

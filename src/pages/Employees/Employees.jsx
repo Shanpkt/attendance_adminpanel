@@ -4,6 +4,10 @@ import { useNavigate } from "react-router-dom";
 
 import EmployeeInfoPop from "./employee_info_pop";
 import EmployeePhoto from "../../components/EmployeePhoto";
+import {
+  EMPLOYEES_API,
+  employeeByIdApi,
+} from "../../api";
 import { deleteProfilePic } from "../../services/uploadProfilePic";
 import "./Employees.scss";
 
@@ -14,13 +18,6 @@ import "./Employees.scss";
 import IconButton from "@mui/material/IconButton";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-
-// ==========================================
-// API
-// ==========================================
-
-const API_URL =
-  "https://attendance-backend-hs75.onrender.com/api/employees";
 
 // ==========================================
 // FORMAT DATE
@@ -92,7 +89,7 @@ function Employees() {
       setLoading(true);
       setError("");
 
-      const response = await axios.get(API_URL);
+      const response = await axios.get(EMPLOYEES_API);
 
       console.log("Employees API response:", response.data);
 
@@ -294,7 +291,7 @@ function Employees() {
       }
 
       await axios.delete(
-        `${API_URL}/${employeeId}`
+        employeeByIdApi(employeeId)
       );
 
       if (employee.profilePic) {

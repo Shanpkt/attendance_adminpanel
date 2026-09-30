@@ -1,0 +1,426 @@
+.holidays-page {
+  width: 100%;
+  min-height: 100%;
+  padding: 24px;
+  box-sizing: border-box;
+  background: #f6f8fc;
+}
+
+.holidays-page__header {
+  margin-bottom: 20px;
+
+  h1 {
+    margin: 0;
+    color: #1f2937;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  p {
+    margin: 7px 0 0;
+    color: #6b7280;
+    font-size: 14px;
+    max-width: 560px;
+  }
+}
+
+.holidays-page__banner {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.holidays-page__banner--error {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.holidays-page__banner--success {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.holidays-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.9fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.holidays-calendar-card,
+.holidays-form-card,
+.holidays-list-card {
+  background: #ffffff;
+  border: 1px solid #e8edf3;
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.holidays-calendar-card {
+  padding: 20px;
+}
+
+.holidays-calendar-card__nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+
+  strong {
+    color: #111827;
+    font-size: 18px;
+  }
+
+  button {
+    width: 36px;
+    height: 36px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: #f9fafb;
+    color: #111827;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      background: #f3f4f6;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.holidays-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  margin-bottom: 8px;
+
+  span {
+    text-align: center;
+    color: #6b7280;
+    font-size: 12px;
+    font-weight: 700;
+  }
+}
+
+.holidays-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+.holidays-empty {
+  min-height: 54px;
+}
+
+.holidays-day {
+  position: relative;
+  min-height: 54px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #111827;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    transform 0.15s ease;
+
+  span {
+    position: absolute;
+    top: 8px;
+    left: 10px;
+    font-size: 14px;
+    font-weight: 650;
+  }
+
+  i {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #0f766e;
+  }
+
+  &:hover:not(:disabled) {
+    border-color: #99f6e4;
+    background: #f0fdfa;
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+}
+
+.holidays-day--today {
+  border-color: #93c5fd;
+  box-shadow: inset 0 0 0 1px #93c5fd;
+}
+
+.holidays-day--holiday {
+  background: #ecfdf5;
+  border-color: #6ee7b7;
+  color: #065f46;
+}
+
+.holidays-day--selected {
+  border-color: #0f766e;
+  background: #ccfbf1;
+  box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.18);
+}
+
+.holidays-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 16px;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 600;
+
+  div {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+}
+
+.holidays-legend__dot,
+.holidays-legend__today {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.holidays-legend__dot {
+  background: #0f766e;
+}
+
+.holidays-legend__today {
+  background: #ffffff;
+  border: 2px solid #60a5fa;
+  box-sizing: border-box;
+}
+
+.holidays-loading {
+  margin: 14px 0 0;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.holidays-side {
+  display: grid;
+  gap: 18px;
+}
+
+.holidays-form-card,
+.holidays-list-card {
+  padding: 20px;
+}
+
+.holidays-form-card {
+  h2,
+  .holidays-list-card__header h2 {
+    margin: 0;
+    color: #111827;
+    font-size: 18px;
+  }
+
+  label {
+    display: block;
+    margin: 14px 0 6px;
+    color: #374151;
+    font-size: 13px;
+    font-weight: 650;
+  }
+
+  input,
+  textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 11px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #111827;
+    font: inherit;
+    font-size: 14px;
+    outline: none;
+
+    &:focus {
+      border-color: #0f766e;
+      box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+    }
+
+    &:disabled {
+      background: #f9fafb;
+      color: #9ca3af;
+    }
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 84px;
+  }
+}
+
+.holidays-form-card__date {
+  margin: 8px 0 0;
+  color: #0f766e;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.holidays-form-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.holidays-btn {
+  border: none;
+  border-radius: 10px;
+  padding: 11px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+.holidays-btn--primary {
+  background: #0f766e;
+  color: #ffffff;
+
+  &:hover:not(:disabled) {
+    background: #0d9488;
+  }
+}
+
+.holidays-btn--danger {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+
+  &:hover:not(:disabled) {
+    background: #fee2e2;
+  }
+}
+
+.holidays-list-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+
+  span {
+    min-width: 28px;
+    height: 28px;
+    padding: 0 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: #ecfdf5;
+    color: #0f766e;
+    font-size: 13px;
+    font-weight: 700;
+  }
+}
+
+.holidays-list-card__empty {
+  margin: 0;
+  color: #6b7280;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.holidays-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+
+  button {
+    width: 100%;
+    text-align: left;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #f9fafb;
+    padding: 12px 14px;
+    cursor: pointer;
+
+    strong {
+      display: block;
+      color: #111827;
+      font-size: 14px;
+    }
+
+    span {
+      display: block;
+      margin-top: 3px;
+      color: #0f766e;
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    small {
+      display: block;
+      margin-top: 4px;
+      color: #6b7280;
+      font-size: 12px;
+    }
+
+    &:hover {
+      border-color: #99f6e4;
+      background: #f0fdfa;
+    }
+  }
+}
+
+@media (max-width: 960px) {
+  .holidays-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .holidays-page {
+    padding: 16px;
+  }
+
+  .holidays-page__header h1 {
+    font-size: 24px;
+  }
+
+  .holidays-day {
+    min-height: 46px;
+    border-radius: 10px;
+
+    span {
+      top: 6px;
+      left: 7px;
+      font-size: 12px;
+    }
+  }
+}

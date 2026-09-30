@@ -6,6 +6,10 @@ import React, {
 import axios from "axios";
 
 import {
+  ATTENDANCE_API,
+  EMPLOYEE_API,
+} from "../../api";
+import {
   deleteStorageFiles,
   formatFileSize,
   getStoragePathFromPublicUrl,
@@ -14,12 +18,6 @@ import {
 } from "../../services/cleanupDrive";
 
 import "./CleanupDrive.scss";
-
-const ATTENDANCE_API =
-  "https://attendance-backend-hs75.onrender.com/api/attendance";
-
-const EMPLOYEE_API =
-  "https://attendance-backend-hs75.onrender.com/api/employees";
 
 const collectUsedPaths = (attendance, employees) => {
   const used = new Set();

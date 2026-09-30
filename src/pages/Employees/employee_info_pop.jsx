@@ -15,12 +15,10 @@ import {
   IconButton,
 } from "@mui/material";
 
-// ==========================================
-// API URL
-// ==========================================
-
-const API_URL =
-  "https://attendance-backend-hs75.onrender.com/api/employees";
+import {
+  EMPLOYEES_API,
+  employeeByIdApi,
+} from "../../api";
 
 // ==========================================
 // EMPTY FORM
@@ -333,7 +331,7 @@ function EmployeeInfoPop({
 
           response =
             await axios.put(
-              `${API_URL}/${employeeId}`,
+              employeeByIdApi(employeeId),
               requestData
             );
 
@@ -347,7 +345,7 @@ function EmployeeInfoPop({
 
           response =
             await axios.post(
-              API_URL,
+              EMPLOYEES_API,
               requestData
             );
 

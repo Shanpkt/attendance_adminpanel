@@ -38,22 +38,21 @@ import {
   deleteProfilePic,
   uploadProfilePic,
 } from "../../services/uploadProfilePic";
-import { isPunchAfterTime } from "../../utils/attendanceSettings";
+import {
+  isPunchAfterTime,
+  isPunchBeforeTime,
+} from "../../utils/attendanceSettings";
+
+import {
+  ATTENDANCE_API,
+  EMPLOYEE_API,
+  LEAVE_API,
+  employeeByIdApi,
+  leaveByIdApi,
+  leavesByEmployeeApi,
+} from "../../api";
 
 import "./Profile.scss";
-
-// ==================================================
-// API
-// ==================================================
-
-const EMPLOYEE_API =
-  "https://attendance-backend-hs75.onrender.com/api/employees";
-
-const ATTENDANCE_API =
-  "https://attendance-backend-hs75.onrender.com/api/attendance";
-
-const LEAVE_API =
-  "https://attendance-backend-hs75.onrender.com/api/leaves";
 
 // ==================================================
 // PROFILE
@@ -257,7 +256,7 @@ function Profile() {
         );
 
         const response = await axios.get(
-          `${LEAVE_API}/employee/${cleanMobileNumber}`
+          leavesByEmployeeApi(cleanMobileNumber)
         );
 
         console.log(
@@ -511,7 +510,7 @@ function Profile() {
 
       const response =
         await axios.put(
-          `${EMPLOYEE_API}/${employeeId}`,
+          employeeByIdApi(employeeId),
           requestData
         );
 
@@ -975,7 +974,7 @@ function Profile() {
 
         const response =
           await axios.delete(
-            `${LEAVE_API}/${leaveId}`
+            leaveByIdApi(leaveId)
           );
 
         setScheduledLeaves(
@@ -2918,10 +2917,8 @@ function AttendanceRecords({
                 );
 
               const isHalfDayPunch =
-                isPunchAfterTime(
-                  getPunchInTimestamp(
-                    record
-                  ),
+                isPunchBeforeTime(
+                  punchOut.timestamp,
                   halfDayTime
                 );
 

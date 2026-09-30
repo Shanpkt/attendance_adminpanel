@@ -6,9 +6,9 @@ import {
 
 import axios from "axios";
 
+import { SETTINGS_API } from "../api";
 import {
   DEFAULT_ATTENDANCE_SETTINGS,
-  SETTINGS_API,
   normalizeSettings,
   toSettingsPayload,
 } from "../utils/attendanceSettings";

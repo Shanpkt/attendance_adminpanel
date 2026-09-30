@@ -29,20 +29,16 @@ import {
 import "./Attendance.scss";
 
 import useAttendanceSettings from "../../hooks/useAttendanceSettings";
-import { isPunchAfterTime } from "../../utils/attendanceSettings";
-
-// ======================================================
-// API URLS
-// ======================================================
-
-const ATTENDANCE_API =
-  "https://attendance-backend-hs75.onrender.com/api/attendance";
-
-const EMPLOYEES_API =
-  "https://attendance-backend-hs75.onrender.com/api/employees";
-
-const LEAVES_API =
-  "https://attendance-backend-hs75.onrender.com/api/leaves";
+import {
+  ATTENDANCE_API,
+  EMPLOYEES_API,
+  HOLIDAYS_API,
+  LEAVES_API,
+} from "../../api";
+import {
+  isPunchAfterTime,
+  isPunchBeforeTime,
+} from "../../utils/attendanceSettings";
 
 // ======================================================
 // FORMAT DATE
@@ -212,6 +208,8 @@ function Attendance() {
   const [attendanceData, setAttendanceData] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [leaveData, setLeaveData] = useState([]);
+  const [selectedHoliday, setSelectedHoliday] =
+    useState(null);
 
   // ====================================================
   // LOADING
@@ -350,6 +348,39 @@ function Attendance() {
     fetchLeaves();
   }, [selectedDate]);
 
+  // ====================================================
+  // FETCH HOLIDAY FOR SELECTED DATE
+  // ====================================================
+
+  useEffect(() => {
+    const fetchHoliday = async () => {
+      try {
+        const response = await axios.get(
+          HOLIDAYS_API,
+          {
+            params: {
+              date: selectedDate,
+            },
+          }
+        );
+
+        const holidays =
+          response.data?.data || [];
+
+        setSelectedHoliday(holidays[0] || null);
+      } catch (err) {
+        console.error(
+          "Holiday fetch error:",
+          err
+        );
+
+        setSelectedHoliday(null);
+      }
+    };
+
+    fetchHoliday();
+  }, [selectedDate]);
+
   const isLatePunchTime = (timestamp) => {
     return isPunchAfterTime(
       timestamp,
@@ -358,7 +389,7 @@ function Attendance() {
   };
 
   const isHalfDayPunchTime = (timestamp) => {
-    return isPunchAfterTime(
+    return isPunchBeforeTime(
       timestamp,
       halfDayTime
     );
@@ -489,7 +520,7 @@ function Attendance() {
     filteredAttendance
       .filter((attendance) =>
         isHalfDayPunchTime(
-          getPunchInTimestamp(attendance)
+          getPunchOutTimestamp(attendance)
         )
       )
       .map((attendance) =>
@@ -542,12 +573,13 @@ function Attendance() {
 
   const lateAttendanceList =
     filteredAttendance.filter((attendance) => {
-      const timestamp =
-        getPunchInTimestamp(attendance);
-
       return (
-        isLatePunchTime(timestamp) &&
-        !isHalfDayPunchTime(timestamp)
+        isLatePunchTime(
+          getPunchInTimestamp(attendance)
+        ) &&
+        !isHalfDayPunchTime(
+          getPunchOutTimestamp(attendance)
+        )
       );
     });
 
@@ -570,25 +602,28 @@ function Attendance() {
   // ABSENT EMPLOYEES
   // ====================================================
 
-  const absentEmployees =
-    employees.filter((employee) => {
-      const mobileNumber = String(
-        employee.mobileNumber
-      );
-
-      const isPresent =
-        presentMobileNumbers.has(
-          mobileNumber
+  const absentEmployees = selectedHoliday
+    ? []
+    : employees.filter((employee) => {
+        const mobileNumber = String(
+          employee.mobileNumber
         );
 
-      const isLeave =
-        isEmployeeOnLeave(employee);
+        const isPresent =
+          presentMobileNumbers.has(
+            mobileNumber
+          );
 
-      const isHalfDay =
-        isEmployeeHalfDay(employee);
+        const isLeave =
+          isEmployeeOnLeave(employee);
 
-      return !isPresent && !isLeave && !isHalfDay;
-    });
+        const isHalfDay =
+          isEmployeeHalfDay(employee);
+
+        return (
+          !isPresent && !isLeave && !isHalfDay
+        );
+      });
 
   // ====================================================
   // OPEN DATE PICKER
@@ -810,7 +845,7 @@ function Attendance() {
 
     const isHalfDayPunch =
       isHalfDayPunchTime(
-        getPunchInTimestamp(attendance)
+        getPunchOutTimestamp(attendance)
       );
 
     const isLate =
@@ -1127,6 +1162,16 @@ function Attendance() {
         </div>
 
       </div>
+
+      {selectedHoliday && (
+        <div className="attendance-holiday-banner">
+          Holiday
+          {selectedHoliday.name
+            ? `: ${selectedHoliday.name}`
+            : ""}
+          . Absent is not counted for this date.
+        </div>
+      )}
 
       {/* ==================================================
           ACTIONS

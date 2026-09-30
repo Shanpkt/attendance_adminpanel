@@ -39,6 +39,17 @@
   gap: 10px;
 }
 
+.dashboard-holiday-banner {
+  margin: -8px 0 18px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #047857;
+  font-size: 13px;
+  font-weight: 650;
+}
+
 /* ==========================================
    REPORT BUTTON
 ========================================== */
@@ -180,6 +191,8 @@
 }
 
 .stat-card--halfday {
+  cursor: pointer;
+
   .stat-card__icon {
     background: #ecfeff;
     color: #0891b2;
@@ -191,6 +204,8 @@
 }
 
 .stat-card--late {
+  cursor: pointer;
+
   .stat-card__icon {
     background: #fefce8;
     color: #ca8a04;
@@ -247,7 +262,9 @@
 
 @media (hover: hover) {
   .stat-card--absent:hover .absent-popup,
-  .stat-card--leave:hover .absent-popup {
+  .stat-card--leave:hover .absent-popup,
+  .stat-card--halfday:hover .absent-popup,
+  .stat-card--late:hover .absent-popup {
     opacity: 1;
 
     visibility: visible;
@@ -460,6 +477,56 @@
   margin-top: 3px;
 
   color: #ea580c !important;
+
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.halfday-popup .absent-popup__header span {
+  background: #ecfeff;
+  color: #0891b2;
+}
+
+.halfday-popup .absent-popup__avatar {
+  background:
+    linear-gradient(
+      135deg,
+      #0891b2,
+      #22d3ee
+    );
+}
+
+.halfday-popup__meta {
+  display: block;
+
+  margin-top: 3px;
+
+  color: #0891b2 !important;
+
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.late-popup .absent-popup__header span {
+  background: #fefce8;
+  color: #ca8a04;
+}
+
+.late-popup .absent-popup__avatar {
+  background:
+    linear-gradient(
+      135deg,
+      #ca8a04,
+      #facc15
+    );
+}
+
+.late-popup__meta {
+  display: block;
+
+  margin-top: 3px;
+
+  color: #ca8a04 !important;
 
   font-size: 11px;
   font-weight: 600;
