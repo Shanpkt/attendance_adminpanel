@@ -23,7 +23,7 @@ export const leavesByEmployeeApi = (mobileNumber) =>
 export const holidayByIdApi = (holidayId) =>
   `${HOLIDAYS_API}/${holidayId}`;
 
-export default {
+const api = {
   API_BASE_URL,
   ATTENDANCE_API,
   EMPLOYEES_API,
@@ -37,3 +37,5 @@ export default {
   leavesByEmployeeApi,
   holidayByIdApi,
 };
+
+export default api;
