@@ -89,6 +89,26 @@ function Sidebar({ isOpen, onClose, onLogout }) {
         </div>
 
         {/* ================================
+            LOGOUT
+        ================================= */}
+
+        <div className="sidebar__top">
+          <button
+            className="sidebar__logout"
+            type="button"
+            onClick={onLogout}
+          >
+            <span className="sidebar__item-icon">
+              ⇥
+            </span>
+
+            <span>
+              Logout
+            </span>
+          </button>
+        </div>
+
+        {/* ================================
             NAVIGATION
         ================================= */}
 
@@ -146,28 +166,6 @@ function Sidebar({ isOpen, onClose, onLogout }) {
           ))}
 
         </nav>
-
-        {/* ================================
-            LOGOUT
-        ================================= */}
-
-        <div className="sidebar__bottom">
-
-          <button
-            className="sidebar__logout"
-            type="button"
-            onClick={onLogout}
-          >
-            <span className="sidebar__item-icon">
-              ⇥
-            </span>
-
-            <span>
-              Logout
-            </span>
-          </button>
-
-        </div>
 
       </aside>
     </>
