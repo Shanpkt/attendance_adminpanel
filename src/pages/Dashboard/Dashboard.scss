@@ -633,6 +633,68 @@
   gap: 10px;
 }
 
+.photo-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+
+  padding: 12px 22px;
+
+  border-bottom: 1px solid #edf0f4;
+  background: #fafbfc;
+}
+
+.photo-toggle__label {
+  color: #374151;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.photo-toggle__radios {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px;
+  border-radius: 999px;
+  background: #eef2f7;
+  border: 1px solid #e5e7eb;
+}
+
+.photo-toggle__option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 72px;
+  min-height: 32px;
+  padding: 0 14px;
+
+  border-radius: 999px;
+
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+
+  input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  &.is-active {
+    background: #0f766e;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(15, 118, 110, 0.22);
+  }
+}
+
 /* ==========================================
    REFRESH BUTTON
 ========================================== */
@@ -898,11 +960,6 @@
    PUNCH TIME
 ========================================== */
 
-.attendance-punch__hit {
-  display: inline-flex;
-  width: fit-content;
-}
-
 .attendance-punch {
   display: flex;
   flex-direction: column;
@@ -911,12 +968,11 @@
   justify-content: center;
 
   width: fit-content;
+  min-width: 96px;
 
-  min-width: 85px;
+  padding: 8px 10px;
 
-  padding: 7px 10px;
-
-  border-radius: 7px;
+  border-radius: 8px;
 
   box-sizing: border-box;
 
@@ -935,6 +991,17 @@
     font-weight: 700;
     white-space: nowrap;
   }
+}
+
+.attendance-punch__photo {
+  display: block;
+  width: 110px;
+  height: 110px;
+  margin-top: 8px;
+  object-fit: cover;
+  border-radius: 10px;
+  background: #f3f4f6;
+  border: 1px solid rgba(15, 23, 42, 0.08);
 }
 
 /* ==========================================
@@ -967,60 +1034,6 @@
   strong {
     color: #1e40af;
   }
-}
-
-.attendance-punch--has-photo {
-  cursor: pointer;
-  outline: 1px solid transparent;
-  transition: outline-color 0.2s ease, box-shadow 0.2s ease;
-
-  &:hover {
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
-  }
-}
-
-.attendance-punch--in.attendance-punch--has-photo:hover {
-  outline-color: #86efac;
-}
-
-.attendance-punch--out.attendance-punch--has-photo:hover {
-  outline-color: #93c5fd;
-}
-
-.selfie-tooltip {
-  padding: 8px !important;
-  max-width: none !important;
-  background: #ffffff !important;
-  color: #111827 !important;
-  border: 1px solid #e5e7eb !important;
-  border-radius: 12px !important;
-  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18) !important;
-}
-
-.selfie-tooltip__arrow {
-  color: #ffffff !important;
-}
-
-.selfie-popup {
-  width: 220px;
-}
-
-.selfie-popup__title {
-  margin: 0 0 8px;
-  color: #4b5563;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  text-transform: uppercase;
-}
-
-.selfie-popup img {
-  display: block;
-  width: 100%;
-  height: 220px;
-  object-fit: cover;
-  border-radius: 8px;
-  background: #f3f4f6;
 }
 
 /* ==========================================
@@ -1315,9 +1328,13 @@
     text-transform: uppercase;
   }
 
-  .attendance-list__row .attendance-punch__hit,
   .attendance-list__row .attendance-punch {
     width: 100%;
+  }
+
+  .attendance-punch__photo {
+    width: 96px;
+    height: 96px;
   }
 
   .attendance-status {

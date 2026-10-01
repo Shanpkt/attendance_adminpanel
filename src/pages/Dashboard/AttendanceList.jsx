@@ -1,8 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Chip from "@mui/material/Chip";
-import Tooltip from "@mui/material/Tooltip";
 import EmployeePhoto from "../../components/EmployeePhoto";
 import { formatShortTime } from "./useDashboardData";
 
@@ -30,7 +29,8 @@ const getStatusClass = (status) => {
 const renderPunchCell = (
   punch,
   type,
-  timeLabel
+  timeLabel,
+  showPhotos
 ) => {
   const selfieUrl = getSelfieUrl(punch);
 
@@ -42,10 +42,10 @@ const renderPunchCell = (
   const punchLabel =
     type === "in" ? "Punch In" : "Punch Out";
 
-  const cell = (
+  return (
     <Box
       className={`${punchClass}${
-        selfieUrl
+        showPhotos && selfieUrl
           ? " attendance-punch--has-photo"
           : ""
       }`}
@@ -54,55 +54,15 @@ const renderPunchCell = (
         {punchLabel}
       </span>
       <strong>{timeLabel}</strong>
+
+      {showPhotos && selfieUrl ? (
+        <img
+          className="attendance-punch__photo"
+          src={selfieUrl}
+          alt={`${punchLabel} selfie`}
+        />
+      ) : null}
     </Box>
-  );
-
-  if (!selfieUrl) {
-    return cell;
-  }
-
-  return (
-    <Tooltip
-      arrow
-      placement="top"
-      enterDelay={120}
-      leaveDelay={80}
-      slotProps={{
-        tooltip: {
-          className: "selfie-tooltip",
-          sx: {
-            bgcolor: "#ffffff",
-            color: "#111827",
-            padding: "8px",
-            maxWidth: "none",
-            border: "1px solid #e5e7eb",
-            borderRadius: "12px",
-            boxShadow:
-              "0 16px 40px rgba(15, 23, 42, 0.18)",
-          },
-        },
-        arrow: {
-          sx: {
-            color: "#ffffff",
-          },
-        },
-      }}
-      title={
-        <div className="selfie-popup">
-          <p className="selfie-popup__title">
-            {punchLabel} photo
-          </p>
-          <img
-            src={selfieUrl}
-            alt={`${punchLabel} selfie`}
-          />
-        </div>
-      }
-    >
-      <span className="attendance-punch__hit">
-        {cell}
-      </span>
-    </Tooltip>
   );
 };
 
@@ -116,6 +76,9 @@ function AttendanceList({
   onDownloadPdf,
   getEmployeeName,
 }) {
+  const [showPhotos, setShowPhotos] =
+    useState(true);
+
   const getEmployeePhoto = (mobileNumber) => {
     const employee = employees.find(
       (emp) =>
@@ -161,6 +124,60 @@ function AttendanceList({
             </button>
           </div>
         </div>
+
+        {!loading &&
+          !error &&
+          attendanceList.length > 0 && (
+            <div className="photo-toggle">
+              <span className="photo-toggle__label">
+                Show punch photos
+              </span>
+
+              <div
+                className="photo-toggle__radios"
+                role="radiogroup"
+                aria-label="Show punch photos"
+              >
+                <label
+                  className={`photo-toggle__option${
+                    showPhotos
+                      ? " is-active"
+                      : ""
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="show-punch-photos"
+                    value="show"
+                    checked={showPhotos}
+                    onChange={() =>
+                      setShowPhotos(true)
+                    }
+                  />
+                  Show
+                </label>
+
+                <label
+                  className={`photo-toggle__option${
+                    !showPhotos
+                      ? " is-active"
+                      : ""
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="show-punch-photos"
+                    value="hide"
+                    checked={!showPhotos}
+                    onChange={() =>
+                      setShowPhotos(false)
+                    }
+                  />
+                  Hide
+                </label>
+              </div>
+            </div>
+          )}
 
         {loading && (
           <div className="attendance-placeholder">
@@ -255,13 +272,15 @@ function AttendanceList({
                       {renderPunchCell(
                         punchIn,
                         "in",
-                        punchInTime
+                        punchInTime,
+                        showPhotos
                       )}
 
                       {renderPunchCell(
                         punchOut,
                         "out",
-                        punchOutTime
+                        punchOutTime,
+                        showPhotos
                       )}
 
                       <Chip
