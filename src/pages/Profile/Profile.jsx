@@ -675,6 +675,58 @@ function Profile() {
   const presentDays =
     presentDateKeys.size;
 
+  const {
+    lateComingTime,
+    halfDayTime,
+  } = useAttendanceSettings();
+
+  // ==================================================
+  // LATE DAYS
+  // ==================================================
+
+  const lateDays =
+    useMemo(() => {
+      const lateDateKeys = new Set();
+
+      selectedMonthAttendance.forEach(
+        (record) => {
+          const punchInTimestamp =
+            getPunchInTimestamp(record);
+
+          const isHalfDayPunch =
+            isHalfDayByPunchTimes({
+              punchInTimestamp,
+              punchOutTimestamp:
+                record?.punchOut?.timestamp,
+              halfDayTime,
+            });
+
+          const isLate =
+            isPunchAfterTime(
+              punchInTimestamp,
+              lateComingTime
+            ) && !isHalfDayPunch;
+
+          if (!isLate) {
+            return;
+          }
+
+          const dateKey =
+            getRecordDateKey(record);
+
+          if (dateKey) {
+            lateDateKeys.add(dateKey);
+          }
+        }
+      );
+
+      return lateDateKeys.size;
+    }, [
+      selectedMonthAttendance,
+      lateComingTime,
+      halfDayTime,
+    ]);
+
   // ==================================================
   // WORKING DAYS
   // ==================================================
@@ -1702,6 +1754,10 @@ function Profile() {
 
           leaveDays={
             leaveDays
+          }
+
+          lateDays={
+            lateDays
           }
 
           workingDays={
@@ -3235,6 +3291,7 @@ function SalaryCalculationModal({
   presentDays,
   absentDays,
   leaveDays,
+  lateDays = 0,
   workingDays,
   onClose,
 }) {
@@ -3243,8 +3300,14 @@ function SalaryCalculationModal({
       employee?.salary || ""
     );
 
+  const [lateFeePerDay, setLateFeePerDay] =
+    useState("");
+
   const salaryNumber =
     Number(monthlySalary) || 0;
+
+  const lateFeeNumber =
+    Number(lateFeePerDay) || 0;
 
   // ==================================================
   // SALARY CALCULATIONS
@@ -3264,11 +3327,15 @@ function SalaryCalculationModal({
   const absentDeduction =
     absentDays * perDaySalary;
 
+  const lateFeeTotal =
+    lateDays * lateFeeNumber;
+
   const finalSalary =
     Math.max(
       salaryNumber -
         leaveDeduction -
-        absentDeduction,
+        absentDeduction -
+        lateFeeTotal,
       0
     );
 
@@ -3698,6 +3765,18 @@ function SalaryCalculationModal({
 
             </div>
 
+            <div class="summary-box">
+
+              <span>
+                Late Days
+              </span>
+
+              <strong>
+                ${lateDays}
+              </strong>
+
+            </div>
+
           </div>
 
           <h2>
@@ -3783,6 +3862,31 @@ function SalaryCalculationModal({
 
                 <td class="deduction">
                   - ₹${absentDeduction.toFixed(
+                    2
+                  )}
+                </td>
+              </tr>
+
+              <tr>
+                <td>
+                  Late Fee / Day
+                </td>
+
+                <td>
+                  ₹${lateFeeNumber.toFixed(
+                    2
+                  )}
+                </td>
+              </tr>
+
+              <tr>
+                <td>
+                  Late Fee Total
+                  (${lateDays} days)
+                </td>
+
+                <td class="deduction">
+                  - ₹${lateFeeTotal.toFixed(
                     2
                   )}
                 </td>
@@ -3976,32 +4080,65 @@ function SalaryCalculationModal({
 
           </div>
 
-          {/* SALARY INPUT */}
+          {/* SALARY INPUTS */}
 
-          <div className="salary-input-field">
+          <div className="salary-input-grid">
 
-            <label>
-              Monthly Salary
-            </label>
+            <div className="salary-input-field">
 
-            <div className="salary-input-wrapper">
+              <label>
+                Monthly Salary
+              </label>
 
-              <IndianRupee size={17} />
+              <div className="salary-input-wrapper">
 
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="Enter monthly salary"
-                value={
-                  monthlySalary
-                }
-                onChange={(event) =>
-                  setMonthlySalary(
-                    event.target.value
-                  )
-                }
-              />
+                <IndianRupee size={17} />
+
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="Enter monthly salary"
+                  value={
+                    monthlySalary
+                  }
+                  onChange={(event) =>
+                    setMonthlySalary(
+                      event.target.value
+                    )
+                  }
+                />
+
+              </div>
+
+            </div>
+
+            <div className="salary-input-field">
+
+              <label>
+                Late Fee Per Day
+              </label>
+
+              <div className="salary-input-wrapper salary-input-wrapper--late">
+
+                <IndianRupee size={17} />
+
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="Enter late fee per day"
+                  value={
+                    lateFeePerDay
+                  }
+                  onChange={(event) =>
+                    setLateFeePerDay(
+                      event.target.value
+                    )
+                  }
+                />
+
+              </div>
 
             </div>
 
@@ -4061,6 +4198,18 @@ function SalaryCalculationModal({
 
                 <strong>
                   {absentDays}
+                </strong>
+
+              </div>
+
+              <div className="salary-stat salary-stat--late">
+
+                <span>
+                  Late
+                </span>
+
+                <strong>
+                  {lateDays}
                 </strong>
 
               </div>
@@ -4149,6 +4298,35 @@ function SalaryCalculationModal({
 
               </div>
 
+              <div>
+
+                <span>
+                  Late Fee / Day
+                </span>
+
+                <strong>
+                  ₹{lateFeeNumber.toFixed(
+                    2
+                  )}
+                </strong>
+
+              </div>
+
+              <div>
+
+                <span>
+                  Late Fee Total
+                  ({lateDays} days)
+                </span>
+
+                <strong className="deduction">
+                  - ₹{lateFeeTotal.toFixed(
+                    2
+                  )}
+                </strong>
+
+              </div>
+
             </div>
 
           </div>
@@ -4164,8 +4342,8 @@ function SalaryCalculationModal({
               </span>
 
               <small>
-                After attendance
-                deductions
+                After attendance and late
+                fee deductions
               </small>
 
             </div>
