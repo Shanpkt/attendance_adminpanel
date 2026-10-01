@@ -390,8 +390,9 @@ function Settings() {
             </h2>
 
             <p>
-              Punch out before this time is
-              marked as half day.
+              Punch in after this time, or punch
+              out before this time, is marked as
+              half day.
             </p>
 
             <label htmlFor="half-day-time">

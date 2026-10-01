@@ -37,7 +37,7 @@ import {
 } from "../../api";
 import {
   isPunchAfterTime,
-  isPunchBeforeTime,
+  isHalfDayByPunchTimes,
 } from "../../utils/attendanceSettings";
 
 // ======================================================
@@ -388,11 +388,14 @@ function Attendance() {
     );
   };
 
-  const isHalfDayPunchTime = (timestamp) => {
-    return isPunchBeforeTime(
-      timestamp,
-      halfDayTime
-    );
+  const isHalfDayAttendance = (attendance) => {
+    return isHalfDayByPunchTimes({
+      punchInTimestamp:
+        getPunchInTimestamp(attendance),
+      punchOutTimestamp:
+        getPunchOutTimestamp(attendance),
+      halfDayTime,
+    });
   };
 
   // ====================================================
@@ -519,9 +522,7 @@ function Attendance() {
   const halfDayPunchNumbers = new Set(
     filteredAttendance
       .filter((attendance) =>
-        isHalfDayPunchTime(
-          getPunchOutTimestamp(attendance)
-        )
+        isHalfDayAttendance(attendance)
       )
       .map((attendance) =>
         String(attendance.mobileNumber)
@@ -577,9 +578,7 @@ function Attendance() {
         isLatePunchTime(
           getPunchInTimestamp(attendance)
         ) &&
-        !isHalfDayPunchTime(
-          getPunchOutTimestamp(attendance)
-        )
+        !isHalfDayAttendance(attendance)
       );
     });
 
@@ -844,9 +843,7 @@ function Attendance() {
     );
 
     const isHalfDayPunch =
-      isHalfDayPunchTime(
-        getPunchOutTimestamp(attendance)
-      );
+      isHalfDayAttendance(attendance);
 
     const isLate =
       isLatePunchTime(

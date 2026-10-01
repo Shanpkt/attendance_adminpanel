@@ -347,6 +347,8 @@ function useDashboardStats({
   });
 
   const halfDayByPunchKeys = new Set();
+  const halfDayLateInKeys = new Set();
+  const halfDayEarlyOutKeys = new Set();
 
   attendanceList.forEach((attendance) => {
     const mobileNumber =
@@ -356,15 +358,33 @@ function useDashboardStats({
       return;
     }
 
-    const isHalfDayPunch = isPunchBeforeTime(
-      attendance?.punchOut?.timestamp,
+    const employeeKey = String(mobileNumber);
+    const punchInTimestamp =
+      attendance?.punchIn?.timestamp ||
+      attendance.timestamp ||
+      attendance.createdAt;
+    const punchOutTimestamp =
+      attendance?.punchOut?.timestamp;
+
+    const latePunchIn = isPunchAfterTime(
+      punchInTimestamp,
+      halfDayTime
+    );
+    const earlyPunchOut = isPunchBeforeTime(
+      punchOutTimestamp,
       halfDayTime
     );
 
-    if (isHalfDayPunch) {
-      halfDayByPunchKeys.add(
-        String(mobileNumber)
-      );
+    if (latePunchIn || earlyPunchOut) {
+      halfDayByPunchKeys.add(employeeKey);
+    }
+
+    if (latePunchIn) {
+      halfDayLateInKeys.add(employeeKey);
+    }
+
+    if (earlyPunchOut) {
+      halfDayEarlyOutKeys.add(employeeKey);
     }
   });
 
@@ -421,7 +441,11 @@ function useDashboardStats({
       reasons.push("Half Day Leave");
     }
 
-    if (halfDayByPunchKeys.has(key)) {
+    if (halfDayLateInKeys.has(key)) {
+      reasons.push("Late Punch In");
+    }
+
+    if (halfDayEarlyOutKeys.has(key)) {
       reasons.push("Early Punch Out");
     }
 

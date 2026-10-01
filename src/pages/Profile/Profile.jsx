@@ -40,7 +40,7 @@ import {
 } from "../../services/uploadProfilePic";
 import {
   isPunchAfterTime,
-  isPunchBeforeTime,
+  isHalfDayByPunchTimes,
 } from "../../utils/attendanceSettings";
 
 import {
@@ -2917,10 +2917,15 @@ function AttendanceRecords({
                 );
 
               const isHalfDayPunch =
-                isPunchBeforeTime(
-                  punchOut.timestamp,
-                  halfDayTime
-                );
+                isHalfDayByPunchTimes({
+                  punchInTimestamp:
+                    getPunchInTimestamp(
+                      record
+                    ),
+                  punchOutTimestamp:
+                    punchOut.timestamp,
+                  halfDayTime,
+                });
 
               const isLate =
                 isPunchAfterTime(

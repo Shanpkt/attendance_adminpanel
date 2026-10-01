@@ -105,6 +105,24 @@ export const isPunchBeforeTime = (
   return punchMinutes < timeToMinutes(time);
 };
 
+export const isHalfDayByPunchTimes = ({
+  punchInTimestamp,
+  punchOutTimestamp,
+  halfDayTime,
+}) => {
+  const latePunchIn = isPunchAfterTime(
+    punchInTimestamp,
+    halfDayTime
+  );
+
+  const earlyPunchOut = isPunchBeforeTime(
+    punchOutTimestamp,
+    halfDayTime
+  );
+
+  return latePunchIn || earlyPunchOut;
+};
+
 export const formatTimeLabel = (time) => {
   if (!time) {
     return "—";
