@@ -123,6 +123,90 @@ export const isHalfDayByPunchTimes = ({
   return latePunchIn || earlyPunchOut;
 };
 
+export const getRecordDayLimits = (
+  record,
+  fallbackSettings = DEFAULT_ATTENDANCE_SETTINGS
+) => {
+  return {
+    lateComingTime:
+      record?.limits?.lateComingTime ||
+      fallbackSettings.lateComingTime ||
+      DEFAULT_ATTENDANCE_SETTINGS.lateComingTime,
+    halfDayTime:
+      record?.limits?.halfDayTime ||
+      fallbackSettings.halfDayTime ||
+      DEFAULT_ATTENDANCE_SETTINGS.halfDayTime,
+  };
+};
+
+export const getPunchInTimestampFromRecord = (
+  record
+) => {
+  return (
+    record?.punchIn?.timestamp ||
+    record?.timestamp ||
+    record?.createdAt ||
+    null
+  );
+};
+
+export const getPunchOutTimestampFromRecord = (
+  record
+) => {
+  return record?.punchOut?.timestamp || null;
+};
+
+export const evaluateAttendanceRecord = (
+  record,
+  fallbackSettings = DEFAULT_ATTENDANCE_SETTINGS
+) => {
+  const limits = getRecordDayLimits(
+    record,
+    fallbackSettings
+  );
+
+  const punchInTimestamp =
+    getPunchInTimestampFromRecord(record);
+  const punchOutTimestamp =
+    getPunchOutTimestampFromRecord(record);
+
+  const hasSavedFlags =
+    record?.flags &&
+    (typeof record.flags.isLate === "boolean" ||
+      typeof record.flags.isHalfDay === "boolean");
+
+  if (hasSavedFlags) {
+    const isHalfDay = Boolean(
+      record.flags.isHalfDay
+    );
+    const isLate = Boolean(record.flags.isLate);
+
+    return {
+      limits,
+      isHalfDay,
+      isLate: isLate && !isHalfDay,
+    };
+  }
+
+  const isHalfDay = isHalfDayByPunchTimes({
+    punchInTimestamp,
+    punchOutTimestamp,
+    halfDayTime: limits.halfDayTime,
+  });
+
+  const isLate =
+    isPunchAfterTime(
+      punchInTimestamp,
+      limits.lateComingTime
+    ) && !isHalfDay;
+
+  return {
+    limits,
+    isHalfDay,
+    isLate,
+  };
+};
+
 export const formatTimeLabel = (time) => {
   if (!time) {
     return "—";

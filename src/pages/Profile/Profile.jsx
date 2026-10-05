@@ -39,8 +39,8 @@ import {
   uploadProfilePic,
 } from "../../services/uploadProfilePic";
 import {
-  isPunchAfterTime,
-  isHalfDayByPunchTimes,
+  evaluateAttendanceRecord,
+  formatTimeLabel,
 } from "../../utils/attendanceSettings";
 
 import {
@@ -690,22 +690,14 @@ function Profile() {
 
       selectedMonthAttendance.forEach(
         (record) => {
-          const punchInTimestamp =
-            getPunchInTimestamp(record);
-
-          const isHalfDayPunch =
-            isHalfDayByPunchTimes({
-              punchInTimestamp,
-              punchOutTimestamp:
-                record?.punchOut?.timestamp,
-              halfDayTime,
-            });
-
-          const isLate =
-            isPunchAfterTime(
-              punchInTimestamp,
-              lateComingTime
-            ) && !isHalfDayPunch;
+          const { isLate } =
+            evaluateAttendanceRecord(
+              record,
+              {
+                lateComingTime,
+                halfDayTime,
+              }
+            );
 
           if (!isLate) {
             return;
@@ -2972,25 +2964,28 @@ function AttendanceRecords({
                   punchOut.timestamp
                 );
 
+              const evaluation =
+                evaluateAttendanceRecord(
+                  record,
+                  {
+                    lateComingTime,
+                    halfDayTime,
+                  }
+                );
+
               const isHalfDayPunch =
-                isHalfDayByPunchTimes({
-                  punchInTimestamp:
-                    getPunchInTimestamp(
-                      record
-                    ),
-                  punchOutTimestamp:
-                    punchOut.timestamp,
-                  halfDayTime,
-                });
+                evaluation.isHalfDay;
 
               const isLate =
-                isPunchAfterTime(
-                  getPunchInTimestamp(
-                    record
-                  ),
-                  lateComingTime
-                ) &&
-                !isHalfDayPunch;
+                evaluation.isLate;
+
+              const dayLateLimit =
+                evaluation.limits
+                  .lateComingTime;
+
+              const dayHalfLimit =
+                evaluation.limits
+                  .halfDayTime;
 
               const isHalfDayLeave =
                 halfDayLeaveDates.has(
@@ -3048,12 +3043,24 @@ function AttendanceRecords({
                     {isLate && (
                       <span className="history-flag history-flag--late">
                         Late
+                        <small>
+                          limit{" "}
+                          {formatTimeLabel(
+                            dayLateLimit
+                          )}
+                        </small>
                       </span>
                     )}
 
                     {isHalfDay && (
                       <span className="history-flag history-flag--halfday">
                         Half Day
+                        <small>
+                          limit{" "}
+                          {formatTimeLabel(
+                            dayHalfLimit
+                          )}
+                        </small>
                       </span>
                     )}
 

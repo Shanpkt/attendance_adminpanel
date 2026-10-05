@@ -602,6 +602,9 @@
 .status--late {
   background: #fefce8;
   color: #a16207;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
 }
 
 .status--late .status-dot {
@@ -611,10 +614,21 @@
 .status--halfday {
   background: #ecfeff;
   color: #0e7490;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
 }
 
 .status--halfday .status-dot {
   background: #06b6d4;
+}
+
+.limit-note {
+  display: block;
+  margin-top: 1px;
+  font-size: 10px;
+  font-weight: 600;
+  opacity: 0.85;
 }
 
 .status--punched-in {

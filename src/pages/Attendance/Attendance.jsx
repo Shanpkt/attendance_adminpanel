@@ -36,8 +36,8 @@ import {
   LEAVES_API,
 } from "../../api";
 import {
-  isPunchAfterTime,
-  isHalfDayByPunchTimes,
+  evaluateAttendanceRecord,
+  formatTimeLabel,
 } from "../../utils/attendanceSettings";
 
 // ======================================================
@@ -381,21 +381,24 @@ function Attendance() {
     fetchHoliday();
   }, [selectedDate]);
 
-  const isLatePunchTime = (timestamp) => {
-    return isPunchAfterTime(
-      timestamp,
-      lateComingTime
-    );
+  const isHalfDayAttendance = (attendance) => {
+    return evaluateAttendanceRecord(
+      attendance,
+      {
+        lateComingTime,
+        halfDayTime,
+      }
+    ).isHalfDay;
   };
 
-  const isHalfDayAttendance = (attendance) => {
-    return isHalfDayByPunchTimes({
-      punchInTimestamp:
-        getPunchInTimestamp(attendance),
-      punchOutTimestamp:
-        getPunchOutTimestamp(attendance),
-      halfDayTime,
-    });
+  const isLateAttendance = (attendance) => {
+    return evaluateAttendanceRecord(
+      attendance,
+      {
+        lateComingTime,
+        halfDayTime,
+      }
+    ).isLate;
   };
 
   // ====================================================
@@ -574,12 +577,7 @@ function Attendance() {
 
   const lateAttendanceList =
     filteredAttendance.filter((attendance) => {
-      return (
-        isLatePunchTime(
-          getPunchInTimestamp(attendance)
-        ) &&
-        !isHalfDayAttendance(attendance)
-      );
+      return isLateAttendance(attendance);
     });
 
   const lateMobileNumbers = new Set(
@@ -842,13 +840,20 @@ function Attendance() {
       getPunchOutTimestamp(attendance)
     );
 
-    const isHalfDayPunch =
-      isHalfDayAttendance(attendance);
+    const evaluation = evaluateAttendanceRecord(
+      attendance,
+      {
+        lateComingTime,
+        halfDayTime,
+      }
+    );
 
-    const isLate =
-      isLatePunchTime(
-        getPunchInTimestamp(attendance)
-      ) && !isHalfDayPunch;
+    const isHalfDayPunch = evaluation.isHalfDay;
+    const isLate = evaluation.isLate;
+    const dayLateLimit =
+      evaluation.limits.lateComingTime;
+    const dayHalfLimit =
+      evaluation.limits.halfDayTime;
 
     const isHalfDay =
       isEmployeeHalfDay(employee) ||
@@ -913,6 +918,9 @@ function Attendance() {
             <span className="status status--late">
               <span className="status-dot" />
               Late
+              <small className="limit-note">
+                limit {formatTimeLabel(dayLateLimit)}
+              </small>
             </span>
           ) : (
             <span className="empty-flag">—</span>
@@ -924,6 +932,9 @@ function Attendance() {
             <span className="status status--halfday">
               <span className="status-dot" />
               Half Day
+              <small className="limit-note">
+                limit {formatTimeLabel(dayHalfLimit)}
+              </small>
             </span>
           ) : (
             <span className="empty-flag">—</span>

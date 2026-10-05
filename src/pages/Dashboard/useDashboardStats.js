@@ -1,6 +1,7 @@
 import {
   isPunchAfterTime,
   isPunchBeforeTime,
+  evaluateAttendanceRecord,
 } from "../../utils/attendanceSettings";
 import { formatShortTime } from "./useDashboardData";
 
@@ -349,6 +350,13 @@ function useDashboardStats({
   const halfDayByPunchKeys = new Set();
   const halfDayLateInKeys = new Set();
   const halfDayEarlyOutKeys = new Set();
+  const lateEmployeeKeys = new Set();
+  const latePunchByEmployee = new Map();
+
+  const settingsFallback = {
+    lateComingTime,
+    halfDayTime,
+  };
 
   attendanceList.forEach((attendance) => {
     const mobileNumber =
@@ -366,16 +374,25 @@ function useDashboardStats({
     const punchOutTimestamp =
       attendance?.punchOut?.timestamp;
 
+    const {
+      limits,
+      isHalfDay,
+      isLate,
+    } = evaluateAttendanceRecord(
+      attendance,
+      settingsFallback
+    );
+
     const latePunchIn = isPunchAfterTime(
       punchInTimestamp,
-      halfDayTime
+      limits.halfDayTime
     );
     const earlyPunchOut = isPunchBeforeTime(
       punchOutTimestamp,
-      halfDayTime
+      limits.halfDayTime
     );
 
-    if (latePunchIn || earlyPunchOut) {
+    if (isHalfDay) {
       halfDayByPunchKeys.add(employeeKey);
     }
 
@@ -386,30 +403,19 @@ function useDashboardStats({
     if (earlyPunchOut) {
       halfDayEarlyOutKeys.add(employeeKey);
     }
-  });
 
-  const lateEmployeeKeys = new Set();
-  const latePunchByEmployee = new Map();
-
-  earliestPunchByEmployee.forEach(
-    (punchInDate, employeeKey) => {
-      const isLate = isPunchAfterTime(
-        punchInDate,
-        lateComingTime
+    if (isLate) {
+      lateEmployeeKeys.add(employeeKey);
+      latePunchByEmployee.set(
+        employeeKey,
+        punchInTimestamp
+          ? new Date(punchInTimestamp)
+          : earliestPunchByEmployee.get(
+              employeeKey
+            )
       );
-
-      if (
-        isLate &&
-        !halfDayByPunchKeys.has(employeeKey)
-      ) {
-        lateEmployeeKeys.add(employeeKey);
-        latePunchByEmployee.set(
-          employeeKey,
-          punchInDate
-        );
-      }
     }
-  );
+  });
 
   const lateCount = lateEmployeeKeys.size;
 
