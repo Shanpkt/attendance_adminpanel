@@ -29,6 +29,35 @@
   font-weight: 650;
 }
 
+.attendance-limits-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+
+  margin: -6px 0 16px;
+  padding: 12px 14px;
+
+  border-radius: 10px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #9a3412;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  strong {
+    font-weight: 750;
+  }
+}
+
+.attendance-limits-banner__source {
+  margin-left: auto;
+  color: #c2410c;
+  font-size: 12px;
+  font-weight: 650;
+}
+
 /* ==========================================
    TITLE
 ========================================== */

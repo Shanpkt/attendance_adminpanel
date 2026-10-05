@@ -539,6 +539,37 @@ function Attendance() {
     );
   };
 
+  const halfDayPunchAttendanceList =
+    filteredAttendance.filter((attendance) =>
+      isHalfDayAttendance(attendance)
+    );
+
+  // Day limits from attendance response (first record that has saved limits)
+  const dayLimitsFromResponse = (() => {
+    for (const attendance of filteredAttendance) {
+      if (
+        attendance?.limits?.lateComingTime ||
+        attendance?.limits?.halfDayTime
+      ) {
+        return {
+          lateComingTime:
+            attendance.limits.lateComingTime ||
+            lateComingTime,
+          halfDayTime:
+            attendance.limits.halfDayTime ||
+            halfDayTime,
+          fromRecord: true,
+        };
+      }
+    }
+
+    return {
+      lateComingTime,
+      halfDayTime,
+      fromRecord: false,
+    };
+  })();
+
   // ====================================================
   // PRESENT EMPLOYEES
   // ====================================================
@@ -562,6 +593,13 @@ function Attendance() {
   // ====================================================
   // HALF DAY EMPLOYEES
   // ====================================================
+
+  const halfDayLeaveOnlyEmployees =
+    employees.filter(
+      (employee) =>
+        isEmployeeHalfDay(employee) &&
+        !isHalfDayByPunch(employee.mobileNumber)
+    );
 
   const halfDayEmployees =
     employees.filter((employee) =>
@@ -1180,6 +1218,33 @@ function Attendance() {
           . Absent is not counted for this date.
         </div>
       )}
+
+      {!selectedHoliday &&
+        filteredAttendance.length > 0 && (
+          <div className="attendance-limits-banner">
+            <span>
+              Late limit:{" "}
+              <strong>
+                {formatTimeLabel(
+                  dayLimitsFromResponse.lateComingTime
+                )}
+              </strong>
+            </span>
+            <span>
+              Half day limit:{" "}
+              <strong>
+                {formatTimeLabel(
+                  dayLimitsFromResponse.halfDayTime
+                )}
+              </strong>
+            </span>
+            <span className="attendance-limits-banner__source">
+              {dayLimitsFromResponse.fromRecord
+                ? "From attendance records"
+                : "From current settings"}
+            </span>
+          </div>
+        )}
 
       {/* ==================================================
           ACTIONS
@@ -1958,7 +2023,11 @@ function Attendance() {
 
                   <p>
                     No employees punched in after
-                    10:00 AM on{" "}
+                    the late limit (
+                    {formatTimeLabel(
+                      dayLimitsFromResponse.lateComingTime
+                    )}
+                    ) on{" "}
                     {formatDate(selectedDate)}.
                   </p>
 
@@ -1975,8 +2044,17 @@ function Attendance() {
           !error &&
           selectedStatus === "halfday" && (
             <>
-              {halfDayEmployees.map(
-                renderHalfDayEmployeeRow
+              {halfDayPunchAttendanceList.map(
+                renderPresentRow
+              )}
+
+              {halfDayLeaveOnlyEmployees.map(
+                (employee, index) =>
+                  renderHalfDayEmployeeRow(
+                    employee,
+                    index +
+                      halfDayPunchAttendanceList.length
+                  )
               )}
 
               {halfDayEmployees.length === 0 && (
@@ -1991,9 +2069,14 @@ function Attendance() {
                   </h3>
 
                   <p>
-                    No half day leave scheduled
+                    No half day punches or leave
                     for{" "}
-                    {formatDate(selectedDate)}.
+                    {formatDate(selectedDate)}
+                    {" "}(limit{" "}
+                    {formatTimeLabel(
+                      dayLimitsFromResponse.halfDayTime
+                    )}
+                    ).
                   </p>
 
                 </div>

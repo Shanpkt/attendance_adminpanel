@@ -160,6 +160,11 @@ export const evaluateAttendanceRecord = (
   record,
   fallbackSettings = DEFAULT_ATTENDANCE_SETTINGS
 ) => {
+  const hasSavedLimits = Boolean(
+    record?.limits?.lateComingTime ||
+      record?.limits?.halfDayTime
+  );
+
   const limits = getRecordDayLimits(
     record,
     fallbackSettings
@@ -169,6 +174,28 @@ export const evaluateAttendanceRecord = (
     getPunchInTimestampFromRecord(record);
   const punchOutTimestamp =
     getPunchOutTimestampFromRecord(record);
+
+  // Prefer computing from the day's saved limits in response data
+  if (hasSavedLimits) {
+    const isHalfDay = isHalfDayByPunchTimes({
+      punchInTimestamp,
+      punchOutTimestamp,
+      halfDayTime: limits.halfDayTime,
+    });
+
+    const isLate =
+      isPunchAfterTime(
+        punchInTimestamp,
+        limits.lateComingTime
+      ) && !isHalfDay;
+
+    return {
+      limits,
+      isHalfDay,
+      isLate,
+      source: "record-limits",
+    };
+  }
 
   const hasSavedFlags =
     record?.flags &&
@@ -185,6 +212,7 @@ export const evaluateAttendanceRecord = (
       limits,
       isHalfDay,
       isLate: isLate && !isHalfDay,
+      source: "record-flags",
     };
   }
 
@@ -204,6 +232,7 @@ export const evaluateAttendanceRecord = (
     limits,
     isHalfDay,
     isLate,
+    source: "fallback-settings",
   };
 };
 

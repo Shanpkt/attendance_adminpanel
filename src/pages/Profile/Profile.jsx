@@ -719,6 +719,41 @@ function Profile() {
       halfDayTime,
     ]);
 
+  const halfDayPunchDays =
+    useMemo(() => {
+      const halfDayDateKeys = new Set();
+
+      selectedMonthAttendance.forEach(
+        (record) => {
+          const { isHalfDay } =
+            evaluateAttendanceRecord(
+              record,
+              {
+                lateComingTime,
+                halfDayTime,
+              }
+            );
+
+          if (!isHalfDay) {
+            return;
+          }
+
+          const dateKey =
+            getRecordDateKey(record);
+
+          if (dateKey) {
+            halfDayDateKeys.add(dateKey);
+          }
+        }
+      );
+
+      return halfDayDateKeys.size;
+    }, [
+      selectedMonthAttendance,
+      lateComingTime,
+      halfDayTime,
+    ]);
+
   // ==================================================
   // WORKING DAYS
   // ==================================================
@@ -1644,6 +1679,14 @@ function Profile() {
           leaveDays
         }
 
+        lateDays={
+          lateDays
+        }
+
+        halfDayPunchDays={
+          halfDayPunchDays
+        }
+
         punchCount={
           selectedMonthAttendance.length
         }
@@ -1682,6 +1725,14 @@ function Profile() {
 
         halfDayLeaveDates={
           halfDayLeaveDates
+        }
+
+        lateComingTime={
+          lateComingTime
+        }
+
+        halfDayTime={
+          halfDayTime
         }
       />
 
@@ -2599,6 +2650,8 @@ function AttendanceSummary({
   presentDays,
   absentDays,
   leaveDays,
+  lateDays = 0,
+  halfDayPunchDays = 0,
   punchCount,
   workingDays,
   onPresentClick,
@@ -2625,6 +2678,22 @@ function AttendanceSummary({
       title: "Leave Days",
       value: leaveDays,
       type: "leave",
+      icon: Clock3,
+      clickable: false,
+    },
+
+    {
+      title: "Late Days",
+      value: lateDays,
+      type: "late",
+      icon: Clock3,
+      clickable: false,
+    },
+
+    {
+      title: "Half Day Punches",
+      value: halfDayPunchDays,
+      type: "halfday",
       icon: Clock3,
       clickable: false,
     },
@@ -2857,11 +2926,58 @@ function AttendanceRecords({
   selectedMonth,
   loading,
   halfDayLeaveDates = new Set(),
+  lateComingTime,
+  halfDayTime,
 }) {
-  const {
-    lateComingTime,
-    halfDayTime,
-  } = useAttendanceSettings();
+  const dayLimitsFromResponse = (() => {
+    for (const record of attendance) {
+      if (
+        record?.limits?.lateComingTime ||
+        record?.limits?.halfDayTime
+      ) {
+        return {
+          lateComingTime:
+            record.limits.lateComingTime ||
+            lateComingTime,
+          halfDayTime:
+            record.limits.halfDayTime ||
+            halfDayTime,
+          fromRecord: true,
+        };
+      }
+    }
+
+    return {
+      lateComingTime,
+      halfDayTime,
+      fromRecord: false,
+    };
+  })();
+
+  const lateCount = attendance.filter(
+    (record) =>
+      evaluateAttendanceRecord(record, {
+        lateComingTime,
+        halfDayTime,
+      }).isLate
+  ).length;
+
+  const halfDayCount = attendance.filter(
+    (record) => {
+      const evaluation =
+        evaluateAttendanceRecord(record, {
+          lateComingTime,
+          halfDayTime,
+        });
+
+      return (
+        evaluation.isHalfDay ||
+        halfDayLeaveDates.has(
+          getRecordDateKey(record)
+        )
+      );
+    }
+  ).length;
 
   return (
     <section className="attendance-records">
@@ -2890,6 +3006,40 @@ function AttendanceRecords({
         </div>
 
       </div>
+
+      {!loading && attendance.length > 0 && (
+        <div className="profile-limits-banner">
+          <span>
+            Late limit:{" "}
+            <strong>
+              {formatTimeLabel(
+                dayLimitsFromResponse.lateComingTime
+              )}
+            </strong>
+          </span>
+          <span>
+            Half day limit:{" "}
+            <strong>
+              {formatTimeLabel(
+                dayLimitsFromResponse.halfDayTime
+              )}
+            </strong>
+          </span>
+          <span>
+            Late:{" "}
+            <strong>{lateCount}</strong>
+          </span>
+          <span>
+            Half Day:{" "}
+            <strong>{halfDayCount}</strong>
+          </span>
+          <span className="profile-limits-banner__source">
+            {dayLimitsFromResponse.fromRecord
+              ? "From attendance records"
+              : "From current settings"}
+          </span>
+        </div>
+      )}
 
       {loading ? (
 
@@ -3056,10 +3206,12 @@ function AttendanceRecords({
                       <span className="history-flag history-flag--halfday">
                         Half Day
                         <small>
-                          limit{" "}
-                          {formatTimeLabel(
-                            dayHalfLimit
-                          )}
+                          {isHalfDayLeave &&
+                          !isHalfDayPunch
+                            ? "Leave"
+                            : `limit ${formatTimeLabel(
+                                dayHalfLimit
+                              )}`}
                         </small>
                       </span>
                     )}
