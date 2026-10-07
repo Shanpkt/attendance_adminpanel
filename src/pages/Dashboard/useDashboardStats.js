@@ -188,6 +188,29 @@ function useDashboardStats({
 
   const presentCount = uniqueEmployees.size;
 
+  const punchOutEmployees = new Set();
+
+  attendanceList.forEach((attendance) => {
+    const mobileNumber = String(
+      attendance.mobileNumber || ""
+    );
+
+    if (!mobileNumber) {
+      return;
+    }
+
+    const hasPunchOut =
+      attendance.status === "Punched Out" ||
+      Boolean(attendance.punchOut?.timestamp);
+
+    if (hasPunchOut) {
+      punchOutEmployees.add(mobileNumber);
+    }
+  });
+
+  const punchOutCount = punchOutEmployees.size;
+  const totalPunches = presentCount;
+
   const currentDayLeaves = todayLeaves.filter(
     isLeaveOnToday
   );
@@ -345,6 +368,35 @@ function useDashboardStats({
         punchInDate
       );
     }
+  });
+
+  const pendingPunchOutEmployees = [];
+
+  uniqueEmployees.forEach((mobileNumber) => {
+    if (punchOutEmployees.has(mobileNumber)) {
+      return;
+    }
+
+    const employee = findEmployeeByKey(
+      employees,
+      mobileNumber
+    );
+
+    pendingPunchOutEmployees.push({
+      id: employee?._id || mobileNumber,
+      name: getEmployeeName(
+        employees,
+        mobileNumber
+      ),
+      mobileNumber:
+        employee?.mobileNumber || mobileNumber,
+      profilePic: employee?.profilePic || "",
+      punchInTime: formatShortTime(
+        earliestPunchByEmployee.get(
+          mobileNumber
+        )
+      ),
+    });
   });
 
   const halfDayByPunchKeys = new Set();
@@ -540,6 +592,9 @@ function useDashboardStats({
   return {
     totalEmployees,
     presentCount,
+    punchOutCount,
+    totalPunches,
+    pendingPunchOutEmployees,
     absentCount,
     leaveCount,
     halfDayCount,

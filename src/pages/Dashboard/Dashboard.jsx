@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 
+import EmployeePhoto from "../../components/EmployeePhoto";
 import useAttendanceSettings from "../../hooks/useAttendanceSettings";
 import useDashboardData from "./useDashboardData";
 import useDashboardStats from "./useDashboardStats";
@@ -29,6 +30,9 @@ function Dashboard() {
   const {
     totalEmployees,
     presentCount,
+    punchOutCount,
+    totalPunches,
+    pendingPunchOutEmployees,
     absentCount,
     stats,
     absentEmployees,
@@ -44,6 +48,11 @@ function Dashboard() {
     halfDayTime,
     isHoliday: Boolean(todayHoliday),
   });
+
+  const [
+    showPendingPunchOut,
+    setShowPendingPunchOut,
+  ] = useState(false);
 
   const handleDownloadPdf = () => {
     downloadAttendancePdf({
@@ -91,6 +100,92 @@ function Dashboard() {
           . Absent is not counted.
         </div>
       )}
+
+      <div
+        className={`punch-out-progress${
+          showPendingPunchOut ? " is-open" : ""
+        }`}
+        onClick={() =>
+          setShowPendingPunchOut(
+            (current) => !current
+          )
+        }
+      >
+        <div className="punch-out-progress__header">
+          <span>Punch Out</span>
+          <strong>
+            {punchOutCount} / {totalPunches}
+          </strong>
+        </div>
+
+        <progress
+          max={Math.max(totalPunches, 1)}
+          value={
+            totalPunches === 0
+              ? 0
+              : punchOutCount
+          }
+          aria-label="Punch out progress"
+        />
+
+        <small className="punch-out-progress__hint">
+          Click to see who has not punched out
+        </small>
+
+        <div
+          className="absent-popup punch-out-popup"
+          onClick={(event) =>
+            event.stopPropagation()
+          }
+        >
+          <div className="absent-popup__header">
+            <h3>Not Punched Out</h3>
+            <span>
+              {pendingPunchOutEmployees.length}
+            </span>
+          </div>
+
+          <div className="absent-popup__list">
+            {pendingPunchOutEmployees.length > 0 ? (
+              pendingPunchOutEmployees.map(
+                (employee) => (
+                  <div
+                    className="absent-popup__employee"
+                    key={employee.id}
+                  >
+                    <EmployeePhoto
+                      className="absent-popup__avatar"
+                      src={employee.profilePic}
+                      name={employee.name}
+                    />
+
+                    <div>
+                      <strong>
+                        {employee.name}
+                      </strong>
+                      <span>
+                        {employee.mobileNumber}
+                      </span>
+                      {employee.punchInTime &&
+                        employee.punchInTime !==
+                          "—" && (
+                          <span className="punch-out-popup__meta">
+                            Punched in{" "}
+                            {employee.punchInTime}
+                          </span>
+                        )}
+                    </div>
+                  </div>
+                )
+              )
+            ) : (
+              <p className="no-absent">
+                Everyone has punched out
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
 
       <StatsSection
         stats={stats}

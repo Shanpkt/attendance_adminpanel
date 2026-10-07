@@ -30,8 +30,6 @@ import {
   Camera,
 } from "lucide-react";
 
-import Tooltip from "@mui/material/Tooltip";
-
 import EmployeePhoto from "../../components/EmployeePhoto";
 import useAttendanceSettings from "../../hooks/useAttendanceSettings";
 import {
@@ -79,6 +77,7 @@ function Profile() {
   const [attendanceLoading, setAttendanceLoading] = useState(true);
 
   const [showPresentPopup, setShowPresentPopup] = useState(false);
+  const [showAbsentPopup, setShowAbsentPopup] = useState(false);
 
   // ==================================================
   // SALARY
@@ -126,6 +125,8 @@ function Profile() {
     email: "",
     phone: "",
     joiningDate: "",
+    lateComingTime: "",
+    halfDayTime: "",
   });
 
   const [photoFile, setPhotoFile] = useState(null);
@@ -180,6 +181,12 @@ function Profile() {
         joiningDate: formatDateForInput(
           selectedEmployee.joiningDate
         ),
+
+        lateComingTime:
+          selectedEmployee.lateComingTime || "",
+
+        halfDayTime:
+          selectedEmployee.halfDayTime || "",
       });
 
       setPhotoFile(null);
@@ -478,6 +485,29 @@ function Profile() {
     const previousPhoto = employee?.profilePic || "";
     let nextPhoto = previousPhoto;
 
+    const customLateTime =
+      formData.lateComingTime.trim();
+
+    const customHalfDayTime =
+      formData.halfDayTime.trim();
+
+    const resolvedLateTime =
+      customLateTime || lateComingTime;
+
+    const resolvedHalfDayTime =
+      customHalfDayTime || halfDayTime;
+
+    if (
+      resolvedLateTime &&
+      resolvedHalfDayTime &&
+      resolvedHalfDayTime <= resolvedLateTime
+    ) {
+      alert(
+        "Half day time must be later than the late mark time."
+      );
+      return;
+    }
+
     try {
       setSaving(true);
 
@@ -506,6 +536,10 @@ function Profile() {
           formData.joiningDate,
 
         profilePic: nextPhoto,
+
+        lateComingTime: customLateTime,
+
+        halfDayTime: customHalfDayTime,
       };
 
       const response =
@@ -831,6 +865,19 @@ function Profile() {
         leaveDays,
       0
     );
+
+  const absentDates =
+    useMemo(() => {
+      return getAbsentDatesForMonth(
+        selectedMonth,
+        presentDateKeys,
+        selectedMonthLeaves
+      );
+    }, [
+      selectedMonth,
+      presentDateKeys,
+      selectedMonthLeaves,
+    ]);
 
   // ==================================================
   // SORTED PRESENT RECORDS
@@ -1445,6 +1492,54 @@ function Profile() {
               }
             />
 
+            <FormTime
+              label="Late Mark Time"
+              name="lateComingTime"
+              value={
+                formData.lateComingTime
+              }
+              onChange={
+                handleChange
+              }
+              onClear={() => {
+                setFormData((previous) => ({
+                  ...previous,
+                  lateComingTime: "",
+                }));
+              }}
+              hint={
+                formData.lateComingTime
+                  ? "Applies only to this employee."
+                  : `Company default: ${formatTimeLabel(
+                      lateComingTime
+                    )}`
+              }
+            />
+
+            <FormTime
+              label="Half Day Time"
+              name="halfDayTime"
+              value={
+                formData.halfDayTime
+              }
+              onChange={
+                handleChange
+              }
+              onClear={() => {
+                setFormData((previous) => ({
+                  ...previous,
+                  halfDayTime: "",
+                }));
+              }}
+              hint={
+                formData.halfDayTime
+                  ? "Applies only to this employee."
+                  : `Company default: ${formatTimeLabel(
+                      halfDayTime
+                    )}`
+              }
+            />
+
           </div>
 
           <div className="form-actions">
@@ -1701,6 +1796,12 @@ function Profile() {
           )
         }
 
+        onAbsentClick={() =>
+          setShowAbsentPopup(
+            true
+          )
+        }
+
         onSalaryClick={() =>
           setShowSalaryPopup(
             true
@@ -1737,6 +1838,19 @@ function Profile() {
       />
 
       {/* ================= PRESENT MODAL ================= */}
+
+      {showAbsentPopup && (
+
+        <AbsentDatesModal
+          dates={absentDates}
+          employeeName={name}
+          selectedMonth={selectedMonth}
+          onClose={() =>
+            setShowAbsentPopup(false)
+          }
+        />
+
+      )}
 
       {showPresentPopup && (
 
@@ -1784,27 +1898,19 @@ function Profile() {
           }
 
           attendance={
-            selectedMonthAttendance
+            employeeAttendance
           }
 
-          presentDays={
-            presentDays
+          leaves={
+            scheduledLeaves
           }
 
-          absentDays={
-            absentDays
+          lateComingTime={
+            lateComingTime
           }
 
-          leaveDays={
-            leaveDays
-          }
-
-          lateDays={
-            lateDays
-          }
-
-          workingDays={
-            workingDays
+          halfDayTime={
+            halfDayTime
           }
 
           onClose={() =>
@@ -1886,6 +1992,55 @@ function FormInput({
 // ==================================================
 // DATE INPUT
 // ==================================================
+
+function FormTime({
+  label,
+  name,
+  value,
+  onChange,
+  onClear,
+  hint,
+}) {
+  return (
+    <div className="form-field">
+
+      <label htmlFor={name}>
+        {label}
+      </label>
+
+      <div className="time-field">
+
+        <Clock3 size={17} />
+
+        <input
+          id={name}
+          type="time"
+          name={name}
+          value={value}
+          onChange={onChange}
+        />
+
+      </div>
+
+      {value ? (
+        <button
+          type="button"
+          className="time-field__clear"
+          onClick={onClear}
+        >
+          Use company default
+        </button>
+      ) : null}
+
+      {hint ? (
+        <span className="form-field__hint">
+          {hint}
+        </span>
+      ) : null}
+
+    </div>
+  );
+}
 
 function FormDate({
   label,
@@ -2655,6 +2810,7 @@ function AttendanceSummary({
   punchCount,
   workingDays,
   onPresentClick,
+  onAbsentClick,
   onSalaryClick,
 }) {
   const summary = [
@@ -2664,6 +2820,8 @@ function AttendanceSummary({
       type: "present",
       icon: UserCheck,
       clickable: true,
+      action: "present",
+      hint: "Click to view punches",
     },
 
     {
@@ -2671,7 +2829,9 @@ function AttendanceSummary({
       value: absentDays,
       type: "absent",
       icon: UserX,
-      clickable: false,
+      clickable: true,
+      action: "absent",
+      hint: "Click to view dates",
     },
 
     {
@@ -2792,9 +2952,11 @@ function AttendanceSummary({
                   : ""
               }`}
               onClick={
-                item.clickable
+                item.action === "present"
                   ? onPresentClick
-                  : undefined
+                  : item.action === "absent"
+                    ? onAbsentClick
+                    : undefined
               }
             >
 
@@ -2814,7 +2976,7 @@ function AttendanceSummary({
 
                 {item.clickable && (
                   <small>
-                    Click to view punches
+                    {item.hint}
                   </small>
                 )}
 
@@ -2853,7 +3015,7 @@ function PunchTimeCell({
       ? "profile-punch profile-punch--in"
       : "profile-punch profile-punch--out";
 
-  const cell = (
+  return (
     <div
       className={`${punchClass}${
         selfieUrl
@@ -2868,56 +3030,15 @@ function PunchTimeCell({
       <strong>
         {timeLabel}
       </strong>
+
+      {selfieUrl ? (
+        <img
+          className="profile-punch__photo"
+          src={selfieUrl}
+          alt={`${punchLabel} selfie`}
+        />
+      ) : null}
     </div>
-  );
-
-  if (!selfieUrl) {
-    return cell;
-  }
-
-  return (
-    <Tooltip
-      arrow
-      placement="top"
-      enterDelay={120}
-      leaveDelay={80}
-      slotProps={{
-        tooltip: {
-          className: "selfie-tooltip",
-          sx: {
-            bgcolor: "#ffffff",
-            color: "#111827",
-            padding: "8px",
-            maxWidth: "none",
-            border: "1px solid #e5e7eb",
-            borderRadius: "12px",
-            boxShadow:
-              "0 16px 40px rgba(15, 23, 42, 0.18)",
-          },
-        },
-        arrow: {
-          sx: {
-            color: "#ffffff",
-          },
-        },
-      }}
-      title={
-        <div className="selfie-popup">
-          <p className="selfie-popup__title">
-            {punchLabel} photo
-          </p>
-
-          <img
-            src={selfieUrl}
-            alt={`${punchLabel} selfie`}
-          />
-        </div>
-      }
-    >
-      <span className="profile-punch__hit">
-        {cell}
-      </span>
-    </Tooltip>
   );
 }
 
@@ -3258,6 +3379,170 @@ function AttendanceRecords({
 // PRESENT PUNCH MODAL
 // ==================================================
 
+function AbsentDatesModal({
+  dates,
+  employeeName,
+  selectedMonth,
+  onClose,
+}) {
+  const fullCount = dates.filter(
+    (item) => !item.half
+  ).length;
+
+  const halfCount = dates.length - fullCount;
+
+  return (
+    <div
+      className="present-modal-overlay"
+      onMouseDown={onClose}
+    >
+
+      <div
+        className="present-modal"
+        onMouseDown={(event) =>
+          event.stopPropagation()
+        }
+      >
+
+        <div className="present-modal-header">
+
+          <div>
+
+            <h2>
+              Absent Dates
+            </h2>
+
+            <p>
+
+              {employeeName}
+
+              <span>•</span>
+
+              {formatMonthName(
+                selectedMonth
+              )}
+
+            </p>
+
+          </div>
+
+          <button
+            type="button"
+            className="modal-close-button"
+            onClick={onClose}
+          >
+            <X size={20} />
+          </button>
+
+        </div>
+
+        <div className="present-modal-body">
+
+          {dates.length === 0 ? (
+
+            <div className="modal-empty">
+
+              <UserX size={30} />
+
+              <p>
+                No absent dates
+                for this month.
+              </p>
+
+            </div>
+
+          ) : (
+
+            <div className="punch-list">
+
+              {dates.map(
+                (item, index) => {
+                  const [
+                    year,
+                    month,
+                    day,
+                  ] = item.dateKey
+                    .split("-")
+                    .map(Number);
+
+                  const absentDate =
+                    new Date(
+                      year,
+                      month - 1,
+                      day
+                    );
+
+                  return (
+
+                  <div
+                    className="punch-item punch-item--absent"
+                    key={item.dateKey}
+                  >
+
+                    <div className="punch-number">
+                      {index + 1}
+                    </div>
+
+                    <div className="punch-date">
+
+                      <strong>
+                        {formatDate(
+                          item.dateKey
+                        )}
+                      </strong>
+
+                      <span>
+                        {getDayName(
+                          absentDate
+                        )}
+                      </span>
+
+                    </div>
+
+                    <div className="punch-time">
+
+                      <UserX size={17} />
+
+                      <strong>
+                        {item.half
+                          ? "Half day"
+                          : "Absent"}
+                      </strong>
+
+                    </div>
+
+                  </div>
+
+                  );
+                }
+              )}
+
+            </div>
+
+          )}
+
+        </div>
+
+        <div className="present-modal-footer">
+
+          <strong>
+            {fullCount + halfCount * 0.5}
+          </strong>
+
+          <span>
+            {halfCount > 0
+              ? `${fullCount} full, ${halfCount} half`
+              : "absent days"}
+          </span>
+
+        </div>
+
+      </div>
+
+    </div>
+  );
+}
+
 function PresentPunchModal({
   records,
   employeeName,
@@ -3447,13 +3732,20 @@ function SalaryCalculationModal({
   employeeId,
   selectedMonth,
   attendance,
-  presentDays,
-  absentDays,
-  leaveDays,
-  lateDays = 0,
-  workingDays,
+  leaves = [],
+  lateComingTime,
+  halfDayTime,
   onClose,
 }) {
+  const defaultRange =
+    getDefaultSalaryRange(selectedMonth);
+
+  const [fromDate, setFromDate] =
+    useState(defaultRange.from);
+
+  const [toDate, setToDate] =
+    useState(defaultRange.to);
+
   const [monthlySalary, setMonthlySalary] =
     useState(
       employee?.salary || ""
@@ -3467,6 +3759,38 @@ function SalaryCalculationModal({
 
   const lateFeeNumber =
     Number(lateFeePerDay) || 0;
+
+  const rangeSummary = useMemo(
+    () =>
+      calculateSalaryRange({
+        fromDate,
+        toDate,
+        attendance,
+        leaves,
+        lateComingTime,
+        halfDayTime,
+      }),
+    [
+      fromDate,
+      toDate,
+      attendance,
+      leaves,
+      lateComingTime,
+      halfDayTime,
+    ]
+  );
+
+  const {
+    workingDays,
+    presentDays,
+    leaveDays,
+    absentDays,
+    lateDays,
+    rangeError,
+    rangeNote,
+    countedFrom,
+    countedTo,
+  } = rangeSummary;
 
   // ==================================================
   // SALARY CALCULATIONS
@@ -3489,14 +3813,15 @@ function SalaryCalculationModal({
   const lateFeeTotal =
     lateDays * lateFeeNumber;
 
-  const finalSalary =
-    Math.max(
-      salaryNumber -
-        leaveDeduction -
-        absentDeduction -
-        lateFeeTotal,
-      0
-    );
+  const finalSalary = rangeError
+    ? 0
+    : Math.max(
+        salaryNumber -
+          leaveDeduction -
+          absentDeduction -
+          lateFeeTotal,
+        0
+      );
 
   // ==================================================
   // PRINT REPORT
@@ -3518,11 +3843,24 @@ function SalaryCalculationModal({
     }
 
     const sortedAttendance =
-      [...attendance].sort(
-        (a, b) =>
-          getRecordTimestamp(a) -
-          getRecordTimestamp(b)
-      );
+      [...attendance]
+        .filter((record) => {
+          const dateKey =
+            getRecordDateKey(record);
+
+          return (
+            dateKey &&
+            countedFrom &&
+            countedTo &&
+            dateKey >= countedFrom &&
+            dateKey <= countedTo
+          );
+        })
+        .sort(
+          (a, b) =>
+            getRecordTimestamp(a) -
+            getRecordTimestamp(b)
+        );
 
     const attendanceRows =
       sortedAttendance
@@ -3821,9 +4159,9 @@ function SalaryCalculationModal({
             </h1>
 
             <p>
-              ${formatMonthName(
-                selectedMonth
-              )}
+              ${formatDate(countedFrom)}
+              to
+              ${formatDate(countedTo)}
             </p>
 
           </div>
@@ -3948,7 +4286,7 @@ function SalaryCalculationModal({
 
               <tr>
                 <td>
-                  Monthly Salary
+                  Total Salary
                 </td>
 
                 <td>
@@ -4186,9 +4524,9 @@ function SalaryCalculationModal({
 
                 <span>•</span>
 
-                {formatMonthName(
-                  selectedMonth
-                )}
+                {formatDate(fromDate)}
+                {" – "}
+                {formatDate(toDate)}
               </p>
 
             </div>
@@ -4239,6 +4577,72 @@ function SalaryCalculationModal({
 
           </div>
 
+          {/* DATE RANGE */}
+
+          <div className="salary-input-grid">
+
+            <div className="salary-input-field">
+
+              <label htmlFor="salary-from-date">
+                From Date
+              </label>
+
+              <div className="salary-input-wrapper salary-input-wrapper--date">
+
+                <input
+                  id="salary-from-date"
+                  type="date"
+                  value={fromDate}
+                  max={toDate || undefined}
+                  onChange={(event) =>
+                    setFromDate(
+                      event.target.value
+                    )
+                  }
+                />
+
+              </div>
+
+            </div>
+
+            <div className="salary-input-field">
+
+              <label htmlFor="salary-to-date">
+                To Date
+              </label>
+
+              <div className="salary-input-wrapper salary-input-wrapper--date">
+
+                <input
+                  id="salary-to-date"
+                  type="date"
+                  value={toDate}
+                  min={fromDate || undefined}
+                  onChange={(event) =>
+                    setToDate(
+                      event.target.value
+                    )
+                  }
+                />
+
+              </div>
+
+            </div>
+
+          </div>
+
+          {(rangeError || rangeNote) && (
+            <p
+              className={
+                rangeError
+                  ? "salary-range-message salary-range-message--error"
+                  : "salary-range-message"
+              }
+            >
+              {rangeError || rangeNote}
+            </p>
+          )}
+
           {/* SALARY INPUTS */}
 
           <div className="salary-input-grid">
@@ -4246,7 +4650,7 @@ function SalaryCalculationModal({
             <div className="salary-input-field">
 
               <label>
-                Monthly Salary
+                Total Salary
               </label>
 
               <div className="salary-input-wrapper">
@@ -4257,7 +4661,7 @@ function SalaryCalculationModal({
                   type="number"
                   min="0"
                   step="0.01"
-                  placeholder="Enter monthly salary"
+                  placeholder="Enter total salary"
                   value={
                     monthlySalary
                   }
@@ -4390,7 +4794,7 @@ function SalaryCalculationModal({
               <div>
 
                 <span>
-                  Monthly Salary
+                  Total Salary
                 </span>
 
                 <strong>
@@ -4501,8 +4905,11 @@ function SalaryCalculationModal({
               </span>
 
               <small>
-                After attendance and late
-                fee deductions
+                {formatDate(countedFrom)}
+                {" to "}
+                {formatDate(countedTo)}
+                , after attendance and
+                late fee deductions
               </small>
 
             </div>
@@ -5255,6 +5662,321 @@ function formatDateForInput(
 // WORKING DAYS
 // ==================================================
 
+function getDefaultSalaryRange(
+  monthValue
+) {
+  const today = getTodayDateKey();
+
+  if (
+    !monthValue ||
+    !/^\d{4}-\d{2}$/.test(monthValue)
+  ) {
+    return {
+      from: today,
+      to: today,
+    };
+  }
+
+  const [year, month] = monthValue
+    .split("-")
+    .map(Number);
+
+  const from = `${monthValue}-01`;
+
+  const lastDay = new Date(
+    year,
+    month,
+    0
+  ).getDate();
+
+  const monthEnd = `${monthValue}-${String(
+    lastDay
+  ).padStart(2, "0")}`;
+
+  if (from > today) {
+    return {
+      from: today,
+      to: today,
+    };
+  }
+
+  return {
+    from,
+    to: monthEnd > today ? today : monthEnd,
+  };
+}
+
+function getWorkingDaysInRange(
+  fromDate,
+  toDate
+) {
+  if (
+    !fromDate ||
+    !toDate ||
+    fromDate > toDate
+  ) {
+    return 0;
+  }
+
+  const [startYear, startMonth, startDay] =
+    fromDate.split("-").map(Number);
+
+  const [endYear, endMonth, endDay] =
+    toDate.split("-").map(Number);
+
+  const cursor = new Date(
+    startYear,
+    startMonth - 1,
+    startDay
+  );
+
+  const end = new Date(
+    endYear,
+    endMonth - 1,
+    endDay
+  );
+
+  let workingDays = 0;
+
+  while (cursor <= end) {
+    workingDays += 1;
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  return workingDays;
+}
+
+function calculateSalaryRange({
+  fromDate,
+  toDate,
+  attendance = [],
+  leaves = [],
+  lateComingTime,
+  halfDayTime,
+}) {
+  const today = getTodayDateKey();
+
+  const empty = {
+    workingDays: 0,
+    presentDays: 0,
+    leaveDays: 0,
+    absentDays: 0,
+    lateDays: 0,
+    rangeError: "",
+    rangeNote: "",
+    countedFrom: fromDate || "",
+    countedTo: toDate || "",
+  };
+
+  if (!fromDate || !toDate) {
+    return {
+      ...empty,
+      rangeError:
+        "Select a start date and an end date.",
+    };
+  }
+
+  if (fromDate > toDate) {
+    return {
+      ...empty,
+      rangeError:
+        "End date must be on or after the start date.",
+    };
+  }
+
+  const countedTo =
+    toDate > today ? today : toDate;
+
+  if (fromDate > countedTo) {
+    return {
+      ...empty,
+      countedTo,
+      rangeError:
+        "This range is still in the future, so no days are counted yet.",
+    };
+  }
+
+  const presentKeys = new Set();
+  const lateKeys = new Set();
+
+  attendance.forEach((record) => {
+    const dateKey = getRecordDateKey(record);
+
+    if (
+      !dateKey ||
+      dateKey < fromDate ||
+      dateKey > countedTo
+    ) {
+      return;
+    }
+
+    presentKeys.add(dateKey);
+
+    const { isLate } =
+      evaluateAttendanceRecord(record, {
+        lateComingTime,
+        halfDayTime,
+      });
+
+    if (isLate) {
+      lateKeys.add(dateKey);
+    }
+  });
+
+  const leaveDays = leaves.reduce(
+    (total, leave) => {
+      if (
+        !leave?.date ||
+        leave.status === "Cancelled" ||
+        leave.date < fromDate ||
+        leave.date > countedTo
+      ) {
+        return total;
+      }
+
+      return (
+        total +
+        (leave.leaveType === "half"
+          ? 0.5
+          : 1)
+      );
+    },
+    0
+  );
+
+  const workingDays = getWorkingDaysInRange(
+    fromDate,
+    countedTo
+  );
+
+  const presentDays = presentKeys.size;
+
+  return {
+    workingDays,
+    presentDays,
+    leaveDays,
+    absentDays: Math.max(
+      workingDays - presentDays - leaveDays,
+      0
+    ),
+    lateDays: lateKeys.size,
+    rangeError: "",
+    rangeNote:
+      toDate > today
+        ? "Days after today are not counted yet."
+        : "",
+    countedFrom: fromDate,
+    countedTo,
+  };
+}
+
+function getMonthLastCountedDay(
+  monthValue
+) {
+  if (
+    !monthValue ||
+    !/^\d{4}-\d{2}$/.test(monthValue)
+  ) {
+    return 0;
+  }
+
+  const [year, month] = monthValue
+    .split("-")
+    .map(Number);
+
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
+
+  if (
+    year > currentYear ||
+    (
+      year === currentYear &&
+      month - 1 > currentMonth
+    )
+  ) {
+    return 0;
+  }
+
+  if (
+    year === currentYear &&
+    month - 1 === currentMonth
+  ) {
+    return now.getDate();
+  }
+
+  return new Date(
+    year,
+    month,
+    0
+  ).getDate();
+}
+
+function getAbsentDatesForMonth(
+  monthValue,
+  presentDateKeys,
+  leaves = []
+) {
+  const lastDay =
+    getMonthLastCountedDay(monthValue);
+
+  if (!lastDay) {
+    return [];
+  }
+
+  const [year, month] = monthValue
+    .split("-")
+    .map(Number);
+
+  const fullLeaveDates = new Set(
+    leaves
+      .filter(
+        (leave) =>
+          leave?.date &&
+          leave.leaveType !== "half"
+      )
+      .map((leave) => leave.date)
+  );
+
+  const halfLeaveDates = new Set(
+    leaves
+      .filter(
+        (leave) =>
+          leave?.date &&
+          leave.leaveType === "half"
+      )
+      .map((leave) => leave.date)
+  );
+
+  const absentDates = [];
+
+  for (
+    let day = 1;
+    day <= lastDay;
+    day += 1
+  ) {
+    const dateKey = [
+      year,
+      String(month).padStart(2, "0"),
+      String(day).padStart(2, "0"),
+    ].join("-");
+
+    if (
+      presentDateKeys?.has(dateKey) ||
+      fullLeaveDates.has(dateKey)
+    ) {
+      continue;
+    }
+
+    absentDates.push({
+      dateKey,
+      half: halfLeaveDates.has(dateKey),
+    });
+  }
+
+  return absentDates;
+}
+
 function getWorkingDaysForMonth(
   monthValue
 ) {
@@ -5309,32 +6031,7 @@ function getWorkingDaysForMonth(
       ).getDate();
   }
 
-  let workingDays = 0;
-
-  for (
-    let day = 1;
-    day <= lastDay;
-    day++
-  ) {
-    const date =
-      new Date(
-        year,
-        month - 1,
-        day
-      );
-
-    const dayOfWeek =
-      date.getDay();
-
-    if (
-      dayOfWeek !== 0 &&
-      dayOfWeek !== 6
-    ) {
-      workingDays++;
-    }
-  }
-
-  return workingDays;
+  return lastDay;
 }
 
 // ==================================================

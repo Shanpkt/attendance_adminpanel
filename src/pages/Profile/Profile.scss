@@ -458,7 +458,26 @@
   }
 }
 
+.form-field__hint {
+  color: #667085;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.time-field__clear {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #4f46e5;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 .date-field,
+.time-field,
 .leave-date-input {
   position: relative;
   display: flex;
@@ -1626,6 +1645,7 @@
   border-bottom: 1px solid #edf0f4;
   color: #475467;
   font-size: 12px;
+  align-items: start;
 
   &:last-child {
     border-bottom: 0;
@@ -1662,11 +1682,6 @@
 .attendance-status--out {
   background: #ecfdf3;
   color: #027a48;
-}
-
-.profile-punch__hit {
-  display: inline-flex;
-  width: fit-content;
 }
 
 .profile-punch {
@@ -1719,8 +1734,16 @@
   }
 }
 
-.profile-punch--has-photo {
-  cursor: pointer;
+.profile-punch__photo {
+  display: block;
+  width: 110px;
+  height: 110px;
+  margin-top: 8px;
+  object-fit: cover;
+  border-radius: 10px;
+  background: #f3f4f6;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  pointer-events: none;
 }
 
 .history-flags {
@@ -1759,38 +1782,6 @@
 
 .history-flag-empty {
   color: #98a2b3;
-}
-
-.selfie-tooltip {
-  padding: 8px !important;
-  max-width: none !important;
-  background: #ffffff !important;
-  color: #111827 !important;
-  border: 1px solid #e5e7eb !important;
-  border-radius: 12px !important;
-  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18) !important;
-}
-
-.selfie-popup {
-  width: 220px;
-}
-
-.selfie-popup__title {
-  margin: 0 0 8px;
-  color: #4b5563;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  text-transform: uppercase;
-}
-
-.selfie-popup img {
-  display: block;
-  width: 100%;
-  height: 220px;
-  object-fit: cover;
-  border-radius: 8px;
-  background: #f3f4f6;
 }
 
 // ==================================================
@@ -1866,6 +1857,14 @@
 .punch-item {
   display: grid;
   grid-template-columns: 35px 1.2fr 1fr 1.5fr;
+
+  &--absent {
+    grid-template-columns: 35px 1.4fr 1fr;
+
+    .punch-time {
+      color: #f04438;
+    }
+  }
   align-items: center;
   gap: 14px;
   padding: 13px 5px;
@@ -2463,6 +2462,17 @@
   margin-bottom: 22px;
 }
 
+.salary-range-message {
+  margin: -8px 0 18px;
+  color: #667085;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.salary-range-message--error {
+  color: #b42318;
+}
+
 .salary-input-field {
   margin-bottom: 0;
 
@@ -2503,6 +2513,10 @@
   svg {
     margin-left: 13px;
     flex: 0 0 auto;
+  }
+
+  &--date input {
+    padding-left: 13px;
   }
 
   input {

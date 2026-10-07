@@ -87,6 +87,102 @@
 }
 
 /* ==========================================
+   PUNCH OUT PROGRESS
+========================================== */
+
+.punch-out-progress {
+  position: relative;
+  margin-bottom: 18px;
+  padding: 16px 18px;
+  background: #ffffff;
+  border: 1px solid #e8edf3;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  cursor: pointer;
+
+  &.is-open .absent-popup {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+    pointer-events: auto;
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  span {
+    color: #6b7280;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  strong {
+    color: #111827;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  progress {
+    display: block;
+    width: 100%;
+    height: 12px;
+    border: 0;
+    border-radius: 999px;
+    overflow: hidden;
+    background: #e8eef7;
+    appearance: none;
+  }
+
+  progress::-webkit-progress-bar {
+    background: #e8eef7;
+    border-radius: 999px;
+  }
+
+  progress::-webkit-progress-value {
+    background: #2563eb;
+    border-radius: 999px;
+  }
+
+  progress::-moz-progress-bar {
+    background: #2563eb;
+    border-radius: 999px;
+  }
+
+  &__hint {
+    display: block;
+    margin-top: 8px;
+    color: #94a3b8;
+    font-size: 12px;
+    font-weight: 500;
+  }
+}
+
+.punch-out-popup {
+  left: 18px;
+  transform: translateY(-10px);
+}
+
+.punch-out-progress.is-open .punch-out-popup {
+  transform: translateY(0);
+}
+
+.punch-out-popup::before {
+  left: 28px;
+}
+
+.punch-out-popup__meta {
+  display: block;
+  margin-top: 2px;
+  color: #64748b;
+  font-size: 11px;
+}
+
+/* ==========================================
    STATS
 ========================================== */
 
