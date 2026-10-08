@@ -40,6 +40,19 @@ import {
   formatTimeLabel,
 } from "../../utils/attendanceSettings";
 
+const getPunchSelfieUrl = (punch) => {
+  if (!punch) {
+    return "";
+  }
+
+  return (
+    punch.selfieUrl ||
+    punch.selfieURL ||
+    punch.imageUrl ||
+    ""
+  );
+};
+
 // ======================================================
 // FORMAT DATE
 // ======================================================
@@ -230,6 +243,9 @@ function Attendance() {
 
   const [selectedStatus, setSelectedStatus] =
     useState("all");
+
+  const [showPhotos, setShowPhotos] =
+    useState(true);
 
   // ====================================================
   // DATE INPUT REF
@@ -903,6 +919,14 @@ function Attendance() {
     const punchStatus =
       attendance.status || "Punched In";
 
+    const punchInPhoto = showPhotos
+      ? getPunchSelfieUrl(attendance.punchIn)
+      : "";
+
+    const punchOutPhoto = showPhotos
+      ? getPunchSelfieUrl(attendance.punchOut)
+      : "";
+
     return (
       <div
         className="attendance-table__row"
@@ -937,6 +961,13 @@ function Attendance() {
             <strong>
               {punchInTime}
             </strong>
+            {punchInPhoto ? (
+              <img
+                className="punch-box__photo"
+                src={punchInPhoto}
+                alt="Punch In selfie"
+              />
+            ) : null}
           </span>
         </div>
 
@@ -948,6 +979,13 @@ function Attendance() {
             <strong>
               {punchOutTime}
             </strong>
+            {punchOutPhoto ? (
+              <img
+                className="punch-box__photo"
+                src={punchOutPhoto}
+                alt="Punch Out selfie"
+              />
+            ) : null}
           </span>
         </div>
 
@@ -1781,7 +1819,61 @@ function Attendance() {
           TABLE
       ================================================== */}
 
-      <div className="attendance-table-card">
+      {!loading && !error && (
+        <div className="photo-toggle">
+          <span className="photo-toggle__label">
+            Show punch photos
+          </span>
+
+          <div
+            className="photo-toggle__radios"
+            role="radiogroup"
+            aria-label="Show punch photos"
+          >
+            <label
+              className={`photo-toggle__option${
+                showPhotos ? " is-active" : ""
+              }`}
+            >
+              <input
+                type="radio"
+                name="attendance-show-punch-photos"
+                value="show"
+                checked={showPhotos}
+                onChange={() =>
+                  setShowPhotos(true)
+                }
+              />
+              Show
+            </label>
+
+            <label
+              className={`photo-toggle__option${
+                !showPhotos ? " is-active" : ""
+              }`}
+            >
+              <input
+                type="radio"
+                name="attendance-show-punch-photos"
+                value="hide"
+                checked={!showPhotos}
+                onChange={() =>
+                  setShowPhotos(false)
+                }
+              />
+              Hide
+            </label>
+          </div>
+        </div>
+      )}
+
+      <div
+        className={`attendance-table-card${
+          showPhotos
+            ? " attendance-table-card--photos"
+            : ""
+        }`}
+      >
 
         <div className="attendance-table__header">
 
