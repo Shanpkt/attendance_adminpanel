@@ -3754,6 +3754,11 @@ function SalaryCalculationModal({
   const [lateFeePerDay, setLateFeePerDay] =
     useState("");
 
+  const [monthDays, setMonthDays] =
+    useState(() =>
+      getDefaultMonthDays(selectedMonth)
+    );
+
   const salaryNumber =
     Number(monthlySalary) || 0;
 
@@ -3797,9 +3802,16 @@ function SalaryCalculationModal({
   // ==================================================
 
   const perDaySalary =
-    workingDays > 0
-      ? salaryNumber / workingDays
+    monthDays > 0
+      ? salaryNumber / monthDays
       : 0;
+
+  const rangeDays = rangeError
+    ? 0
+    : workingDays;
+
+  const rangeSalary =
+    rangeDays * perDaySalary;
 
   const presentSalary =
     presentDays * perDaySalary;
@@ -3816,7 +3828,7 @@ function SalaryCalculationModal({
   const finalSalary = rangeError
     ? 0
     : Math.max(
-        salaryNumber -
+        rangeSalary -
           leaveDeduction -
           absentDeduction -
           lateFeeTotal,
@@ -4287,6 +4299,7 @@ function SalaryCalculationModal({
               <tr>
                 <td>
                   Total Salary
+                  (${monthDays}-day month)
                 </td>
 
                 <td>
@@ -4298,11 +4311,11 @@ function SalaryCalculationModal({
 
               <tr>
                 <td>
-                  Working Days
+                  Month Length
                 </td>
 
                 <td>
-                  ${workingDays}
+                  ${monthDays} days
                 </td>
               </tr>
 
@@ -4313,6 +4326,28 @@ function SalaryCalculationModal({
 
                 <td>
                   ₹${perDaySalary.toFixed(
+                    2
+                  )}
+                </td>
+              </tr>
+
+              <tr>
+                <td>
+                  Days in Date Range
+                </td>
+
+                <td>
+                  ${rangeDays}
+                </td>
+              </tr>
+
+              <tr>
+                <td>
+                  Salary for Date Range
+                </td>
+
+                <td>
+                  ₹${rangeSalary.toFixed(
                     2
                   )}
                 </td>
@@ -4577,6 +4612,59 @@ function SalaryCalculationModal({
 
           </div>
 
+          {/* MONTH LENGTH */}
+
+          <div className="salary-input-field salary-month-field">
+
+            <label>
+              Month Length
+            </label>
+
+            <div
+              className="salary-month-toggle"
+              role="group"
+              aria-label="Month length"
+            >
+
+              <button
+                type="button"
+                className={
+                  monthDays === 30
+                    ? "is-active"
+                    : ""
+                }
+                onClick={() =>
+                  setMonthDays(30)
+                }
+              >
+                30-day month
+              </button>
+
+              <button
+                type="button"
+                className={
+                  monthDays === 31
+                    ? "is-active"
+                    : ""
+                }
+                onClick={() =>
+                  setMonthDays(31)
+                }
+              >
+                31-day month
+              </button>
+
+            </div>
+
+            <p className="salary-month-note">
+              Total salary is for a full{" "}
+              {monthDays}-day month. Per day
+              pay is total salary divided by{" "}
+              {monthDays}.
+            </p>
+
+          </div>
+
           {/* DATE RANGE */}
 
           <div className="salary-input-grid">
@@ -4650,7 +4738,7 @@ function SalaryCalculationModal({
             <div className="salary-input-field">
 
               <label>
-                Total Salary
+                Total Salary ({monthDays} days)
               </label>
 
               <div className="salary-input-wrapper">
@@ -4794,7 +4882,7 @@ function SalaryCalculationModal({
               <div>
 
                 <span>
-                  Total Salary
+                  Total Salary ({monthDays} days)
                 </span>
 
                 <strong>
@@ -4809,10 +4897,37 @@ function SalaryCalculationModal({
 
                 <span>
                   Per Day Salary
+                  (÷ {monthDays})
                 </span>
 
                 <strong>
                   ₹{perDaySalary.toFixed(
+                    2
+                  )}
+                </strong>
+
+              </div>
+
+              <div>
+
+                <span>
+                  Days in Date Range
+                </span>
+
+                <strong>
+                  {rangeDays}
+                </strong>
+
+              </div>
+
+              <div>
+
+                <span>
+                  Salary for Date Range
+                </span>
+
+                <strong>
+                  ₹{rangeSalary.toFixed(
                     2
                   )}
                 </strong>
@@ -4908,6 +5023,9 @@ function SalaryCalculationModal({
                 {formatDate(countedFrom)}
                 {" to "}
                 {formatDate(countedTo)}
+                {" · "}
+                {rangeDays} days × ₹
+                {perDaySalary.toFixed(2)}
                 , after attendance and
                 late fee deductions
               </small>
@@ -5661,6 +5779,29 @@ function formatDateForInput(
 // ==================================================
 // WORKING DAYS
 // ==================================================
+
+function getDefaultMonthDays(
+  monthValue
+) {
+  if (
+    !monthValue ||
+    !/^\d{4}-\d{2}$/.test(monthValue)
+  ) {
+    return 30;
+  }
+
+  const [year, month] = monthValue
+    .split("-")
+    .map(Number);
+
+  const lastDay = new Date(
+    year,
+    month,
+    0
+  ).getDate();
+
+  return lastDay >= 31 ? 31 : 30;
+}
 
 function getDefaultSalaryRange(
   monthValue
