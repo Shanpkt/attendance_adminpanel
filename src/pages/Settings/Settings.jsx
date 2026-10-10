@@ -6,6 +6,7 @@ import React, {
 
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import ContrastIcon from "@mui/icons-material/Contrast";
+import EventAvailableIcon from "@mui/icons-material/EventAvailable";
 import MyLocationIcon from "@mui/icons-material/MyLocation";
 import PlaceIcon from "@mui/icons-material/Place";
 import StopCircleIcon from "@mui/icons-material/StopCircle";
@@ -15,6 +16,7 @@ import {
   DEFAULT_ATTENDANCE_SETTINGS,
   formatTimeLabel,
   isValidGpsSettings,
+  isValidPaidLeaves,
   isValidPunchAccuracy,
   timeToMinutes,
 } from "../../utils/attendanceSettings";
@@ -41,6 +43,7 @@ function Settings() {
     tolerance,
     punchAccuracy,
     gpsTolerance,
+    paidLeaves,
     loading,
     saving,
     error,
@@ -71,6 +74,9 @@ function Settings() {
   const [keepGpsTolerance, setKeepGpsTolerance] =
     useState(gpsTolerance);
 
+  const [paidLeaveCount, setPaidLeaveCount] =
+    useState(paidLeaves);
+
   const [scanning, setScanning] =
     useState(false);
 
@@ -89,6 +95,7 @@ function Settings() {
     setLateTime(lateComingTime);
     setHalfTime(halfDayTime);
     setKeepGpsTolerance(gpsTolerance);
+    setPaidLeaveCount(paidLeaves);
 
     if (!scanningRef.current) {
       setGpsLatitude(latitude);
@@ -106,6 +113,7 @@ function Settings() {
     tolerance,
     punchAccuracy,
     gpsTolerance,
+    paidLeaves,
   ]);
 
   useEffect(() => {
@@ -131,6 +139,9 @@ function Settings() {
 
   const hasInvalidPunchAccuracy =
     !isValidPunchAccuracy(punchAccuracyMeters);
+
+  const hasInvalidPaidLeaves =
+    !isValidPaidLeaves(paidLeaveCount);
 
   const updateGpsField = (setter) => {
     return (event) => {
@@ -234,6 +245,13 @@ function Settings() {
       return;
     }
 
+    if (hasInvalidPaidLeaves) {
+      setFormError(
+        "Enter paid leaves as a whole number from 0 to 366."
+      );
+      return;
+    }
+
     try {
       await saveSettings({
         lateComingTime: lateTime,
@@ -244,6 +262,7 @@ function Settings() {
         tolerance: gpsToleranceMeters,
         punchAccuracy: punchAccuracyMeters,
         gpsTolerance: keepGpsTolerance,
+        paidLeaves: paidLeaveCount,
       });
 
       setSaved(true);
@@ -293,6 +312,10 @@ function Settings() {
       DEFAULT_ATTENDANCE_SETTINGS.gpsTolerance
     );
 
+    setPaidLeaveCount(
+      DEFAULT_ATTENDANCE_SETTINGS.paidLeaves
+    );
+
     stopGpsScan();
     setSaved(false);
     setFormError("");
@@ -310,9 +333,10 @@ function Settings() {
           </h1>
 
           <p>
-            Set late coming, half day, and
-            GPS location. These save to the
-            settings module in the backend.
+            Set late coming, half day, paid
+            leave, and GPS location. These
+            save to the settings module in
+            the backend.
           </p>
 
         </div>
@@ -416,6 +440,63 @@ function Settings() {
             <span className="settings-card__hint">
               Current limit:{" "}
               {formatTimeLabel(halfTime)}
+            </span>
+
+          </div>
+
+        </div>
+
+        <div className="settings-card settings-card--leave">
+
+          <div className="settings-card__icon">
+            <EventAvailableIcon />
+          </div>
+
+          <div className="settings-card__body">
+
+            <h2>
+              Paid Leave
+            </h2>
+
+            <p>
+              How many absent days are paid.
+              This same number is used on
+              every employee salary
+              calculation. Absent days within
+              this allowance are not deducted.
+            </p>
+
+            <label htmlFor="paid-leaves">
+              Paid leaves
+            </label>
+
+            <input
+              id="paid-leaves"
+              type="number"
+              min="0"
+              max="366"
+              step="1"
+              placeholder="e.g. 2"
+              value={paidLeaveCount}
+              disabled={loading || saving}
+              onChange={(event) => {
+                setPaidLeaveCount(
+                  event.target.value
+                );
+                setSaved(false);
+                setFormError("");
+              }}
+            />
+
+            <span className="settings-card__hint">
+              Current allowance:{" "}
+              {paidLeaveCount === ""
+                ? "not set"
+                : `${paidLeaveCount} day${
+                    Number(paidLeaveCount) === 1
+                      ? ""
+                      : "s"
+                  }`}
             </span>
 
           </div>
@@ -686,6 +767,15 @@ function Settings() {
 
       )}
 
+      {hasInvalidPaidLeaves && (
+
+        <p className="settings-warning">
+          Enter paid leaves as a whole
+          number from 0 to 366.
+        </p>
+
+      )}
+
       <div className="settings-actions">
 
         <button
@@ -702,7 +792,11 @@ function Settings() {
           className="settings-save"
           onClick={handleSave}
           disabled={
-            loading || saving || hasInvalidGps || hasInvalidPunchAccuracy
+            loading ||
+            saving ||
+            hasInvalidGps ||
+            hasInvalidPunchAccuracy ||
+            hasInvalidPaidLeaves
           }
         >
           {saving

@@ -712,6 +712,7 @@ function Profile() {
   const {
     lateComingTime,
     halfDayTime,
+    paidLeaves,
   } = useAttendanceSettings();
 
   // ==================================================
@@ -1911,6 +1912,10 @@ function Profile() {
 
           halfDayTime={
             halfDayTime
+          }
+
+          paidLeaves={
+            Number(paidLeaves) || 0
           }
 
           onClose={() =>
@@ -3735,6 +3740,7 @@ function SalaryCalculationModal({
   leaves = [],
   lateComingTime,
   halfDayTime,
+  paidLeaves = 0,
   onClose,
 }) {
   const defaultRange =
@@ -3816,11 +3822,26 @@ function SalaryCalculationModal({
   const presentSalary =
     presentDays * perDaySalary;
 
+  const paidLeaveAllowance = Math.max(
+    0,
+    Number(paidLeaves) || 0
+  );
+
+  const paidLeaveUsed = Math.min(
+    paidLeaveAllowance,
+    absentDays
+  );
+
+  const unpaidAbsentDays = Math.max(
+    absentDays - paidLeaveAllowance,
+    0
+  );
+
   const leaveDeduction =
     leaveDays * perDaySalary;
 
   const absentDeduction =
-    absentDays * perDaySalary;
+    unpaidAbsentDays * perDaySalary;
 
   const lateFeeTotal =
     lateDays * lateFeeNumber;
@@ -4257,7 +4278,21 @@ function SalaryCalculationModal({
               </span>
 
               <strong>
-                ${leaveDays}
+                ${formatDayCount(leaveDays)}
+              </strong>
+
+            </div>
+
+            <div class="summary-box">
+
+              <span>
+                Paid Leaves
+              </span>
+
+              <strong>
+                ${formatDayCount(
+                  paidLeaveAllowance
+                )}
               </strong>
 
             </div>
@@ -4378,6 +4413,9 @@ function SalaryCalculationModal({
               <tr>
                 <td>
                   Leave Deduction
+                  (${formatDayCount(
+                    leaveDays
+                  )} days)
                 </td>
 
                 <td class="deduction">
@@ -4389,7 +4427,37 @@ function SalaryCalculationModal({
 
               <tr>
                 <td>
+                  Paid Leaves
+                </td>
+
+                <td>
+                  ${formatDayCount(
+                    paidLeaveAllowance
+                  )}
+                </td>
+              </tr>
+
+              <tr>
+                <td>
+                  Paid Leave Used
+                  (against absent)
+                </td>
+
+                <td>
+                  ${formatDayCount(
+                    paidLeaveUsed
+                  )}
+                </td>
+              </tr>
+
+              <tr>
+                <td>
                   Absent Deduction
+                  (${formatDayCount(
+                    unpaidAbsentDays
+                  )} unpaid of ${formatDayCount(
+                    absentDays
+                  )})
                 </td>
 
                 <td class="deduction">
@@ -4836,7 +4904,21 @@ function SalaryCalculationModal({
                 </span>
 
                 <strong>
-                  {leaveDays}
+                  {formatDayCount(leaveDays)}
+                </strong>
+
+              </div>
+
+              <div className="salary-stat salary-stat--paid">
+
+                <span>
+                  Paid Leaves
+                </span>
+
+                <strong>
+                  {formatDayCount(
+                    paidLeaveAllowance
+                  )}
                 </strong>
 
               </div>
@@ -4952,6 +5034,7 @@ function SalaryCalculationModal({
 
                 <span>
                   Leave Deduction
+                  ({formatDayCount(leaveDays)} days)
                 </span>
 
                 <strong className="deduction">
@@ -4965,7 +5048,41 @@ function SalaryCalculationModal({
               <div>
 
                 <span>
+                  Paid Leaves
+                </span>
+
+                <strong>
+                  {formatDayCount(
+                    paidLeaveAllowance
+                  )}
+                </strong>
+
+              </div>
+
+              <div>
+
+                <span>
+                  Paid Leave Used
+                  (against absent)
+                </span>
+
+                <strong>
+                  {formatDayCount(
+                    paidLeaveUsed
+                  )}
+                </strong>
+
+              </div>
+
+              <div>
+
+                <span>
                   Absent Deduction
+                  ({formatDayCount(
+                    unpaidAbsentDays
+                  )} unpaid of {formatDayCount(
+                    absentDays
+                  )})
                 </span>
 
                 <strong className="deduction">
@@ -5779,6 +5896,14 @@ function formatDateForInput(
 // ==================================================
 // WORKING DAYS
 // ==================================================
+
+function formatDayCount(value) {
+  const number = Number(value) || 0;
+
+  return Number.isInteger(number)
+    ? String(number)
+    : number.toFixed(1);
+}
 
 function getDefaultMonthDays(
   monthValue

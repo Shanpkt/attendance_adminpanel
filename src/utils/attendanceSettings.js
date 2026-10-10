@@ -7,6 +7,7 @@ export const DEFAULT_ATTENDANCE_SETTINGS = {
   tolerance: "30",
   punchAccuracy: "30",
   gpsTolerance: true,
+  paidLeaves: "0",
 };
 
 const toSettingBoolean = (value, fallback) => {
@@ -303,6 +304,13 @@ export const normalizeSettings = (
       data.gpsTolerance,
       DEFAULT_ATTENDANCE_SETTINGS.gpsTolerance
     ),
+    paidLeaves: toSettingNumber(
+      data.paidLeaves !== undefined &&
+        data.paidLeaves !== null &&
+        data.paidLeaves !== ""
+        ? data.paidLeaves
+        : DEFAULT_ATTENDANCE_SETTINGS.paidLeaves
+    ),
   };
 };
 
@@ -351,7 +359,30 @@ export const toSettingsPayload = (
         : DEFAULT_ATTENDANCE_SETTINGS.punchAccuracy
     ),
     gpsTolerance: Boolean(settings.gpsTolerance),
+    paidLeaves: Number(
+      settings.paidLeaves !== ""
+        ? settings.paidLeaves
+        : DEFAULT_ATTENDANCE_SETTINGS.paidLeaves
+    ),
   };
+};
+
+export const isValidPaidLeaves = (paidLeaves) => {
+  if (
+    paidLeaves === "" ||
+    paidLeaves === undefined ||
+    paidLeaves === null
+  ) {
+    return false;
+  }
+
+  const value = Number(paidLeaves);
+
+  return (
+    Number.isInteger(value) &&
+    value >= 0 &&
+    value <= 366
+  );
 };
 
 export const isValidPunchAccuracy = (

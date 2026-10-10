@@ -2612,7 +2612,7 @@
 
 .salary-stats {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -2649,6 +2649,19 @@
 
     strong {
       color: #15803d;
+    }
+  }
+
+  &--paid {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+
+    span {
+      color: #1d4ed8;
+    }
+
+    strong {
+      color: #1d4ed8;
     }
   }
 

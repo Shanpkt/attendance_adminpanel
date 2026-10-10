@@ -125,6 +125,7 @@ function useAttendanceSettings() {
     tolerance: settings.tolerance,
     punchAccuracy: settings.punchAccuracy,
     gpsTolerance: settings.gpsTolerance,
+    paidLeaves: settings.paidLeaves,
     loading,
     saving,
     error,
