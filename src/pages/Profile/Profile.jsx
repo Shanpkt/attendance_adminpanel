@@ -3796,6 +3796,7 @@ function SalaryCalculationModal({
     presentDays,
     leaveDays,
     absentDays,
+    halfDays,
     lateDays,
     rangeError,
     rangeNote,
@@ -3819,9 +3820,6 @@ function SalaryCalculationModal({
   const rangeSalary =
     rangeDays * perDaySalary;
 
-  const presentSalary =
-    presentDays * perDaySalary;
-
   const paidLeaveAllowance = Math.max(
     0,
     Number(paidLeaves) || 0
@@ -3837,11 +3835,12 @@ function SalaryCalculationModal({
     0
   );
 
-  const leaveDeduction =
-    leaveDays * perDaySalary;
-
   const absentDeduction =
     unpaidAbsentDays * perDaySalary;
+
+  // Half day: employee gets half of per-day salary
+  const halfDayDeduction =
+    halfDays * (perDaySalary / 2);
 
   const lateFeeTotal =
     lateDays * lateFeeNumber;
@@ -3850,8 +3849,8 @@ function SalaryCalculationModal({
     ? 0
     : Math.max(
         rangeSalary -
-          leaveDeduction -
           absentDeduction -
+          halfDayDeduction -
           lateFeeTotal,
         0
       );
@@ -4312,6 +4311,18 @@ function SalaryCalculationModal({
             <div class="summary-box">
 
               <span>
+                Half Days
+              </span>
+
+              <strong>
+                ${formatDayCount(halfDays)}
+              </strong>
+
+            </div>
+
+            <div class="summary-box">
+
+              <span>
                 Late Days
               </span>
 
@@ -4390,21 +4401,16 @@ function SalaryCalculationModal({
 
               <tr>
                 <td>
-                  Present Days
+                  Absent Deduction
+                  (${formatDayCount(
+                    unpaidAbsentDays
+                  )} unpaid of ${formatDayCount(
+                    absentDays
+                  )})
                 </td>
 
-                <td>
-                  ${presentDays}
-                </td>
-              </tr>
-
-              <tr>
-                <td>
-                  Present Salary
-                </td>
-
-                <td>
-                  ₹${presentSalary.toFixed(
+                <td class="deduction">
+                  - ₹${absentDeduction.toFixed(
                     2
                   )}
                 </td>
@@ -4412,14 +4418,14 @@ function SalaryCalculationModal({
 
               <tr>
                 <td>
-                  Leave Deduction
+                  Half Day Deduction
                   (${formatDayCount(
-                    leaveDays
-                  )} days)
+                    halfDays
+                  )} days × half per day)
                 </td>
 
                 <td class="deduction">
-                  - ₹${leaveDeduction.toFixed(
+                  - ₹${halfDayDeduction.toFixed(
                     2
                   )}
                 </td>
@@ -4446,23 +4452,6 @@ function SalaryCalculationModal({
                 <td>
                   ${formatDayCount(
                     paidLeaveUsed
-                  )}
-                </td>
-              </tr>
-
-              <tr>
-                <td>
-                  Absent Deduction
-                  (${formatDayCount(
-                    unpaidAbsentDays
-                  )} unpaid of ${formatDayCount(
-                    absentDays
-                  )})
-                </td>
-
-                <td class="deduction">
-                  - ₹${absentDeduction.toFixed(
-                    2
                   )}
                 </td>
               </tr>
@@ -4935,6 +4924,18 @@ function SalaryCalculationModal({
 
               </div>
 
+              <div className="salary-stat">
+
+                <span>
+                  Half Day
+                </span>
+
+                <strong>
+                  {formatDayCount(halfDays)}
+                </strong>
+
+              </div>
+
               <div className="salary-stat salary-stat--late">
 
                 <span>
@@ -5019,11 +5020,16 @@ function SalaryCalculationModal({
               <div>
 
                 <span>
-                  Present Salary
+                  Absent Deduction
+                  ({formatDayCount(
+                    unpaidAbsentDays
+                  )} unpaid of {formatDayCount(
+                    absentDays
+                  )})
                 </span>
 
-                <strong>
-                  ₹{presentSalary.toFixed(
+                <strong className="deduction">
+                  - ₹{absentDeduction.toFixed(
                     2
                   )}
                 </strong>
@@ -5033,12 +5039,14 @@ function SalaryCalculationModal({
               <div>
 
                 <span>
-                  Leave Deduction
-                  ({formatDayCount(leaveDays)} days)
+                  Half Day Deduction
+                  ({formatDayCount(
+                    halfDays
+                  )} days × half per day)
                 </span>
 
                 <strong className="deduction">
-                  - ₹{leaveDeduction.toFixed(
+                  - ₹{halfDayDeduction.toFixed(
                     2
                   )}
                 </strong>
@@ -5069,25 +5077,6 @@ function SalaryCalculationModal({
                 <strong>
                   {formatDayCount(
                     paidLeaveUsed
-                  )}
-                </strong>
-
-              </div>
-
-              <div>
-
-                <span>
-                  Absent Deduction
-                  ({formatDayCount(
-                    unpaidAbsentDays
-                  )} unpaid of {formatDayCount(
-                    absentDays
-                  )})
-                </span>
-
-                <strong className="deduction">
-                  - ₹{absentDeduction.toFixed(
-                    2
                   )}
                 </strong>
 
@@ -6027,6 +6016,7 @@ function calculateSalaryRange({
     presentDays: 0,
     leaveDays: 0,
     absentDays: 0,
+    halfDays: 0,
     lateDays: 0,
     rangeError: "",
     rangeNote: "",
@@ -6064,6 +6054,7 @@ function calculateSalaryRange({
 
   const presentKeys = new Set();
   const lateKeys = new Set();
+  const halfDayKeys = new Set();
 
   attendance.forEach((record) => {
     const dateKey = getRecordDateKey(record);
@@ -6078,7 +6069,7 @@ function calculateSalaryRange({
 
     presentKeys.add(dateKey);
 
-    const { isLate } =
+    const { isLate, isHalfDay } =
       evaluateAttendanceRecord(record, {
         lateComingTime,
         halfDayTime,
@@ -6086,6 +6077,10 @@ function calculateSalaryRange({
 
     if (isLate) {
       lateKeys.add(dateKey);
+    }
+
+    if (isHalfDay) {
+      halfDayKeys.add(dateKey);
     }
   });
 
@@ -6100,12 +6095,12 @@ function calculateSalaryRange({
         return total;
       }
 
-      return (
-        total +
-        (leave.leaveType === "half"
-          ? 0.5
-          : 1)
-      );
+      if (leave.leaveType === "half") {
+        halfDayKeys.add(leave.date);
+        return total + 0.5;
+      }
+
+      return total + 1;
     },
     0
   );
@@ -6125,6 +6120,7 @@ function calculateSalaryRange({
       workingDays - presentDays - leaveDays,
       0
     ),
+    halfDays: halfDayKeys.size,
     lateDays: lateKeys.size,
     rangeError: "",
     rangeNote:
