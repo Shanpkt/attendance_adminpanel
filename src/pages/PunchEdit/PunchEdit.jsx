@@ -324,11 +324,9 @@ function PunchEdit() {
       toTimeInput(selectedRecord?.punchOut?.timestamp)
     );
     setLateLimit(
-      selectedEmployee.lateComingTime ||
-        (isSundayDate(selectedDate)
-          ? companyLimitsForDay.lateComingTime
-          : selectedRecord?.limits?.lateComingTime ||
-            companyLimitsForDay.lateComingTime) ||
+      selectedRecord?.limits?.lateComingTime ||
+        selectedEmployee.lateComingTime ||
+        companyLimitsForDay.lateComingTime ||
         "10:00"
     );
   }, [

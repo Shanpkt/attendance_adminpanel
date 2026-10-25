@@ -38,8 +38,6 @@ import {
 import {
   evaluateAttendanceRecord,
   formatTimeLabel,
-  getCompanyLimitsForDate,
-  isSundayDate,
 } from "../../utils/attendanceSettings";
 
 const getPunchSelfieUrl = (punch) => {
@@ -412,7 +410,8 @@ function Attendance() {
     return evaluateAttendanceRecord(
       attendance,
       limitSettings,
-      getEmployee(attendance.mobileNumber)
+      getEmployee(attendance.mobileNumber),
+      { respectSavedLimits: true }
     ).isHalfDay;
   };
 
@@ -420,7 +419,8 @@ function Attendance() {
     return evaluateAttendanceRecord(
       attendance,
       limitSettings,
-      getEmployee(attendance.mobileNumber)
+      getEmployee(attendance.mobileNumber),
+      { respectSavedLimits: true }
     ).isLate;
   };
 
@@ -567,24 +567,8 @@ function Attendance() {
       isHalfDayAttendance(attendance)
     );
 
-  const companyLimitsForDay = getCompanyLimitsForDate(
-    limitSettings,
-    selectedDate
-  );
-
   // Day limits from attendance response (first record that has saved limits)
   const dayLimitsFromResponse = (() => {
-    if (isSundayDate(selectedDate)) {
-      return {
-        lateComingTime:
-          companyLimitsForDay.lateComingTime,
-        halfDayTime:
-          companyLimitsForDay.halfDayTime,
-        fromRecord: false,
-        sunday: true,
-      };
-    }
-
     for (const attendance of filteredAttendance) {
       if (
         attendance?.limits?.lateComingTime ||
@@ -920,7 +904,8 @@ function Attendance() {
     const evaluation = evaluateAttendanceRecord(
       attendance,
       limitSettings,
-      employee
+      employee,
+      { respectSavedLimits: true }
     );
 
     const isHalfDayPunch = evaluation.isHalfDay;
@@ -1298,11 +1283,9 @@ function Attendance() {
               </strong>
             </span>
             <span className="attendance-limits-banner__source">
-              {dayLimitsFromResponse.sunday
-                ? "Sunday settings"
-                : dayLimitsFromResponse.fromRecord
-                  ? "From attendance records"
-                  : "From current settings"}
+              {dayLimitsFromResponse.fromRecord
+                ? "From attendance records"
+                : "From current settings"}
             </span>
           </div>
         )}
