@@ -14,6 +14,8 @@ function Dashboard() {
   const {
     lateComingTime,
     halfDayTime,
+    sundayLateComingTime,
+    sundayHalfDayTime,
   } = useAttendanceSettings();
 
   const {
@@ -46,6 +48,8 @@ function Dashboard() {
     todayLeaves,
     lateComingTime,
     halfDayTime,
+    sundayLateComingTime,
+    sundayHalfDayTime,
     isHoliday: Boolean(todayHoliday),
   });
 

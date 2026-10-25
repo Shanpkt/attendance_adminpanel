@@ -19,6 +19,8 @@ import useAttendanceSettings from "../../hooks/useAttendanceSettings";
 import {
   evaluateAttendanceRecord,
   formatTimeLabel,
+  getCompanyLimitsForDate,
+  isSundayDate,
   timeToMinutes,
 } from "../../utils/attendanceSettings";
 
@@ -167,6 +169,8 @@ function PunchEdit() {
   const {
     lateComingTime: companyLateTime,
     halfDayTime: companyHalfDayTime,
+    sundayLateComingTime,
+    sundayHalfDayTime,
   } = useAttendanceSettings();
 
   const [employees, setEmployees] = useState([]);
@@ -175,6 +179,16 @@ function PunchEdit() {
   const [selectedId, setSelectedId] = useState("");
   const [selectedDate, setSelectedDate] = useState(
     getDateString(new Date())
+  );
+
+  const companyLimitsForDay = getCompanyLimitsForDate(
+    {
+      lateComingTime: companyLateTime,
+      halfDayTime: companyHalfDayTime,
+      sundayLateComingTime,
+      sundayHalfDayTime,
+    },
+    selectedDate
   );
 
   const [punchIn, setPunchIn] = useState("");
@@ -289,9 +303,11 @@ function PunchEdit() {
   }, [records, selectedDate]);
 
   const dayHalfTime =
-    selectedRecord?.limits?.halfDayTime ||
     selectedEmployee?.halfDayTime ||
-    companyHalfDayTime;
+    (isSundayDate(selectedDate)
+      ? companyLimitsForDay.halfDayTime
+      : selectedRecord?.limits?.halfDayTime ||
+        companyLimitsForDay.halfDayTime);
 
   useEffect(() => {
     if (!selectedEmployee) {
@@ -308,15 +324,18 @@ function PunchEdit() {
       toTimeInput(selectedRecord?.punchOut?.timestamp)
     );
     setLateLimit(
-      selectedRecord?.limits?.lateComingTime ||
-        selectedEmployee.lateComingTime ||
-        companyLateTime ||
+      selectedEmployee.lateComingTime ||
+        (isSundayDate(selectedDate)
+          ? companyLimitsForDay.lateComingTime
+          : selectedRecord?.limits?.lateComingTime ||
+            companyLimitsForDay.lateComingTime) ||
         "10:00"
     );
   }, [
     selectedEmployee,
     selectedRecord,
-    companyLateTime,
+    selectedDate,
+    companyLimitsForDay.lateComingTime,
   ]);
 
   const preview = useMemo(() => {
@@ -324,27 +343,44 @@ function PunchEdit() {
       return null;
     }
 
-    return evaluateAttendanceRecord({
-      date: selectedDate,
-      punchIn: {
-        timestamp: toLocalIso(selectedDate, punchIn),
+    return evaluateAttendanceRecord(
+      {
+        date: selectedDate,
+        punchIn: {
+          timestamp: toLocalIso(selectedDate, punchIn),
+        },
+        punchOut: {
+          timestamp: punchOut
+            ? toLocalIso(selectedDate, punchOut)
+            : null,
+        },
+        limits: {
+          lateComingTime: lateLimit,
+          halfDayTime: dayHalfTime,
+        },
       },
-      punchOut: {
-        timestamp: punchOut
-          ? toLocalIso(selectedDate, punchOut)
-          : null,
+      {
+        lateComingTime: companyLateTime,
+        halfDayTime: companyHalfDayTime,
+        sundayLateComingTime,
+        sundayHalfDayTime,
       },
-      limits: {
-        lateComingTime: lateLimit,
-        halfDayTime: dayHalfTime,
-      },
-    });
+      selectedEmployee,
+      {
+        respectSavedLimits: true,
+      }
+    );
   }, [
     punchIn,
     punchOut,
     lateLimit,
     dayHalfTime,
     selectedDate,
+    companyLateTime,
+    companyHalfDayTime,
+    sundayLateComingTime,
+    sundayHalfDayTime,
+    selectedEmployee,
   ]);
 
   const punchOrderInvalid =

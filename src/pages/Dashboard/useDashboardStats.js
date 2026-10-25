@@ -174,6 +174,8 @@ function useDashboardStats({
   todayLeaves,
   lateComingTime,
   halfDayTime,
+  sundayLateComingTime,
+  sundayHalfDayTime,
   isHoliday = false,
 }) {
   const totalEmployees = employees.length;
@@ -408,6 +410,8 @@ function useDashboardStats({
   const settingsFallback = {
     lateComingTime,
     halfDayTime,
+    sundayLateComingTime,
+    sundayHalfDayTime,
   };
 
   attendanceList.forEach((attendance) => {
@@ -426,13 +430,19 @@ function useDashboardStats({
     const punchOutTimestamp =
       attendance?.punchOut?.timestamp;
 
+    const employee = employees.find(
+      (item) =>
+        String(item.mobileNumber) === employeeKey
+    );
+
     const {
       limits,
       isHalfDay,
       isLate,
     } = evaluateAttendanceRecord(
       attendance,
-      settingsFallback
+      settingsFallback,
+      employee
     );
 
     const latePunchIn = isPunchAfterTime(

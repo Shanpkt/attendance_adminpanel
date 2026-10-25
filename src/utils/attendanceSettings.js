@@ -1,6 +1,8 @@
 export const DEFAULT_ATTENDANCE_SETTINGS = {
   lateComingTime: "10:00",
   halfDayTime: "13:30",
+  sundayLateComingTime: "10:00",
+  sundayHalfDayTime: "13:30",
   latitude: "",
   longitude: "",
   accuracy: "",
@@ -124,19 +126,111 @@ export const isHalfDayByPunchTimes = ({
   return latePunchIn || earlyPunchOut;
 };
 
-export const getRecordDayLimits = (
-  record,
-  fallbackSettings = DEFAULT_ATTENDANCE_SETTINGS
+export const parseAttendanceDate = (value) => {
+  if (!value) {
+    return null;
+  }
+
+  const raw = String(value).trim();
+
+  if (/^\d{4}-\d{2}-\d{2}/.test(raw)) {
+    const [year, month, day] = raw
+      .slice(0, 10)
+      .split("-")
+      .map(Number);
+
+    return new Date(year, month - 1, day);
+  }
+
+  const parts = raw.split("/");
+
+  if (parts.length === 3) {
+    const [day, month, year] = parts.map(Number);
+
+    if (year && month && day) {
+      return new Date(year, month - 1, day);
+    }
+  }
+
+  return null;
+};
+
+export const isSundayDate = (value) => {
+  const date = parseAttendanceDate(value);
+
+  return Boolean(
+    date &&
+      !Number.isNaN(date.getTime()) &&
+      date.getDay() === 0
+  );
+};
+
+export const getCompanyLimitsForDate = (
+  settings = DEFAULT_ATTENDANCE_SETTINGS,
+  date
 ) => {
+  const weekdayLate =
+    settings.lateComingTime ||
+    DEFAULT_ATTENDANCE_SETTINGS.lateComingTime;
+  const weekdayHalf =
+    settings.halfDayTime ||
+    DEFAULT_ATTENDANCE_SETTINGS.halfDayTime;
+
+  if (!isSundayDate(date)) {
+    return {
+      lateComingTime: weekdayLate,
+      halfDayTime: weekdayHalf,
+    };
+  }
+
   return {
     lateComingTime:
-      record?.limits?.lateComingTime ||
-      fallbackSettings.lateComingTime ||
-      DEFAULT_ATTENDANCE_SETTINGS.lateComingTime,
+      settings.sundayLateComingTime || weekdayLate,
     halfDayTime:
-      record?.limits?.halfDayTime ||
-      fallbackSettings.halfDayTime ||
-      DEFAULT_ATTENDANCE_SETTINGS.halfDayTime,
+      settings.sundayHalfDayTime || weekdayHalf,
+  };
+};
+
+export const getRecordDayLimits = (
+  record,
+  fallbackSettings = DEFAULT_ATTENDANCE_SETTINGS,
+  employee,
+  options = {}
+) => {
+  const companyLimits = getCompanyLimitsForDate(
+    fallbackSettings,
+    record?.date
+  );
+
+  const savedLate = record?.limits?.lateComingTime;
+  const savedHalf = record?.limits?.halfDayTime;
+
+  if (
+    options.respectSavedLimits &&
+    (savedLate || savedHalf)
+  ) {
+    return {
+      lateComingTime: savedLate || companyLimits.lateComingTime,
+      halfDayTime: savedHalf || companyLimits.halfDayTime,
+    };
+  }
+
+  if (isSundayDate(record?.date)) {
+    return {
+      lateComingTime:
+        employee?.lateComingTime ||
+        companyLimits.lateComingTime,
+      halfDayTime:
+        employee?.halfDayTime ||
+        companyLimits.halfDayTime,
+    };
+  }
+
+  return {
+    lateComingTime:
+      savedLate || companyLimits.lateComingTime,
+    halfDayTime:
+      savedHalf || companyLimits.halfDayTime,
   };
 };
 
@@ -159,7 +253,9 @@ export const getPunchOutTimestampFromRecord = (
 
 export const evaluateAttendanceRecord = (
   record,
-  fallbackSettings = DEFAULT_ATTENDANCE_SETTINGS
+  fallbackSettings = DEFAULT_ATTENDANCE_SETTINGS,
+  employee,
+  options
 ) => {
   const hasSavedLimits = Boolean(
     record?.limits?.lateComingTime ||
@@ -168,7 +264,9 @@ export const evaluateAttendanceRecord = (
 
   const limits = getRecordDayLimits(
     record,
-    fallbackSettings
+    fallbackSettings,
+    employee,
+    options
   );
 
   const punchInTimestamp =
@@ -203,7 +301,10 @@ export const evaluateAttendanceRecord = (
     (typeof record.flags.isLate === "boolean" ||
       typeof record.flags.isHalfDay === "boolean");
 
-  if (hasSavedFlags) {
+  if (
+    hasSavedFlags &&
+    !isSundayDate(record?.date)
+  ) {
     const isHalfDay = Boolean(
       record.flags.isHalfDay
     );
@@ -277,6 +378,12 @@ export const normalizeSettings = (
     halfDayTime:
       data.halfDayTime ||
       DEFAULT_ATTENDANCE_SETTINGS.halfDayTime,
+    sundayLateComingTime:
+      data.sundayLateComingTime ||
+      DEFAULT_ATTENDANCE_SETTINGS.sundayLateComingTime,
+    sundayHalfDayTime:
+      data.sundayHalfDayTime ||
+      DEFAULT_ATTENDANCE_SETTINGS.sundayHalfDayTime,
     latitude: toSettingNumber(
       data.latitude
     ),
@@ -341,6 +448,9 @@ export const toSettingsPayload = (
   return {
     lateComingTime: settings.lateComingTime,
     halfDayTime: settings.halfDayTime,
+    sundayLateComingTime:
+      settings.sundayLateComingTime,
+    sundayHalfDayTime: settings.sundayHalfDayTime,
     latitude,
     longitude,
     accuracy: toNumberOrNull(

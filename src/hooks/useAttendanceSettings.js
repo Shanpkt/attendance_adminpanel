@@ -119,6 +119,10 @@ function useAttendanceSettings() {
       settings.lateComingTime,
     halfDayTime:
       settings.halfDayTime,
+    sundayLateComingTime:
+      settings.sundayLateComingTime,
+    sundayHalfDayTime:
+      settings.sundayHalfDayTime,
     latitude: settings.latitude,
     longitude: settings.longitude,
     accuracy: settings.accuracy,

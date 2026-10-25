@@ -38,6 +38,8 @@ import {
 import {
   evaluateAttendanceRecord,
   formatTimeLabel,
+  getCompanyLimitsForDate,
+  isSundayDate,
 } from "../../utils/attendanceSettings";
 
 const getPunchSelfieUrl = (punch) => {
@@ -204,7 +206,16 @@ function Attendance() {
   const {
     lateComingTime,
     halfDayTime,
+    sundayLateComingTime,
+    sundayHalfDayTime,
   } = useAttendanceSettings();
+
+  const limitSettings = {
+    lateComingTime,
+    halfDayTime,
+    sundayLateComingTime,
+    sundayHalfDayTime,
+  };
 
   // ====================================================
   // DATE
@@ -400,20 +411,16 @@ function Attendance() {
   const isHalfDayAttendance = (attendance) => {
     return evaluateAttendanceRecord(
       attendance,
-      {
-        lateComingTime,
-        halfDayTime,
-      }
+      limitSettings,
+      getEmployee(attendance.mobileNumber)
     ).isHalfDay;
   };
 
   const isLateAttendance = (attendance) => {
     return evaluateAttendanceRecord(
       attendance,
-      {
-        lateComingTime,
-        halfDayTime,
-      }
+      limitSettings,
+      getEmployee(attendance.mobileNumber)
     ).isLate;
   };
 
@@ -560,8 +567,24 @@ function Attendance() {
       isHalfDayAttendance(attendance)
     );
 
+  const companyLimitsForDay = getCompanyLimitsForDate(
+    limitSettings,
+    selectedDate
+  );
+
   // Day limits from attendance response (first record that has saved limits)
   const dayLimitsFromResponse = (() => {
+    if (isSundayDate(selectedDate)) {
+      return {
+        lateComingTime:
+          companyLimitsForDay.lateComingTime,
+        halfDayTime:
+          companyLimitsForDay.halfDayTime,
+        fromRecord: false,
+        sunday: true,
+      };
+    }
+
     for (const attendance of filteredAttendance) {
       if (
         attendance?.limits?.lateComingTime ||
@@ -896,10 +919,8 @@ function Attendance() {
 
     const evaluation = evaluateAttendanceRecord(
       attendance,
-      {
-        lateComingTime,
-        halfDayTime,
-      }
+      limitSettings,
+      employee
     );
 
     const isHalfDayPunch = evaluation.isHalfDay;
@@ -1277,9 +1298,11 @@ function Attendance() {
               </strong>
             </span>
             <span className="attendance-limits-banner__source">
-              {dayLimitsFromResponse.fromRecord
-                ? "From attendance records"
-                : "From current settings"}
+              {dayLimitsFromResponse.sunday
+                ? "Sunday settings"
+                : dayLimitsFromResponse.fromRecord
+                  ? "From attendance records"
+                  : "From current settings"}
             </span>
           </div>
         )}

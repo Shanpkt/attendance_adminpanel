@@ -32,7 +32,8 @@
   margin-bottom: 20px;
 }
 
-.settings-card--gps {
+.settings-card--gps,
+.settings-card--sunday {
   grid-column: 1 / -1;
 }
 
@@ -79,6 +80,21 @@
 .settings-card--leave .settings-card__icon {
   background: #eff6ff;
   color: #2563eb;
+}
+
+.settings-card--sunday .settings-card__icon {
+  background: #f5f3ff;
+  color: #7c3aed;
+}
+
+.settings-sunday-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 220px));
+  gap: 16px;
+
+  input[type="time"] {
+    max-width: none;
+  }
 }
 
 .settings-card--gps .settings-card__icon {
@@ -388,8 +404,9 @@
     grid-template-columns: 1fr;
   }
 
-  .settings-gps-fields {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .settings-gps-fields,
+  .settings-sunday-fields {
+    grid-template-columns: 1fr;
   }
 
   .settings-gps-tolerance {

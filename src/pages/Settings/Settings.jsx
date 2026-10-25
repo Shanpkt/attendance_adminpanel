@@ -7,6 +7,7 @@ import React, {
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import ContrastIcon from "@mui/icons-material/Contrast";
 import EventAvailableIcon from "@mui/icons-material/EventAvailable";
+import WeekendIcon from "@mui/icons-material/Weekend";
 import MyLocationIcon from "@mui/icons-material/MyLocation";
 import PlaceIcon from "@mui/icons-material/Place";
 import StopCircleIcon from "@mui/icons-material/StopCircle";
@@ -37,6 +38,8 @@ function Settings() {
   const {
     lateComingTime,
     halfDayTime,
+    sundayLateComingTime,
+    sundayHalfDayTime,
     latitude,
     longitude,
     accuracy,
@@ -55,6 +58,12 @@ function Settings() {
 
   const [halfTime, setHalfTime] =
     useState(halfDayTime);
+
+  const [sundayLateTime, setSundayLateTime] =
+    useState(sundayLateComingTime);
+
+  const [sundayHalfTime, setSundayHalfTime] =
+    useState(sundayHalfDayTime);
 
   const [gpsLatitude, setGpsLatitude] =
     useState(latitude);
@@ -94,6 +103,8 @@ function Settings() {
   useEffect(() => {
     setLateTime(lateComingTime);
     setHalfTime(halfDayTime);
+    setSundayLateTime(sundayLateComingTime);
+    setSundayHalfTime(sundayHalfDayTime);
     setKeepGpsTolerance(gpsTolerance);
     setPaidLeaveCount(paidLeaves);
 
@@ -107,6 +118,8 @@ function Settings() {
   }, [
     lateComingTime,
     halfDayTime,
+    sundayLateComingTime,
+    sundayHalfDayTime,
     latitude,
     longitude,
     accuracy,
@@ -129,6 +142,10 @@ function Settings() {
   const hasInvalidOrder =
     timeToMinutes(halfTime) <=
     timeToMinutes(lateTime);
+
+  const hasInvalidSundayOrder =
+    timeToMinutes(sundayHalfTime) <=
+    timeToMinutes(sundayLateTime);
 
   const hasInvalidGps = !isValidGpsSettings({
     latitude: gpsLatitude,
@@ -256,6 +273,8 @@ function Settings() {
       await saveSettings({
         lateComingTime: lateTime,
         halfDayTime: halfTime,
+        sundayLateComingTime: sundayLateTime,
+        sundayHalfDayTime: sundayHalfTime,
         latitude: gpsLatitude,
         longitude: gpsLongitude,
         accuracy: gpsAccuracy,
@@ -286,6 +305,14 @@ function Settings() {
 
     setHalfTime(
       DEFAULT_ATTENDANCE_SETTINGS.halfDayTime
+    );
+
+    setSundayLateTime(
+      DEFAULT_ATTENDANCE_SETTINGS.sundayLateComingTime
+    );
+
+    setSundayHalfTime(
+      DEFAULT_ATTENDANCE_SETTINGS.sundayHalfDayTime
     );
 
     setGpsLatitude(
@@ -333,10 +360,10 @@ function Settings() {
           </h1>
 
           <p>
-            Set late coming, half day, paid
-            leave, and GPS location. These
-            save to the settings module in
-            the backend.
+            Set late coming, half day, Sunday
+            limits, paid leave, and GPS
+            location. These save to the
+            settings module in the backend.
           </p>
 
         </div>
@@ -441,6 +468,87 @@ function Settings() {
               Current limit:{" "}
               {formatTimeLabel(halfTime)}
             </span>
+
+          </div>
+
+        </div>
+
+        <div className="settings-card settings-card--sunday">
+
+          <div className="settings-card__icon">
+            <WeekendIcon />
+          </div>
+
+          <div className="settings-card__body">
+
+            <h2>
+              Sunday Limits
+            </h2>
+
+            <p>
+              Every Sunday, late and half day
+              are calculated with these times.
+              An employee who has their own
+              time limit still uses that limit.
+            </p>
+
+            <div className="settings-sunday-fields">
+
+              <div>
+
+                <label htmlFor="sunday-late-time">
+                  Sunday late time
+                </label>
+
+                <input
+                  id="sunday-late-time"
+                  type="time"
+                  value={sundayLateTime}
+                  disabled={loading || saving}
+                  onChange={(event) => {
+                    setSundayLateTime(
+                      event.target.value
+                    );
+                    setSaved(false);
+                    setFormError("");
+                  }}
+                />
+
+                <span className="settings-card__hint">
+                  Current limit:{" "}
+                  {formatTimeLabel(sundayLateTime)}
+                </span>
+
+              </div>
+
+              <div>
+
+                <label htmlFor="sunday-half-time">
+                  Sunday half day time
+                </label>
+
+                <input
+                  id="sunday-half-time"
+                  type="time"
+                  value={sundayHalfTime}
+                  disabled={loading || saving}
+                  onChange={(event) => {
+                    setSundayHalfTime(
+                      event.target.value
+                    );
+                    setSaved(false);
+                    setFormError("");
+                  }}
+                />
+
+                <span className="settings-card__hint">
+                  Current limit:{" "}
+                  {formatTimeLabel(sundayHalfTime)}
+                </span>
+
+              </div>
+
+            </div>
 
           </div>
 
@@ -744,6 +852,15 @@ function Settings() {
         <p className="settings-warning">
           Half day time should usually be
           later than late coming time.
+        </p>
+
+      )}
+
+      {hasInvalidSundayOrder && (
+
+        <p className="settings-warning">
+          Sunday half day time should usually
+          be later than Sunday late time.
         </p>
 
       )}

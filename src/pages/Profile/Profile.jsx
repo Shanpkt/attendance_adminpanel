@@ -712,8 +712,25 @@ function Profile() {
   const {
     lateComingTime,
     halfDayTime,
+    sundayLateComingTime,
+    sundayHalfDayTime,
     paidLeaves,
   } = useAttendanceSettings();
+
+  const limitSettings = useMemo(
+    () => ({
+      lateComingTime,
+      halfDayTime,
+      sundayLateComingTime,
+      sundayHalfDayTime,
+    }),
+    [
+      lateComingTime,
+      halfDayTime,
+      sundayLateComingTime,
+      sundayHalfDayTime,
+    ]
+  );
 
   // ==================================================
   // LATE DAYS
@@ -728,10 +745,8 @@ function Profile() {
           const { isLate } =
             evaluateAttendanceRecord(
               record,
-              {
-                lateComingTime,
-                halfDayTime,
-              }
+              limitSettings,
+              employee
             );
 
           if (!isLate) {
@@ -750,8 +765,8 @@ function Profile() {
       return lateDateKeys.size;
     }, [
       selectedMonthAttendance,
-      lateComingTime,
-      halfDayTime,
+      limitSettings,
+      employee,
     ]);
 
   const halfDayPunchDays =
@@ -763,10 +778,8 @@ function Profile() {
           const { isHalfDay } =
             evaluateAttendanceRecord(
               record,
-              {
-                lateComingTime,
-                halfDayTime,
-              }
+              limitSettings,
+              employee
             );
 
           if (!isHalfDay) {
@@ -785,8 +798,8 @@ function Profile() {
       return halfDayDateKeys.size;
     }, [
       selectedMonthAttendance,
-      lateComingTime,
-      halfDayTime,
+      limitSettings,
+      employee,
     ]);
 
   // ==================================================
@@ -1836,6 +1849,18 @@ function Profile() {
         halfDayTime={
           halfDayTime
         }
+
+        sundayLateComingTime={
+          sundayLateComingTime
+        }
+
+        sundayHalfDayTime={
+          sundayHalfDayTime
+        }
+
+        employee={
+          employee
+        }
       />
 
       {/* ================= PRESENT MODAL ================= */}
@@ -1912,6 +1937,14 @@ function Profile() {
 
           halfDayTime={
             halfDayTime
+          }
+
+          sundayLateComingTime={
+            sundayLateComingTime
+          }
+
+          sundayHalfDayTime={
+            sundayHalfDayTime
           }
 
           paidLeaves={
@@ -3054,7 +3087,16 @@ function AttendanceRecords({
   halfDayLeaveDates = new Set(),
   lateComingTime,
   halfDayTime,
+  sundayLateComingTime,
+  sundayHalfDayTime,
+  employee,
 }) {
+  const limitSettings = {
+    lateComingTime,
+    halfDayTime,
+    sundayLateComingTime,
+    sundayHalfDayTime,
+  };
   const dayLimitsFromResponse = (() => {
     for (const record of attendance) {
       if (
@@ -3082,19 +3124,21 @@ function AttendanceRecords({
 
   const lateCount = attendance.filter(
     (record) =>
-      evaluateAttendanceRecord(record, {
-        lateComingTime,
-        halfDayTime,
-      }).isLate
+      evaluateAttendanceRecord(
+        record,
+        limitSettings,
+        employee
+      ).isLate
   ).length;
 
   const halfDayCount = attendance.filter(
     (record) => {
       const evaluation =
-        evaluateAttendanceRecord(record, {
-          lateComingTime,
-          halfDayTime,
-        });
+        evaluateAttendanceRecord(
+          record,
+          limitSettings,
+          employee
+        );
 
       return (
         evaluation.isHalfDay ||
@@ -3243,10 +3287,8 @@ function AttendanceRecords({
               const evaluation =
                 evaluateAttendanceRecord(
                   record,
-                  {
-                    lateComingTime,
-                    halfDayTime,
-                  }
+                  limitSettings,
+                  employee
                 );
 
               const isHalfDayPunch =
@@ -3740,6 +3782,8 @@ function SalaryCalculationModal({
   leaves = [],
   lateComingTime,
   halfDayTime,
+  sundayLateComingTime,
+  sundayHalfDayTime,
   paidLeaves = 0,
   onClose,
 }) {
@@ -3780,6 +3824,9 @@ function SalaryCalculationModal({
         leaves,
         lateComingTime,
         halfDayTime,
+        sundayLateComingTime,
+        sundayHalfDayTime,
+        employee,
       }),
     [
       fromDate,
@@ -3788,6 +3835,9 @@ function SalaryCalculationModal({
       leaves,
       lateComingTime,
       halfDayTime,
+      sundayLateComingTime,
+      sundayHalfDayTime,
+      employee,
     ]
   );
 
@@ -6008,6 +6058,9 @@ function calculateSalaryRange({
   leaves = [],
   lateComingTime,
   halfDayTime,
+  sundayLateComingTime,
+  sundayHalfDayTime,
+  employee,
 }) {
   const today = getTodayDateKey();
 
@@ -6070,10 +6123,16 @@ function calculateSalaryRange({
     presentKeys.add(dateKey);
 
     const { isLate, isHalfDay } =
-      evaluateAttendanceRecord(record, {
-        lateComingTime,
-        halfDayTime,
-      });
+      evaluateAttendanceRecord(
+        record,
+        {
+          lateComingTime,
+          halfDayTime,
+          sundayLateComingTime,
+          sundayHalfDayTime,
+        },
+        employee
+      );
 
     if (isLate) {
       lateKeys.add(dateKey);
