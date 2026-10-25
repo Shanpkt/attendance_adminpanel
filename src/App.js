@@ -29,6 +29,9 @@ import Holidays
 import CleanupDrive
   from "./pages/CleanupDrive/CleanupDrive";
 
+import PunchEdit
+  from "./pages/PunchEdit/PunchEdit";
+
 
 function App() {
 
@@ -100,6 +103,13 @@ function App() {
             path="/cleanup-drive"
             element={
               <CleanupDrive />
+            }
+          />
+
+          <Route
+            path="/punch-edit"
+            element={
+              <PunchEdit />
             }
           />
 

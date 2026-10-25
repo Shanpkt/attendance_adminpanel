@@ -29,6 +29,11 @@ const menuItems = [
     path: "/holidays",
   },
   {
+    label: "Punch Edit",
+    icon: "✎",
+    path: "/punch-edit",
+  },
+  {
     label: "Settings",
     icon: "⚙",
     path: "/settings",
