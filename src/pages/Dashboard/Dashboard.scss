@@ -39,6 +39,220 @@
   gap: 10px;
 }
 
+.feature-tour-open {
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid #dbe2ea;
+  border-radius: 8px;
+  background: #eef6ff;
+  color: #1b6fe8;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.feature-tour {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(12, 22, 38, 0.45);
+}
+
+.feature-tour--anchored {
+  align-items: flex-end;
+  background: rgba(12, 22, 38, 0.28);
+}
+
+.feature-tour__card {
+  width: 100%;
+  max-width: 440px;
+  padding: 22px 22px 18px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.22);
+}
+
+.feature-tour__kicker {
+  margin: 0 0 8px;
+  color: #1b6fe8;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.feature-tour__card h2 {
+  margin: 0 0 8px;
+  color: #1f2937;
+  font-size: 22px;
+}
+
+.feature-tour__card p {
+  margin: 0;
+  color: #4b5563;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.feature-tour__dots {
+  display: flex;
+  gap: 6px;
+  margin-top: 18px;
+}
+
+.feature-tour__dots span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #dbe2ea;
+}
+
+.feature-tour__dots span.is-active {
+  background: #238aff;
+}
+
+.feature-tour__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.feature-tour__back,
+.feature-tour__next {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.feature-tour__back {
+  background: #eef1f6;
+  color: #334155;
+}
+
+.feature-tour__next {
+  background: #238aff;
+  color: #fff;
+}
+
+.feature-tour__phone {
+  position: relative;
+  margin-top: 16px;
+  padding: 14px;
+  border-radius: 14px;
+  background: #f4f7fb;
+}
+
+.feature-tour__phone > span {
+  display: block;
+  margin-bottom: 10px;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.feature-tour__phone-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 10px;
+  background: #238aff;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.guide-hand {
+  position: absolute;
+  right: -8px;
+  bottom: -28px;
+  width: 42px;
+  height: 42px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.guide-hand__pointer {
+  position: absolute;
+  left: 4px;
+  top: 0;
+  font-size: 30px;
+  line-height: 1;
+  animation: guide-hand-tap 0.9s ease-in-out infinite;
+  filter: drop-shadow(0 4px 4px rgba(15, 23, 42, 0.25));
+}
+
+.guide-hand__ring {
+  position: absolute;
+  left: 8px;
+  top: 6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid #238aff;
+  animation: guide-ring 0.9s ease-out infinite;
+}
+
+@keyframes guide-hand-tap {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(-16deg);
+  }
+
+  45% {
+    transform: translate(-2px, 7px) rotate(-4deg);
+  }
+}
+
+@keyframes guide-ring {
+  0% {
+    opacity: 0.8;
+    transform: scale(0.6);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.8);
+  }
+}
+
+.access-bell.is-guiding {
+  z-index: 1300;
+  pointer-events: none;
+}
+
+.access-bell__button,
+.access-bell__radios label,
+.access-bell__reject {
+  position: relative;
+}
+
+.access-bell .is-guided {
+  border-radius: 8px;
+  box-shadow: 0 0 0 3px #fff, 0 0 0 6px #238aff;
+  animation: guide-target 1.1s ease-in-out infinite;
+}
+
+@keyframes guide-target {
+  0%,
+  100% {
+    box-shadow: 0 0 0 3px #fff, 0 0 0 6px #238aff;
+  }
+
+  50% {
+    box-shadow: 0 0 0 3px #fff, 0 0 0 9px rgba(35, 138, 255, 0.45);
+  }
+}
+
 .access-bell {
   position: relative;
 
@@ -78,6 +292,10 @@
     font-size: 11px;
     font-weight: 700;
     line-height: 18px;
+  }
+
+  &__backdrop {
+    display: none;
   }
 
   &__panel {
@@ -1382,6 +1600,49 @@
 
   .dashboard__actions {
     width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .feature-tour-open {
+    background: #fff;
+  }
+
+  .access-bell__backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 1390;
+    border: 0;
+    padding: 0;
+    background: rgba(12, 22, 38, 0.45);
+  }
+
+  .access-bell__panel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    right: auto;
+    transform: translate(-50%, -50%);
+    width: calc(100vw - 32px);
+    max-width: 420px;
+    max-height: min(72vh, 520px);
+    z-index: 1400;
+  }
+
+  .access-bell__item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .access-bell__actions {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .access-bell__radios {
+    grid-auto-flow: column;
+    gap: 12px;
   }
 
   .report-button {

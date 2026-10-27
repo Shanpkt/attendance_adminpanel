@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 
 import { EMPLOYEES_API } from "../../api";
+import { GuideHand } from "./FeatureTour";
 
 const formatRequestedAt = (value) => {
   if (!value) {
@@ -23,7 +24,7 @@ const formatRequestedAt = (value) => {
   });
 };
 
-function MonthlyAccessBell() {
+function MonthlyAccessBell({ guideTarget = null }) {
   const [open, setOpen] = useState(false);
   const [requests, setRequests] = useState([]);
   const [savingId, setSavingId] = useState("");
@@ -53,6 +54,17 @@ function MonthlyAccessBell() {
 
     return () => clearInterval(timer);
   }, [loadRequests]);
+
+  useEffect(() => {
+    if (
+      guideTarget === "bell" ||
+      guideTarget === "enable" ||
+      guideTarget === "disable" ||
+      guideTarget === "delete"
+    ) {
+      setOpen(true);
+    }
+  }, [guideTarget]);
 
   const pendingCount = requests.filter(
     (employee) =>
@@ -100,11 +112,33 @@ function MonthlyAccessBell() {
     }
   };
 
+  const visibleRequests =
+    requests.length > 0
+      ? requests
+      : guideTarget
+        ? [
+            {
+              _id: "guide-sample",
+              name: "Sample employee",
+              mobileNumber: "9876543210",
+              monthlyAttendanceAccess: "requested",
+              monthlyAttendanceRequestedAt: new Date(),
+              sample: true,
+            },
+          ]
+        : [];
+
   return (
-    <div className="access-bell">
+    <div
+      className={`access-bell${
+        guideTarget ? " is-guiding" : ""
+      }`}
+    >
       <button
         type="button"
-        className="access-bell__button"
+        className={`access-bell__button${
+          guideTarget === "bell" ? " is-guided" : ""
+        }`}
         aria-label="Monthly attendance requests"
         onClick={() => setOpen((current) => !current)}
       >
@@ -132,7 +166,17 @@ function MonthlyAccessBell() {
             {pendingCount}
           </span>
         )}
+        {guideTarget === "bell" && <GuideHand />}
       </button>
+
+      {open && !guideTarget && (
+        <button
+          type="button"
+          className="access-bell__backdrop"
+          aria-label="Close requests"
+          onClick={() => setOpen(false)}
+        />
+      )}
 
       {open && (
         <div className="access-bell__panel">
@@ -145,13 +189,14 @@ function MonthlyAccessBell() {
             <p className="access-bell__error">{error}</p>
           )}
 
-          {requests.length === 0 ? (
+          {visibleRequests.length === 0 ? (
             <p className="access-bell__empty">
               No monthly attendance requests.
             </p>
           ) : (
             <div className="access-bell__list">
-              {requests.map((employee) => {
+              {visibleRequests.map((employee, index) => {
+                const showHand = index === 0;
                 const enabled =
                   employee.monthlyAttendanceAccess ===
                   "enabled";
@@ -180,13 +225,20 @@ function MonthlyAccessBell() {
                         role="radiogroup"
                         aria-label={`Monthly attendance for ${employee.name}`}
                       >
-                        <label>
+                        <label
+                          className={
+                            showHand && guideTarget === "enable"
+                              ? "is-guided"
+                              : ""
+                          }
+                        >
                           <input
                             type="radio"
                             name={groupName}
                             checked={enabled}
                             disabled={
-                              savingId === employee._id
+                              savingId === employee._id ||
+                              employee.sample
                             }
                             onChange={() =>
                               updateAccess(
@@ -196,8 +248,19 @@ function MonthlyAccessBell() {
                             }
                           />
                           Enable
+                          {showHand &&
+                            guideTarget === "enable" && (
+                            <GuideHand />
+                          )}
                         </label>
-                        <label>
+                        <label
+                          className={
+                            showHand &&
+                            guideTarget === "disable"
+                              ? "is-guided"
+                              : ""
+                          }
+                        >
                           <input
                             type="radio"
                             name={groupName}
@@ -206,7 +269,8 @@ function MonthlyAccessBell() {
                               "disabled"
                             }
                             disabled={
-                              savingId === employee._id
+                              savingId === employee._id ||
+                              employee.sample
                             }
                             onChange={() =>
                               updateAccess(
@@ -216,20 +280,33 @@ function MonthlyAccessBell() {
                             }
                           />
                           Disable
+                          {showHand &&
+                            guideTarget === "disable" && (
+                            <GuideHand />
+                          )}
                         </label>
                       </div>
 
                       <button
                         type="button"
-                        className="access-bell__reject"
+                        className={`access-bell__reject${
+                          showHand && guideTarget === "delete"
+                            ? " is-guided"
+                            : ""
+                        }`}
                         disabled={
-                          savingId === employee._id
+                          savingId === employee._id ||
+                          employee.sample
                         }
                         onClick={() =>
                           rejectRequest(employee._id)
                         }
                       >
                         Delete
+                        {showHand &&
+                          guideTarget === "delete" && (
+                          <GuideHand />
+                        )}
                       </button>
                     </div>
                   </div>

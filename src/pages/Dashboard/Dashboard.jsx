@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import EmployeePhoto from "../../components/EmployeePhoto";
 import useAttendanceSettings from "../../hooks/useAttendanceSettings";
@@ -8,6 +8,9 @@ import downloadAttendancePdf from "./downloadAttendancePdf";
 import StatsSection from "./StatsSection";
 import AttendanceList from "./AttendanceList";
 import MonthlyAccessBell from "./MonthlyAccessBell";
+import FeatureTour, {
+  hasSeenFeatureTour,
+} from "./FeatureTour";
 
 import "./Dashboard.scss";
 
@@ -58,6 +61,15 @@ function Dashboard() {
     showPendingPunchOut,
     setShowPendingPunchOut,
   ] = useState(false);
+  const [showFeatureTour, setShowFeatureTour] =
+    useState(false);
+  const [tourStep, setTourStep] = useState(0);
+
+  useEffect(() => {
+    if (!hasSeenFeatureTour()) {
+      setShowFeatureTour(true);
+    }
+  }, []);
 
   const handleDownloadPdf = () => {
     downloadAttendancePdf({
@@ -81,7 +93,27 @@ function Dashboard() {
         </div>
 
         <div className="dashboard__actions">
-          <MonthlyAccessBell />
+          <button
+            type="button"
+            className="feature-tour-open"
+            onClick={() => setShowFeatureTour(true)}
+          >
+            What&apos;s new
+          </button>
+          <MonthlyAccessBell
+            guideTarget={
+              showFeatureTour
+                ? [
+                    null,
+                    null,
+                    "bell",
+                    "enable",
+                    "disable",
+                    "delete",
+                  ][tourStep] || null
+                : null
+            }
+          />
           <button
             className="report-button"
             onClick={handleDownloadPdf}
@@ -211,6 +243,16 @@ function Dashboard() {
         onDownloadPdf={handleDownloadPdf}
         getEmployeeName={getEmployeeName}
       />
+
+      {showFeatureTour && (
+        <FeatureTour
+          onStepChange={setTourStep}
+          onClose={() => {
+            setTourStep(0);
+            setShowFeatureTour(false);
+          }}
+        />
+      )}
     </div>
   );
 }
