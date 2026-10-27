@@ -46,6 +46,7 @@ function Settings() {
     tolerance,
     punchAccuracy,
     gpsTolerance,
+    showMonthlyAttendance,
     paidLeaves,
     loading,
     saving,
@@ -83,6 +84,11 @@ function Settings() {
   const [keepGpsTolerance, setKeepGpsTolerance] =
     useState(gpsTolerance);
 
+  const [
+    showMonthlyButton,
+    setShowMonthlyButton,
+  ] = useState(showMonthlyAttendance);
+
   const [paidLeaveCount, setPaidLeaveCount] =
     useState(paidLeaves);
 
@@ -106,6 +112,7 @@ function Settings() {
     setSundayLateTime(sundayLateComingTime);
     setSundayHalfTime(sundayHalfDayTime);
     setKeepGpsTolerance(gpsTolerance);
+    setShowMonthlyButton(showMonthlyAttendance);
     setPaidLeaveCount(paidLeaves);
 
     if (!scanningRef.current) {
@@ -126,6 +133,7 @@ function Settings() {
     tolerance,
     punchAccuracy,
     gpsTolerance,
+    showMonthlyAttendance,
     paidLeaves,
   ]);
 
@@ -281,6 +289,7 @@ function Settings() {
         tolerance: gpsToleranceMeters,
         punchAccuracy: punchAccuracyMeters,
         gpsTolerance: keepGpsTolerance,
+        showMonthlyAttendance: showMonthlyButton,
         paidLeaves: paidLeaveCount,
       });
 
@@ -339,6 +348,10 @@ function Settings() {
       DEFAULT_ATTENDANCE_SETTINGS.gpsTolerance
     );
 
+    setShowMonthlyButton(
+      DEFAULT_ATTENDANCE_SETTINGS.showMonthlyAttendance
+    );
+
     setPaidLeaveCount(
       DEFAULT_ATTENDANCE_SETTINGS.paidLeaves
     );
@@ -383,6 +396,67 @@ function Settings() {
       )}
 
       <section className="settings-grid">
+
+        <div className="settings-card">
+
+          <div className="settings-card__body">
+
+            <h2>
+              Monthly attendance button
+            </h2>
+
+            <p>
+              Disable hides Show monthly
+              attendance in the punch app.
+              Enable shows that button.
+              Disable is the default.
+            </p>
+
+            <div
+              className="settings-radios"
+              role="radiogroup"
+              aria-label="Show monthly attendance button"
+            >
+              <label>
+                <input
+                  type="radio"
+                  name="showMonthlyAttendance"
+                  checked={!showMonthlyButton}
+                  disabled={loading || saving}
+                  onChange={() => {
+                    setShowMonthlyButton(false);
+                    setSaved(false);
+                    setFormError("");
+                  }}
+                />
+                Disable
+              </label>
+
+              <label>
+                <input
+                  type="radio"
+                  name="showMonthlyAttendance"
+                  checked={showMonthlyButton}
+                  disabled={loading || saving}
+                  onChange={() => {
+                    setShowMonthlyButton(true);
+                    setSaved(false);
+                    setFormError("");
+                  }}
+                />
+                Enable
+              </label>
+            </div>
+
+            <span className="settings-card__hint">
+              {showMonthlyButton
+                ? "Punch app shows the monthly attendance button."
+                : "Punch app hides the monthly attendance button."}
+            </span>
+
+          </div>
+
+        </div>
 
         <div className="settings-card settings-card--late">
 

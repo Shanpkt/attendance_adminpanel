@@ -129,6 +129,8 @@ function useAttendanceSettings() {
     tolerance: settings.tolerance,
     punchAccuracy: settings.punchAccuracy,
     gpsTolerance: settings.gpsTolerance,
+    showMonthlyAttendance:
+      settings.showMonthlyAttendance,
     paidLeaves: settings.paidLeaves,
     loading,
     saving,

@@ -9,6 +9,7 @@ export const DEFAULT_ATTENDANCE_SETTINGS = {
   tolerance: "30",
   punchAccuracy: "30",
   gpsTolerance: true,
+  showMonthlyAttendance: false,
   paidLeaves: "0",
 };
 
@@ -411,6 +412,10 @@ export const normalizeSettings = (
       data.gpsTolerance,
       DEFAULT_ATTENDANCE_SETTINGS.gpsTolerance
     ),
+    showMonthlyAttendance: toSettingBoolean(
+      data.showMonthlyAttendance,
+      DEFAULT_ATTENDANCE_SETTINGS.showMonthlyAttendance
+    ),
     paidLeaves: toSettingNumber(
       data.paidLeaves !== undefined &&
         data.paidLeaves !== null &&
@@ -469,6 +474,9 @@ export const toSettingsPayload = (
         : DEFAULT_ATTENDANCE_SETTINGS.punchAccuracy
     ),
     gpsTolerance: Boolean(settings.gpsTolerance),
+    showMonthlyAttendance: Boolean(
+      settings.showMonthlyAttendance
+    ),
     paidLeaves: Number(
       settings.paidLeaves !== ""
         ? settings.paidLeaves
