@@ -7,6 +7,7 @@ import useDashboardStats from "./useDashboardStats";
 import downloadAttendancePdf from "./downloadAttendancePdf";
 import StatsSection from "./StatsSection";
 import AttendanceList from "./AttendanceList";
+import MonthlyAccessBell from "./MonthlyAccessBell";
 
 import "./Dashboard.scss";
 
@@ -80,6 +81,7 @@ function Dashboard() {
         </div>
 
         <div className="dashboard__actions">
+          <MonthlyAccessBell />
           <button
             className="report-button"
             onClick={handleDownloadPdf}

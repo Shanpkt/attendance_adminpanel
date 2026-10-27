@@ -39,6 +39,150 @@
   gap: 10px;
 }
 
+.access-bell {
+  position: relative;
+
+  &__button {
+    position: relative;
+    width: 42px;
+    height: 42px;
+    border: 1px solid #dbe2ea;
+    border-radius: 8px;
+    background: #fff;
+    color: #1f2937;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:hover {
+      background: #f3f6fa;
+    }
+  }
+
+  &__icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  &__badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: #e53935;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 18px;
+  }
+
+  &__panel {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: min(380px, 80vw);
+    max-height: 420px;
+    overflow: auto;
+    background: #fff;
+    border: 1px solid #e8edf3;
+    border-radius: 14px;
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.16);
+    z-index: 20;
+    padding: 12px;
+  }
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+
+    span {
+      color: #64748b;
+      font-size: 12px;
+    }
+  }
+
+  &__empty,
+  &__error {
+    margin: 8px 0;
+    color: #64748b;
+    font-size: 13px;
+  }
+
+  &__error {
+    color: #b42318;
+  }
+
+  &__list {
+    display: grid;
+    gap: 8px;
+  }
+
+  &__item {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px;
+    border-radius: 10px;
+    background: #f7f9fc;
+
+    strong,
+    span,
+    small {
+      display: block;
+    }
+
+    span,
+    small {
+      color: #64748b;
+      font-size: 12px;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+  }
+
+  &__reject {
+    border: none;
+    border-radius: 8px;
+    padding: 6px 10px;
+    background: #ffecec;
+    color: #b42318;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  &__radios {
+    display: grid;
+    gap: 6px;
+    align-content: center;
+    font-size: 13px;
+    font-weight: 600;
+
+    label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+  }
+}
+
 .dashboard-holiday-banner {
   margin: -8px 0 18px;
   padding: 12px 14px;
