@@ -1,4 +1,9 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
@@ -87,7 +92,7 @@ function Employees() {
   // FETCH EMPLOYEES
   // ========================================
 
-  const fetchEmployees = async () => {
+  const fetchEmployees = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
@@ -114,7 +119,7 @@ function Employees() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [mode]);
 
   // ========================================
   // LOAD EMPLOYEES
@@ -122,7 +127,7 @@ function Employees() {
 
   useEffect(() => {
     fetchEmployees();
-  }, [mode]);
+  }, [fetchEmployees]);
 
   // ========================================
   // FILTER EMPLOYEES
