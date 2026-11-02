@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 
 import EmployeePhoto from "../../components/EmployeePhoto";
+import { useAdminMode } from "../../context/AdminModeContext";
 import useAttendanceSettings from "../../hooks/useAttendanceSettings";
 import useDashboardData from "./useDashboardData";
 import useDashboardStats from "./useDashboardStats";
@@ -15,12 +16,13 @@ import FeatureTour, {
 import "./Dashboard.scss";
 
 function Dashboard() {
+  const { mode } = useAdminMode();
   const {
     lateComingTime,
     halfDayTime,
     sundayLateComingTime,
     sundayHalfDayTime,
-  } = useAttendanceSettings();
+  } = useAttendanceSettings(mode);
 
   const {
     attendanceList,

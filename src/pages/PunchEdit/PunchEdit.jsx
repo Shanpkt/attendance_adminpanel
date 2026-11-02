@@ -15,7 +15,9 @@ import {
   EMPLOYEES_API,
   employeeByIdApi,
 } from "../../api";
+import { useAdminMode } from "../../context/AdminModeContext";
 import useAttendanceSettings from "../../hooks/useAttendanceSettings";
+import { filterEmployeesByWorkspace } from "../../utils/adminMode";
 import {
   evaluateAttendanceRecord,
   formatTimeLabel,
@@ -166,12 +168,13 @@ const getEmployeeMobile = (employee) => {
 };
 
 function PunchEdit() {
+  const { mode } = useAdminMode();
   const {
     lateComingTime: companyLateTime,
     halfDayTime: companyHalfDayTime,
     sundayLateComingTime,
     sundayHalfDayTime,
-  } = useAttendanceSettings();
+  } = useAttendanceSettings(mode);
 
   const [employees, setEmployees] = useState([]);
   const [records, setRecords] = useState([]);
@@ -212,12 +215,18 @@ function PunchEdit() {
         setLoadingEmployees(true);
         setError("");
 
-        const response = await axios.get(EMPLOYEES_API);
-        const data = Array.isArray(response.data?.data)
-          ? response.data.data
-          : [];
+        const response = await axios.get(EMPLOYEES_API, {
+          params: { workspace: mode },
+        });
+        const data = filterEmployeesByWorkspace(
+          Array.isArray(response.data?.data)
+            ? response.data.data
+            : [],
+          mode
+        );
 
         setEmployees(data);
+        setSelectedId("");
       } catch (fetchError) {
         console.error(fetchError);
         setError("Unable to fetch employees.");
@@ -227,7 +236,7 @@ function PunchEdit() {
     };
 
     fetchEmployees();
-  }, []);
+  }, [mode]);
 
   const selectedEmployee = useMemo(() => {
     return (

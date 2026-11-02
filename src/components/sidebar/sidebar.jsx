@@ -38,6 +38,11 @@ const menuItems = [
     icon: "⚙",
     path: "/settings",
   },
+  {
+    label: "Company Settings",
+    icon: "⚒",
+    path: "/company-settings",
+  },
 ];
 
 const storageItems = [
@@ -46,9 +51,40 @@ const storageItems = [
     icon: "♻",
     path: "/cleanup-drive",
   },
+  {
+    label: "Company Cleanup Drive",
+    icon: "♻",
+    path: "/company-cleanup-drive",
+  },
 ];
 
-function Sidebar({ isOpen, onClose, onLogout }) {
+function Sidebar({ isOpen, onClose, onLogout, mode = "shop", onModeChange }) {
+  const brandName = mode === "company" ? "Company Attendance" : "Shop Attendance";
+
+  const visibleMenuItems = menuItems.filter((item) => {
+    if (item.path === "/settings") {
+      return mode !== "company";
+    }
+
+    if (item.path === "/company-settings") {
+      return mode === "company";
+    }
+
+    return true;
+  });
+
+  const visibleStorageItems = storageItems.filter((item) => {
+    if (item.path === "/cleanup-drive") {
+      return mode !== "company";
+    }
+
+    if (item.path === "/company-cleanup-drive") {
+      return mode === "company";
+    }
+
+    return true;
+  });
+
   return (
     <>
       {/* Overlay for mobile */}
@@ -75,7 +111,7 @@ function Sidebar({ isOpen, onClose, onLogout }) {
 
           <div className="sidebar__logo-text">
             <strong>
-              Shop Attendance
+              {brandName}
             </strong>
 
             <span>
@@ -91,6 +127,36 @@ function Sidebar({ isOpen, onClose, onLogout }) {
           >
             <CloseIcon />
           </button>
+        </div>
+
+        {/* ================================
+            MODE SWITCH
+        ================================= */}
+
+        <div className="sidebar__mode" role="radiogroup" aria-label="Admin mode">
+          <p className="sidebar__mode-label">MODE</p>
+          <div className="sidebar__mode-switch">
+            <label className="sidebar__mode-option">
+              <input
+                type="radio"
+                name="admin-mode"
+                value="shop"
+                checked={mode === "shop"}
+                onChange={() => onModeChange?.("shop")}
+              />
+              <span>Shop</span>
+            </label>
+            <label className="sidebar__mode-option">
+              <input
+                type="radio"
+                name="admin-mode"
+                value="company"
+                checked={mode === "company"}
+                onChange={() => onModeChange?.("company")}
+              />
+              <span>Company</span>
+            </label>
+          </div>
         </div>
 
         {/* ================================
@@ -123,7 +189,7 @@ function Sidebar({ isOpen, onClose, onLogout }) {
             MAIN MENU
           </p>
 
-          {menuItems.map((item) => (
+          {visibleMenuItems.map((item) => (
             <NavLink
               to={item.path}
               key={item.label}
@@ -149,7 +215,7 @@ function Sidebar({ isOpen, onClose, onLogout }) {
             STORAGE
           </p>
 
-          {storageItems.map((item) => (
+          {visibleStorageItems.map((item) => (
             <NavLink
               to={item.path}
               key={item.label}

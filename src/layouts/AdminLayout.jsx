@@ -5,6 +5,10 @@ import MenuIcon from "@mui/icons-material/Menu";
 
 import Sidebar from "../components/sidebar/sidebar";
 import LoginPopup from "../components/LoginPopup/LoginPopup";
+import {
+  AdminModeProvider,
+  useAdminMode,
+} from "../context/AdminModeContext";
 import { ADMIN_VERIFY_API } from "../api";
 import {
   clearAuthSession,
@@ -15,7 +19,8 @@ import {
 
 import "./AdminLayout.scss";
 
-function AdminLayout({ children }) {
+function AdminLayoutShell({ children }) {
+  const { mode, setMode } = useAdminMode();
   const [sidebarOpen, setSidebarOpen] =
     useState(false);
   const [checkingAuth, setCheckingAuth] =
@@ -98,18 +103,26 @@ function AdminLayout({ children }) {
     );
   }
 
+  const brandName =
+    mode === "company" ? "Company Attendance" : "Shop Attendance";
+
   return (
     <div
       className={`admin-layout${
+        mode === "company" ? " admin-layout--company" : ""
+      }${
         sidebarOpen
           ? " admin-layout--menu-open"
           : ""
       }`}
+      data-admin-mode={mode}
     >
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         onLogout={handleLogout}
+        mode={mode}
+        onModeChange={setMode}
       />
 
       <div className="admin-layout__main">
@@ -128,7 +141,7 @@ function AdminLayout({ children }) {
               ♧
             </span>
             <div>
-              <strong>Shop Attendance</strong>
+              <strong>{brandName}</strong>
               <span>Admin Panel</span>
             </div>
           </div>
@@ -156,6 +169,14 @@ function AdminLayout({ children }) {
         </main>
       </div>
     </div>
+  );
+}
+
+function AdminLayout({ children }) {
+  return (
+    <AdminModeProvider>
+      <AdminLayoutShell>{children}</AdminLayoutShell>
+    </AdminModeProvider>
   );
 }
 

@@ -19,6 +19,7 @@ import {
   EMPLOYEES_API,
   employeeByIdApi,
 } from "../../api";
+import { useAdminMode } from "../../context/AdminModeContext";
 
 // ==========================================
 // EMPTY FORM
@@ -34,6 +35,8 @@ const emptyEmployeeForm = {
 
   joiningDate: "",
 
+  workspace: "shop",
+
 };
 
 // ==========================================
@@ -46,6 +49,7 @@ function EmployeeInfoPop({
   employee,
   onEmployeeSaved,
 }) {
+  const { mode } = useAdminMode();
 
   // ========================================
   // FORM
@@ -119,6 +123,11 @@ function EmployeeInfoPop({
               )
             : "",
 
+        workspace:
+          employee.workspace === "company"
+            ? "company"
+            : "shop",
+
       });
 
       setFormError("");
@@ -132,6 +141,7 @@ function EmployeeInfoPop({
 
       setEmployeeForm({
         ...emptyEmployeeForm,
+        workspace: mode === "company" ? "company" : "shop",
       });
 
       setFormError("");
@@ -141,6 +151,7 @@ function EmployeeInfoPop({
   }, [
     open,
     employee,
+    mode,
   ]);
 
   // ========================================
@@ -304,6 +315,11 @@ function EmployeeInfoPop({
 
           joiningDate:
             employeeForm.joiningDate,
+
+          workspace:
+            employeeForm.workspace === "company"
+              ? "company"
+              : "shop",
 
         };
 
@@ -550,6 +566,44 @@ function EmployeeInfoPop({
                   shrink: true,
                 }}
               />
+
+              {/* WORKSPACE */}
+
+              <div className="employee-workspace-field">
+                <p className="employee-workspace-field__label">
+                  Workspace
+                </p>
+                <div
+                  className="employee-workspace-field__options"
+                  role="radiogroup"
+                  aria-label="Workspace"
+                >
+                  <label className="employee-workspace-option">
+                    <input
+                      type="radio"
+                      name="workspace"
+                      value="shop"
+                      checked={
+                        employeeForm.workspace === "shop"
+                      }
+                      onChange={handleFormChange}
+                    />
+                    <span>Shop</span>
+                  </label>
+                  <label className="employee-workspace-option">
+                    <input
+                      type="radio"
+                      name="workspace"
+                      value="company"
+                      checked={
+                        employeeForm.workspace === "company"
+                      }
+                      onChange={handleFormChange}
+                    />
+                    <span>Company</span>
+                  </label>
+                </div>
+              </div>
 
             </div>
 

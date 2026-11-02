@@ -23,6 +23,9 @@ import Employees
 import Settings
   from "./pages/Settings/Settings";
 
+import CompanySettings
+  from "./pages/CompanySettings/CompanySettings";
+
 import Holidays
   from "./pages/Holidays/Holidays";
 
@@ -93,6 +96,13 @@ function App() {
           />
 
           <Route
+            path="/company-settings"
+            element={
+              <CompanySettings />
+            }
+          />
+
+          <Route
             path="/holidays"
             element={
               <Holidays />
@@ -102,7 +112,14 @@ function App() {
           <Route
             path="/cleanup-drive"
             element={
-              <CleanupDrive />
+              <CleanupDrive workspace="shop" />
+            }
+          />
+
+          <Route
+            path="/company-cleanup-drive"
+            element={
+              <CleanupDrive workspace="company" />
             }
           />
 

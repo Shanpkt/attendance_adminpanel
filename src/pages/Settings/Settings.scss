@@ -3,7 +3,7 @@
   min-height: 100%;
   padding: 24px;
   box-sizing: border-box;
-  background: #f6f8fc;
+  background: var(--admin-page-bg, #f6f8fc);
 }
 
 .settings-page__header {
@@ -78,8 +78,8 @@
 }
 
 .settings-card--leave .settings-card__icon {
-  background: #eff6ff;
-  color: #2563eb;
+  background: var(--admin-info-bg, #eaf1ff);
+  color: var(--admin-info, #2563eb);
 }
 
 .settings-card--sunday .settings-card__icon {
@@ -151,7 +151,7 @@
 
   input[type="time"]:focus,
   input[type="number"]:focus {
-    border-color: #1976d2;
+    border-color: var(--admin-btn, #1976d2);
     box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.12);
   }
 }
@@ -253,7 +253,7 @@
 }
 
 .settings-switch input:checked + .settings-switch__slider {
-  background: #1976d2;
+  background: var(--admin-btn, #1976d2);
 }
 
 .settings-switch input:checked + .settings-switch__slider::after {
@@ -391,12 +391,12 @@
 
 .settings-save {
   border: 0;
-  background: #1976d2;
+  background: var(--admin-btn, #1976d2);
   color: #ffffff;
 }
 
 .settings-save:hover:not(:disabled) {
-  background: #1565c0;
+  background: var(--admin-btn-hover, #1565c0);
 }
 
 .settings-reset:hover:not(:disabled) {

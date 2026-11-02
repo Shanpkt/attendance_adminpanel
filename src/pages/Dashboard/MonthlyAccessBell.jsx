@@ -3,6 +3,8 @@ import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 
 import { EMPLOYEES_API } from "../../api";
+import { useAdminMode } from "../../context/AdminModeContext";
+import { filterEmployeesByWorkspace } from "../../utils/adminMode";
 import { GuideHand } from "./FeatureTour";
 
 const formatRequestedAt = (value) => {
@@ -25,6 +27,7 @@ const formatRequestedAt = (value) => {
 };
 
 function MonthlyAccessBell({ guideTarget = null }) {
+  const { mode } = useAdminMode();
   const [open, setOpen] = useState(false);
   const [requests, setRequests] = useState([]);
   const [savingId, setSavingId] = useState("");
@@ -33,19 +36,25 @@ function MonthlyAccessBell({ guideTarget = null }) {
   const loadRequests = useCallback(async () => {
     try {
       const response = await axios.get(
-        `${EMPLOYEES_API}/monthly-access/requests`
+        `${EMPLOYEES_API}/monthly-access/requests`,
+        {
+          params: { workspace: mode },
+        }
       );
 
       setRequests(
-        Array.isArray(response.data?.data)
-          ? response.data.data
-          : []
+        filterEmployeesByWorkspace(
+          Array.isArray(response.data?.data)
+            ? response.data.data
+            : [],
+          mode
+        )
       );
       setError("");
     } catch (loadError) {
       setError("Unable to load requests.");
     }
-  }, []);
+  }, [mode]);
 
   useEffect(() => {
     loadRequests();

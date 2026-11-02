@@ -11,6 +11,8 @@ import {
   HOLIDAYS_API,
   LEAVE_API,
 } from "../../api";
+import { useAdminMode } from "../../context/AdminModeContext";
+import { filterEmployeesByWorkspace } from "../../utils/adminMode";
 
 export const formatShortTime = (timestamp) => {
   if (!timestamp) {
@@ -53,7 +55,27 @@ const getTodayLeaveDate = () => {
   return `${year}-${month}-${day}`;
 };
 
+const matchesWorkspaceEmployee = (employees, item) => {
+  const mobile = String(item?.mobileNumber || "");
+  const employeeId = String(
+    item?.employeeId || item?.employee_id || ""
+  );
+
+  return employees.some((employee) => {
+    const employeeMobile = String(
+      employee.mobileNumber || ""
+    );
+    const id = String(employee._id || employee.id || "");
+
+    return (
+      (mobile && employeeMobile === mobile) ||
+      (employeeId && id === employeeId)
+    );
+  });
+};
+
 function useDashboardData() {
+  const { mode } = useAdminMode();
   const [attendanceList, setAttendanceList] =
     useState([]);
   const [employees, setEmployees] =
@@ -105,13 +127,26 @@ function useDashboardData() {
             }
           );
 
-        setAttendanceList(todayAttendance);
-
         const employeeResponse =
-          await axios.get(EMPLOYEES_API);
+          await axios.get(EMPLOYEES_API, {
+            params: { workspace: mode },
+          });
 
-        setEmployees(
-          employeeResponse.data.data || []
+        const workspaceEmployees =
+          filterEmployeesByWorkspace(
+            employeeResponse.data.data || [],
+            mode
+          );
+
+        setEmployees(workspaceEmployees);
+
+        setAttendanceList(
+          todayAttendance.filter((attendance) =>
+            matchesWorkspaceEmployee(
+              workspaceEmployees,
+              attendance
+            )
+          )
         );
 
         const leaveResponse =
@@ -122,8 +157,16 @@ function useDashboardData() {
             },
           });
 
+        const allLeaves =
+          leaveResponse.data.data || [];
+
         setTodayLeaves(
-          leaveResponse.data.data || []
+          allLeaves.filter((leave) =>
+            matchesWorkspaceEmployee(
+              workspaceEmployees,
+              leave
+            )
+          )
         );
 
         const holidayResponse =
@@ -151,7 +194,7 @@ function useDashboardData() {
         setRefreshing(false);
       }
     },
-    []
+    [mode]
   );
 
   useEffect(() => {

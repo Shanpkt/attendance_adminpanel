@@ -29,6 +29,7 @@ import {
 import "./Attendance.scss";
 
 import useAttendanceSettings from "../../hooks/useAttendanceSettings";
+import { useAdminMode } from "../../context/AdminModeContext";
 import {
   ATTENDANCE_API,
   EMPLOYEES_API,
@@ -39,6 +40,7 @@ import {
   evaluateAttendanceRecord,
   formatTimeLabel,
 } from "../../utils/attendanceSettings";
+import { filterEmployeesByWorkspace } from "../../utils/adminMode";
 
 const getPunchSelfieUrl = (punch) => {
   if (!punch) {
@@ -201,12 +203,13 @@ const getPunchOutTimestamp = (attendance) => {
 // ======================================================
 
 function Attendance() {
+  const { mode } = useAdminMode();
   const {
     lateComingTime,
     halfDayTime,
     sundayLateComingTime,
     sundayHalfDayTime,
-  } = useAttendanceSettings();
+  } = useAttendanceSettings(mode);
 
   const limitSettings = {
     lateComingTime,
@@ -309,7 +312,10 @@ function Attendance() {
     const fetchEmployees = async () => {
       try {
         const response = await axios.get(
-          EMPLOYEES_API
+          EMPLOYEES_API,
+          {
+            params: { workspace: mode },
+          }
         );
 
         console.log(
@@ -318,7 +324,10 @@ function Attendance() {
         );
 
         setEmployees(
-          response.data?.data || []
+          filterEmployeesByWorkspace(
+            response.data?.data || [],
+            mode
+          )
         );
       } catch (err) {
         console.error(
@@ -329,7 +338,7 @@ function Attendance() {
     };
 
     fetchEmployees();
-  }, []);
+  }, [mode]);
 
   // ====================================================
   // FETCH LEAVES FOR SELECTED DATE
@@ -458,15 +467,31 @@ function Attendance() {
   };
 
   // ====================================================
-  // FILTER ATTENDANCE BY DATE
+  // WORKSPACE EMPLOYEE MOBILES
+  // ====================================================
+
+  const workspaceMobileNumbers = new Set(
+    employees
+      .map((employee) =>
+        String(employee.mobileNumber || "")
+      )
+      .filter(Boolean)
+  );
+
+  // ====================================================
+  // FILTER ATTENDANCE BY DATE + WORKSPACE
   // ====================================================
 
   const filteredAttendance =
     attendanceData.filter((attendance) => {
+      const mobileNumber = String(
+        attendance.mobileNumber || ""
+      );
+
       return (
-        normalizeApiDate(
-          attendance.date
-        ) === selectedDate
+        normalizeApiDate(attendance.date) ===
+          selectedDate &&
+        workspaceMobileNumbers.has(mobileNumber)
       );
     });
 

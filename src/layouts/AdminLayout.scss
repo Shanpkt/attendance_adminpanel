@@ -12,8 +12,57 @@
 }
 
 .admin-layout {
+  /* Shop theme (default) */
+  --admin-primary: #1465f5;
+  --admin-primary-dark: #0d56d9;
+  --admin-sidebar-bg: #062441;
+  --admin-sidebar-hover: #12385d;
+  --admin-accent: #238aff;
+  --admin-accent-soft: #eef6ff;
+  --admin-accent-text: #1b6fe8;
+  --admin-info: #2563eb;
+  --admin-info-bg: #eaf1ff;
+  --admin-btn: #1976d2;
+  --admin-btn-hover: #1565c0;
+  --admin-avatar-bg: #dbeafe;
+  --admin-body-bg: #f5f7fb;
+  --admin-page-bg: #f6f8fc;
+  --admin-primary-shadow: rgba(20, 101, 245, 0.25);
+  --admin-indigo: #4f46e5;
+  --admin-indigo-soft: #eef2ff;
+  --admin-indigo-dark: #4338ca;
+  --admin-gradient-start: #062441;
+  --admin-gradient-end: #1465f5;
+  --admin-gradient-mid: #42a5f5;
+
   min-height: 100vh;
   background: $body-bg;
+  transition: background 0.25s ease;
+
+  &--company {
+    /* Deep brown company theme */
+    --admin-primary: #4D2A00;
+    --admin-primary-dark: #3a2000;
+    --admin-sidebar-bg: #2a1700;
+    --admin-sidebar-hover: #3d2200;
+    --admin-accent: #6b3d0a;
+    --admin-accent-soft: #f7f1ea;
+    --admin-accent-text: #4D2A00;
+    --admin-info: #4D2A00;
+    --admin-info-bg: #f3ebe3;
+    --admin-btn: #4D2A00;
+    --admin-btn-hover: #3a2000;
+    --admin-avatar-bg: #eadfce;
+    --admin-body-bg: #f8f4ef;
+    --admin-page-bg: #f8f4ef;
+    --admin-primary-shadow: rgba(77, 42, 0, 0.28);
+    --admin-indigo: #4D2A00;
+    --admin-indigo-soft: #f3ebe3;
+    --admin-indigo-dark: #3a2000;
+    --admin-gradient-start: #2a1700;
+    --admin-gradient-end: #4D2A00;
+    --admin-gradient-mid: #7a4a18;
+  }
 
   &__main {
     min-height: 100vh;
@@ -91,7 +140,7 @@
     justify-content: center;
 
     border-radius: 10px;
-    background: #062441;
+    background: $sidebar-bg;
     color: #fff;
     font-size: 16px;
   }
@@ -116,7 +165,7 @@
 
     border-radius: 50%;
 
-    background: #dbeafe;
+    background: $avatar-bg;
     color: $primary;
 
     font-weight: 700;

@@ -3,7 +3,7 @@
   min-height: 100%;
   padding: 24px;
   box-sizing: border-box;
-  background: #f6f8fc;
+  background: var(--admin-page-bg, #f6f8fc);
 }
 
 .cleanup-range {
@@ -246,7 +246,7 @@
   padding: 0 14px;
   border: 0;
   border-radius: 8px;
-  background: #1976d2;
+  background: var(--admin-btn, #1976d2);
   color: #ffffff;
   font-size: 13px;
   font-weight: 600;
@@ -326,7 +326,7 @@
     flex-shrink: 0;
     object-fit: cover;
     border-radius: 8px;
-    background: #eef2ff;
+    background: var(--admin-indigo-soft, #eef2ff);
   }
 
   strong,

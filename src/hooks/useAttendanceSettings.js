@@ -12,8 +12,11 @@ import {
   normalizeSettings,
   toSettingsPayload,
 } from "../utils/attendanceSettings";
+import { normalizeAdminMode } from "../utils/adminMode";
 
-function useAttendanceSettings() {
+function useAttendanceSettings(workspace = "shop") {
+  const safeWorkspace = normalizeAdminMode(workspace);
+
   const [settings, setSettings] = useState(
     DEFAULT_ATTENDANCE_SETTINGS
   );
@@ -35,7 +38,12 @@ function useAttendanceSettings() {
 
         const response =
           await axios.get(
-            SETTINGS_API
+            SETTINGS_API,
+            {
+              params: {
+                workspace: safeWorkspace,
+              },
+            }
           );
 
         setSettings(
@@ -60,7 +68,7 @@ function useAttendanceSettings() {
         setLoading(false);
       }
     },
-    []
+    [safeWorkspace]
   );
 
   useEffect(() => {
@@ -69,11 +77,13 @@ function useAttendanceSettings() {
 
   const saveSettings = useCallback(
     async (nextSettings) => {
-      const payload =
-        toSettingsPayload({
+      const payload = {
+        ...toSettingsPayload({
           ...settings,
           ...nextSettings,
-        });
+        }),
+        workspace: safeWorkspace,
+      };
 
       setSaving(true);
       setError("");
@@ -82,7 +92,12 @@ function useAttendanceSettings() {
         const response =
           await axios.put(
             SETTINGS_API,
-            payload
+            payload,
+            {
+              params: {
+                workspace: safeWorkspace,
+              },
+            }
           );
 
         const saved =
@@ -111,7 +126,7 @@ function useAttendanceSettings() {
         setSaving(false);
       }
     },
-    [settings]
+    [settings, safeWorkspace]
   );
 
   return {

@@ -1,10 +1,11 @@
-$primary: #1465f5;
-$primary-dark: #0d56d9;
+$primary: var(--admin-primary, #1465f5);
+$primary-dark: var(--admin-primary-dark, #0d56d9);
 
-$sidebar-bg: #062441;
-$sidebar-hover: #12385d;
+$sidebar-bg: var(--admin-sidebar-bg, #062441);
+$sidebar-hover: var(--admin-sidebar-hover, #12385d);
 
-$body-bg: #f5f7fb;
+$body-bg: var(--admin-body-bg, #f5f7fb);
+$page-bg: var(--admin-page-bg, #f6f8fc);
 
 $white: #ffffff;
 
@@ -23,8 +24,19 @@ $danger-bg: #fdecef;
 $warning: #f59e0b;
 $warning-bg: #fff3df;
 
-$info: #2563eb;
-$info-bg: #eaf1ff;
+$info: var(--admin-info, #2563eb);
+$info-bg: var(--admin-info-bg, #eaf1ff);
+
+$accent: var(--admin-accent, #238aff);
+$accent-soft: var(--admin-accent-soft, #eef6ff);
+$accent-text: var(--admin-accent-text, #1b6fe8);
+$btn: var(--admin-btn, #1976d2);
+$btn-hover: var(--admin-btn-hover, #1565c0);
+$avatar-bg: var(--admin-avatar-bg, #dbeafe);
+$primary-shadow: var(--admin-primary-shadow, rgba(20, 101, 245, 0.25));
+$brand-indigo: var(--admin-indigo, #4f46e5);
+$brand-indigo-soft: var(--admin-indigo-soft, #eef2ff);
+$brand-indigo-dark: var(--admin-indigo-dark, #4338ca);
 
 $sidebar-width: 260px;
 $header-height: 64px;

@@ -16,6 +16,10 @@ import {
   listAllStorageFiles,
   listPendingFiles,
 } from "../../services/cleanupDrive";
+import {
+  filterEmployeesByWorkspace,
+  normalizeAdminMode,
+} from "../../utils/adminMode";
 
 import "./CleanupDrive.scss";
 
@@ -155,7 +159,14 @@ const pendingFileFromUrl = (url) => {
   };
 };
 
-function CleanupDrive() {
+function CleanupDrive({ workspace = "shop" }) {
+  const safeWorkspace = normalizeAdminMode(workspace);
+  const isCompany = safeWorkspace === "company";
+  const pageTitle = isCompany
+    ? "Company Cleanup Drive"
+    : "Cleanup Drive";
+  const scopeLabel = isCompany ? "company" : "shop";
+
   const [files, setFiles] = useState([]);
   const [usedPaths, setUsedPaths] = useState(new Set());
   const [selected, setSelected] = useState([]);
@@ -172,30 +183,64 @@ function CleanupDrive() {
   const [rangeFiles, setRangeFiles] = useState([]);
   const [rangeAttendance, setRangeAttendance] = useState([]);
 
+  const loadWorkspaceEmployees = useCallback(async () => {
+    const employeeResponse = await axios.get(EMPLOYEE_API, {
+      params: { workspace: safeWorkspace },
+    });
+
+    return filterEmployeesByWorkspace(
+      employeeResponse.data?.data || [],
+      safeWorkspace
+    );
+  }, [safeWorkspace]);
+
+  const loadWorkspaceAttendance = useCallback(async () => {
+    const [attendanceResponse, employees] = await Promise.all([
+      axios.get(ATTENDANCE_API),
+      loadWorkspaceEmployees(),
+    ]);
+
+    const mobiles = new Set(
+      employees
+        .map((employee) => String(employee.mobileNumber || ""))
+        .filter(Boolean)
+    );
+
+    const attendance = (attendanceResponse.data?.data || []).filter(
+      (record) => mobiles.has(String(record.mobileNumber || ""))
+    );
+
+    return { attendance, employees, mobiles };
+  }, [loadWorkspaceEmployees]);
+
   const scanDrive = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
       setMessage("");
 
-      const [attendanceResponse, employeeResponse, storageFiles] =
+      const [{ attendance, employees }, storageFiles] =
         await Promise.all([
-          axios.get(ATTENDANCE_API),
-          axios.get(EMPLOYEE_API),
+          loadWorkspaceAttendance(),
           listAllStorageFiles(),
         ]);
 
-      const attendance = attendanceResponse.data?.data || [];
-      const employees = employeeResponse.data?.data || [];
       const nextUsed = collectUsedPaths(attendance, employees);
+      const scopedFiles = storageFiles.filter((file) =>
+        nextUsed.has(file.path)
+      );
 
       setUsedPaths(nextUsed);
-      setFiles(storageFiles);
+      setFiles(isCompany ? scopedFiles : storageFiles);
       setSelected([]);
       setMessage(
-        `Found ${storageFiles.length} file${
-          storageFiles.length === 1 ? "" : "s"
-        } in the ATTENDANCE drive.`
+        isCompany
+          ? `Found ${scopedFiles.length} company-linked file${
+              scopedFiles.length === 1 ? "" : "s"
+            } in the ATTENDANCE drive.`
+          : `Found ${storageFiles.length} file${
+              storageFiles.length === 1 ? "" : "s"
+            } in the ATTENDANCE drive.`
       );
     } catch (scanError) {
       console.error("Cleanup drive scan error:", scanError);
@@ -207,7 +252,7 @@ function CleanupDrive() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isCompany, loadWorkspaceAttendance]);
 
   const toggleFile = (path) => {
     setSelected((previous) =>
@@ -249,8 +294,7 @@ function CleanupDrive() {
   };
 
   const loadRangeAttendance = async (start, end) => {
-    const response = await axios.get(ATTENDANCE_API);
-    const attendance = response.data?.data || [];
+    const { attendance } = await loadWorkspaceAttendance();
 
     return attendance.filter((record) =>
       isInRange(parseAttendanceDate(record), start, end)
@@ -267,16 +311,32 @@ function CleanupDrive() {
       setError("");
       setMessage("");
 
-      const [pendingFiles, attendanceResponse] = await Promise.all([
+      const [pendingFiles, { attendance }] = await Promise.all([
         listPendingFiles(),
-        axios.get(ATTENDANCE_API),
+        loadWorkspaceAttendance(),
       ]);
 
-      const attendance = attendanceResponse.data?.data || [];
+      const companyPendingPaths = new Set();
+
+      attendance.forEach((record) => {
+        [
+          record?.punchIn?.selfieUrl,
+          record?.punchOut?.selfieUrl,
+        ].forEach((url) => {
+          const path = getStoragePathFromPublicUrl(url);
+
+          if (path.startsWith("pending/")) {
+            companyPendingPaths.add(path);
+          }
+        });
+      });
+
       const byPath = new Map();
 
       pendingFiles.forEach((file) => {
-        byPath.set(file.path, file);
+        if (!isCompany || companyPendingPaths.has(file.path)) {
+          byPath.set(file.path, file);
+        }
       });
 
       attendance.forEach((record) => {
@@ -431,10 +491,11 @@ function CleanupDrive() {
     <div className="cleanup-page">
       <div className="cleanup-page__header">
         <div>
-          <h1>Cleanup Drive</h1>
+          <h1>{pageTitle}</h1>
           <p>
             Delete pending selfies or MongoDB attendance records
-            by date range. Each section is separate.
+            by date range for {scopeLabel} employees. Each section
+            is separate.
           </p>
         </div>
 
@@ -499,8 +560,9 @@ function CleanupDrive() {
         <div>
           <h2>MongoDB attendance</h2>
           <p>
-            List punch records in this date range, then confirm
-            in a popup before deleting them from MongoDB.
+            List {scopeLabel} punch records in this date range,
+            then confirm in a popup before deleting them from
+            MongoDB.
           </p>
         </div>
 

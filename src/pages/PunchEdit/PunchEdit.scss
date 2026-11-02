@@ -3,7 +3,7 @@
   min-height: 100%;
   padding: 24px;
   box-sizing: border-box;
-  background: #f6f8fc;
+  background: var(--admin-page-bg, #f6f8fc);
 }
 
 .punch-edit__header {
@@ -75,7 +75,7 @@
 
     svg {
       font-size: 22px;
-      color: #1976d2;
+      color: var(--admin-btn, #1976d2);
     }
   }
 
@@ -118,7 +118,7 @@
 
   input:focus,
   select:focus {
-    border-color: #1976d2;
+    border-color: var(--admin-btn, #1976d2);
     box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.12);
   }
 
@@ -213,12 +213,12 @@
 
 .punch-edit__primary {
   border: 0;
-  background: #1976d2;
+  background: var(--admin-btn, #1976d2);
   color: #ffffff;
 }
 
 .punch-edit__primary:hover:not(:disabled) {
-  background: #1565c0;
+  background: var(--admin-btn-hover, #1565c0);
 }
 
 .punch-edit__secondary {

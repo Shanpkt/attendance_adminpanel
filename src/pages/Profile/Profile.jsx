@@ -43,7 +43,6 @@ import {
 
 import {
   ATTENDANCE_API,
-  EMPLOYEE_API,
   LEAVE_API,
   employeeByIdApi,
   leaveByIdApi,
@@ -125,6 +124,7 @@ function Profile() {
     email: "",
     phone: "",
     joiningDate: "",
+    workspace: "shop",
     lateComingTime: "",
     halfDayTime: "",
   });
@@ -143,20 +143,16 @@ function Profile() {
       setLoading(true);
       setError("");
 
-      const response = await axios.get(EMPLOYEE_API);
+      const response = await axios.get(
+        employeeByIdApi(employeeId)
+      );
 
       console.log(
         "Employee API response:",
         response.data
       );
 
-      const employees = response.data?.data || [];
-
-      const selectedEmployee = employees.find(
-        (item) =>
-          String(item?._id || item?.id) ===
-          String(employeeId)
-      );
+      const selectedEmployee = response.data?.data;
 
       if (!selectedEmployee) {
         setError("Employee not found.");
@@ -181,6 +177,11 @@ function Profile() {
         joiningDate: formatDateForInput(
           selectedEmployee.joiningDate
         ),
+
+        workspace:
+          selectedEmployee.workspace === "company"
+            ? "company"
+            : "shop",
 
         lateComingTime:
           selectedEmployee.lateComingTime || "",
@@ -535,6 +536,11 @@ function Profile() {
         joiningDate:
           formData.joiningDate,
 
+        workspace:
+          formData.workspace === "company"
+            ? "company"
+            : "shop",
+
         profilePic: nextPhoto,
 
         lateComingTime: customLateTime,
@@ -709,13 +715,18 @@ function Profile() {
   const presentDays =
     presentDateKeys.size;
 
+  const profileWorkspace =
+    employee?.workspace === "company"
+      ? "company"
+      : "shop";
+
   const {
     lateComingTime,
     halfDayTime,
     sundayLateComingTime,
     sundayHalfDayTime,
     paidLeaves,
-  } = useAttendanceSettings();
+  } = useAttendanceSettings(profileWorkspace);
 
   const limitSettings = useMemo(
     () => ({
@@ -1505,6 +1516,36 @@ function Profile() {
                 handleChange
               }
             />
+
+            <div className="form-field form-field--workspace">
+              <label>Workspace</label>
+              <div
+                className="workspace-radio-group"
+                role="radiogroup"
+                aria-label="Workspace"
+              >
+                <label className="workspace-radio-option">
+                  <input
+                    type="radio"
+                    name="workspace"
+                    value="shop"
+                    checked={formData.workspace === "shop"}
+                    onChange={handleChange}
+                  />
+                  <span>Shop</span>
+                </label>
+                <label className="workspace-radio-option">
+                  <input
+                    type="radio"
+                    name="workspace"
+                    value="company"
+                    checked={formData.workspace === "company"}
+                    onChange={handleChange}
+                  />
+                  <span>Company</span>
+                </label>
+              </div>
+            </div>
 
             <FormTime
               label="Late Mark Time"

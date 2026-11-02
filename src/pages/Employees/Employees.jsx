@@ -4,11 +4,13 @@ import { useNavigate } from "react-router-dom";
 
 import EmployeeInfoPop from "./employee_info_pop";
 import EmployeePhoto from "../../components/EmployeePhoto";
+import { useAdminMode } from "../../context/AdminModeContext";
 import {
   EMPLOYEES_API,
   employeeByIdApi,
 } from "../../api";
 import { deleteProfilePic } from "../../services/uploadProfilePic";
+import { filterEmployeesByWorkspace } from "../../utils/adminMode";
 import "./Employees.scss";
 
 // ==========================================
@@ -63,6 +65,7 @@ const formatDate = (date) => {
 
 function Employees() {
   const navigate = useNavigate();
+  const { mode } = useAdminMode();
 
   // ========================================
   // STATE
@@ -89,13 +92,18 @@ function Employees() {
       setLoading(true);
       setError("");
 
-      const response = await axios.get(EMPLOYEES_API);
+      const response = await axios.get(EMPLOYEES_API, {
+        params: { workspace: mode },
+      });
 
       console.log("Employees API response:", response.data);
 
-      const data = Array.isArray(response.data?.data)
-        ? response.data.data
-        : [];
+      const data = filterEmployeesByWorkspace(
+        Array.isArray(response.data?.data)
+          ? response.data.data
+          : [],
+        mode
+      );
 
       setEmployees(data);
     } catch (err) {
@@ -114,7 +122,7 @@ function Employees() {
 
   useEffect(() => {
     fetchEmployees();
-  }, []);
+  }, [mode]);
 
   // ========================================
   // FILTER EMPLOYEES
