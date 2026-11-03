@@ -283,7 +283,7 @@ function PunchEdit() {
         setError("");
 
         const response = await axios.get(
-          `${ATTENDANCE_API}/employee/${mobile}`
+          `${ATTENDANCE_API}/manage/${mobile}`
         );
 
         const data = Array.isArray(response.data?.data)
