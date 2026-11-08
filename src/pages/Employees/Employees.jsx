@@ -484,6 +484,10 @@ function Employees() {
               Joined Date
             </div>
 
+            <div className="column-gap">
+              Punch gap
+            </div>
+
             <div className="column-status">
               Status
             </div>
@@ -631,6 +635,12 @@ function Employees() {
                         employee.joiningDate ||
                           employee.createdAt
                       )}
+                    </div>
+
+                    <div className="column-gap">
+                      {Number(employee.minPunchGapHours) > 0
+                        ? `${employee.minPunchGapHours} hr`
+                        : "No lock"}
                     </div>
 
                     {/* ==========================

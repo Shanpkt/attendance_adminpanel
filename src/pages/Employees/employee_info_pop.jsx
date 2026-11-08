@@ -37,6 +37,8 @@ const emptyEmployeeForm = {
 
   workspace: "shop",
 
+  minPunchGapHours: "0",
+
 };
 
 // ==========================================
@@ -127,6 +129,11 @@ function EmployeeInfoPop({
           employee.workspace === "company"
             ? "company"
             : "shop",
+
+        minPunchGapHours:
+          employee.minPunchGapHours
+            ? String(employee.minPunchGapHours)
+            : "0",
 
       });
 
@@ -278,6 +285,25 @@ function EmployeeInfoPop({
 
       }
 
+      const punchGapHours = Number(
+        employeeForm.minPunchGapHours
+      );
+
+      if (
+        employeeForm.minPunchGapHours === "" ||
+        !Number.isInteger(punchGapHours) ||
+        punchGapHours < 0 ||
+        punchGapHours > 24
+      ) {
+
+        setFormError(
+          "Minimum hours before punch out must be a whole number from 0 to 24."
+        );
+
+        return false;
+
+      }
+
       return true;
 
     };
@@ -320,6 +346,10 @@ function EmployeeInfoPop({
             employeeForm.workspace === "company"
               ? "company"
               : "shop",
+
+          minPunchGapHours: Number(
+            employeeForm.minPunchGapHours
+          ),
 
         };
 
@@ -564,6 +594,26 @@ function EmployeeInfoPop({
                 }
                 InputLabelProps={{
                   shrink: true,
+                }}
+              />
+
+              <TextField
+                fullWidth
+                required
+                type="number"
+                label="Min hours before punch out"
+                name="minPunchGapHours"
+                value={
+                  employeeForm.minPunchGapHours
+                }
+                onChange={
+                  handleFormChange
+                }
+                helperText="Employee cannot punch out until this many hours after punch in. Use 0 for no lock."
+                inputProps={{
+                  min: 0,
+                  max: 24,
+                  step: 1,
                 }}
               />
 

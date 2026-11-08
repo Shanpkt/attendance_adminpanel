@@ -277,7 +277,7 @@
   // ====================================================
 
   .employees-table__header {
-    min-width: 850px;
+    min-width: 980px;
 
     display: grid;
 
@@ -286,6 +286,7 @@
       minmax(240px, 1.7fr)
       minmax(150px, 1fr)
       minmax(130px, 1fr)
+      minmax(110px, 0.7fr)
       minmax(120px, 0.8fr)
       130px;
 
@@ -315,7 +316,7 @@
   // ====================================================
 
   .employees-table__row {
-    min-width: 850px;
+    min-width: 980px;
 
     display: grid;
 
@@ -324,6 +325,7 @@
       minmax(240px, 1.7fr)
       minmax(150px, 1fr)
       minmax(130px, 1fr)
+      minmax(110px, 0.7fr)
       minmax(120px, 0.8fr)
       130px;
 
@@ -373,6 +375,12 @@
   .column-date {
     color: #4b5563;
     font-size: 13px;
+  }
+
+  .column-gap {
+    color: #374151;
+    font-size: 13px;
+    font-weight: 600;
   }
 
   .column-status {
@@ -845,7 +853,7 @@
 
     .employees-table__header,
     .employees-table__row {
-      min-width: 820px;
+      min-width: 980px;
     }
 
     .employees-table__row {
